@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Common;
+using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
 
@@ -8,22 +9,20 @@ namespace Pwneu.Api.Features.Users;
 
 public static class GetUser
 {
-    public record Response(string Id, string? Email);
+    public record Query(Guid Id) : IRequest<Result<UserResponse>>;
 
-    public record Query(Guid Id) : IRequest<Result<Response>>;
-
-    internal sealed class Handler(ApplicationDbContext context) : IRequestHandler<Query, Result<Response>>
+    internal sealed class Handler(ApplicationDbContext context) : IRequestHandler<Query, Result<UserResponse>>
     {
-        public async Task<Result<Response>> Handle(Query request, CancellationToken cancellationToken)
+        public async Task<Result<UserResponse>> Handle(Query request, CancellationToken cancellationToken)
         {
             var user = await context
                 .Users
                 .Where(u => u.Id == request.Id.ToString())
-                .Select(u => new Response(u.Id, u.Email))
+                .Select(u => new UserResponse(u.Id, u.Email))
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (user is null)
-                return Result.Failure<Response>(new Error("GetUser.Null",
+                return Result.Failure<UserResponse>(new Error("GetUser.Null",
                     "The user with the specified ID was not found"));
 
             return user;
@@ -42,7 +41,7 @@ public static class GetUser
                     return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
                 })
                 .RequireAuthorization()
-                .WithTags(nameof(ApplicationUser));
+                .WithTags(nameof(User));
         }
     }
 }

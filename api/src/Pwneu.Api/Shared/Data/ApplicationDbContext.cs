@@ -5,7 +5,7 @@ using Pwneu.Api.Shared.Entities;
 namespace Pwneu.Api.Shared.Data;
 
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-    : IdentityDbContext<ApplicationUser>(options)
+    : IdentityDbContext<User>(options)
 {
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -24,7 +24,7 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddCors();
 
 // TODO: Replace default identity endpoints
-builder.Services.AddIdentityCore<ApplicationUser>().AddEntityFrameworkStores<ApplicationDbContext>().AddApiEndpoints();
+builder.Services.AddIdentityCore<User>().AddEntityFrameworkStores<ApplicationDbContext>().AddApiEndpoints();
 
 var connection = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite(connection));
@@ -62,7 +62,7 @@ app.UseCors(x => x
 
 app.ApplyMigrations();
 
-app.MapIdentityApi<ApplicationUser>();
+app.MapIdentityApi<User>();
 
 app.UseHttpsRedirection();
 
