@@ -18,9 +18,12 @@ public static class GetChallenge
             var challengeResponse = await context
                 .Challenges
                 .Where(c => c.Id == request.Id)
-                .Select(c =>
-                    new ChallengeResponse(c.Id, c.Name, c.Description, c.Points, c.DeadlineEnabled, c.Deadline,
-                        c.MaxAttempts))
+                .Include(c => c.ChallengeFiles)
+                .Select(c => new ChallengeResponse(c.Id, c.Name, c.Description, c.Points, c.DeadlineEnabled, c.Deadline,
+                    c.MaxAttempts, c.ChallengeFiles
+                        .Select(cf => new ChallengeFileResponse(cf.Id, cf.FileName))
+                        .ToList()
+                ))
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (challengeResponse is null)

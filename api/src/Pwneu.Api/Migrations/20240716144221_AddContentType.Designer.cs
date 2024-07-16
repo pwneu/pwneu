@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Pwneu.Api.Shared.Data;
 
@@ -10,9 +11,11 @@ using Pwneu.Api.Shared.Data;
 namespace Pwneu.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240716144221_AddContentType")]
+    partial class AddContentType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.7");
@@ -179,7 +182,7 @@ namespace Pwneu.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Challenges", (string)null);
+                    b.ToTable("Challenges");
                 });
 
             modelBuilder.Entity("Pwneu.Api.Shared.Entities.ChallengeFile", b =>
@@ -207,7 +210,7 @@ namespace Pwneu.Api.Migrations
 
                     b.HasIndex("ChallengeId");
 
-                    b.ToTable("ChallengeFiles", (string)null);
+                    b.ToTable("ChallengeFiles");
                 });
 
             modelBuilder.Entity("Pwneu.Api.Shared.Entities.User", b =>

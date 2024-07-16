@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Data;
@@ -18,7 +19,7 @@ public static class GetChallenges
         public async Task<Result<PagedList<ChallengeResponse>>> Handle(Query request,
             CancellationToken cancellationToken)
         {
-            IQueryable<Challenge> challengesQuery = context.Challenges;
+            IQueryable<Challenge> challengesQuery = context.Challenges.Include(c => c.ChallengeFiles);
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
                 challengesQuery = challengesQuery.Where(c =>
@@ -39,7 +40,7 @@ public static class GetChallenges
 
             var challengeResponsesQuery = challengesQuery
                 .Select(c => new ChallengeResponse(c.Id, c.Name, c.Description, c.Points, c.DeadlineEnabled, c.Deadline,
-                    c.MaxAttempts));
+                    c.MaxAttempts, c.ChallengeFiles.Select(cf => new ChallengeFileResponse(cf.Id, cf.FileName))));
 
             var challenges =
                 await PagedList<ChallengeResponse>.CreateAsync(challengeResponsesQuery, request.Page ?? 1,

@@ -7,7 +7,8 @@ public record ChallengeResponse(
     int Points,
     bool DeadlineEnabled,
     DateTime Deadline,
-    int MaxAttempts);
+    int MaxAttempts,
+    IEnumerable<ChallengeFileResponse> ChallengeFiles);
 
 public record CreateChallengeRequest(
     string Name,
