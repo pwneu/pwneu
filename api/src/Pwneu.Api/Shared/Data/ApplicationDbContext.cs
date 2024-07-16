@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Pwneu.Api.Entities;
+using Pwneu.Api.Shared.Entities;
 
-namespace Pwneu.Api.Data;
+namespace Pwneu.Api.Shared.Data;
 
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
     : IdentityDbContext<ApplicationUser>(options)

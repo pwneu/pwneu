@@ -1,6 +1,6 @@
 using System.Security.Claims;
 
-namespace Pwneu.Api.Extensions;
+namespace Pwneu.Api.Shared.Extensions;
 
 public static class ClaimsPrincipalExtensions
 {

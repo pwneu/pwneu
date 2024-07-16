@@ -1,9 +1,9 @@
 using System.Linq.Expressions;
 using MediatR;
-using Pwneu.Api.Common;
-using Pwneu.Api.Contracts;
-using Pwneu.Api.Data;
-using Pwneu.Api.Entities;
+using Pwneu.Api.Shared.Common;
+using Pwneu.Api.Shared.Contracts;
+using Pwneu.Api.Shared.Data;
+using Pwneu.Api.Shared.Entities;
 
 namespace Pwneu.Api.Features.Challenges;
 

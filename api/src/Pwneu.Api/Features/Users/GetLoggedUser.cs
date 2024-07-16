@@ -1,7 +1,7 @@
 using MediatR;
-using Pwneu.Api.Common;
-using Pwneu.Api.Entities;
-using Pwneu.Api.Extensions;
+using Pwneu.Api.Shared.Common;
+using Pwneu.Api.Shared.Entities;
+using Pwneu.Api.Shared.Extensions;
 
 namespace Pwneu.Api.Features.Users;
 

@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using Pwneu.Api.Data;
+using Pwneu.Api.Shared.Data;
 
-namespace Pwneu.Api.Extensions;
+namespace Pwneu.Api.Shared.Extensions;
 
 public static class MigrationExtensions
 {

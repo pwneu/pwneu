@@ -1,4 +1,4 @@
-namespace Pwneu.Api.Contracts;
+namespace Pwneu.Api.Shared.Contracts;
 
 public record ChallengeResponse(
     Guid Id,

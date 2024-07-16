@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace Pwneu.Api.Common;
+namespace Pwneu.Api.Shared.Common;
 
 public class PagedList<T>
 {

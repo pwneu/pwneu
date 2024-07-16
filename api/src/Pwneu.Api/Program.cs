@@ -2,9 +2,9 @@ using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using Pwneu.Api.Data;
-using Pwneu.Api.Entities;
-using Pwneu.Api.Extensions;
+using Pwneu.Api.Shared.Data;
+using Pwneu.Api.Shared.Entities;
+using Pwneu.Api.Shared.Extensions;
 using Swashbuckle.AspNetCore.Filters;
 
 var builder = WebApplication.CreateBuilder(args);

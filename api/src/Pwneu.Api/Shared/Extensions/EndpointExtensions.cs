@@ -1,8 +1,8 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Pwneu.Api.Common;
+using Pwneu.Api.Shared.Common;
 
-namespace Pwneu.Api.Extensions;
+namespace Pwneu.Api.Shared.Extensions;
 
 public static class EndpointExtensions
 {

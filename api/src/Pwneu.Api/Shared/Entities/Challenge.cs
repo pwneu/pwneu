@@ -1,4 +1,4 @@
-namespace Pwneu.Api.Entities;
+namespace Pwneu.Api.Shared.Entities;
 
 public class Challenge
 {
