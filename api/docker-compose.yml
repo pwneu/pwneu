@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  pwneu.api:
+    image: ${DOCKER_REGISTRY-}pwneu.api
+    build:
+      context: .
+      dockerfile: src/Pwneu.Api/Dockerfile
