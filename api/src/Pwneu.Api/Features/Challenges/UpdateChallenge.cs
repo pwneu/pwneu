@@ -17,7 +17,8 @@ public static class UpdateChallenge
         int Points,
         bool DeadlineEnabled,
         DateTime Deadline,
-        int MaxAttempts) : IRequest<Result<Guid>>;
+        int MaxAttempts,
+        IEnumerable<string> Flags) : IRequest<Result<Guid>>;
 
     public class Validator : AbstractValidator<Command>
     {
@@ -25,10 +26,12 @@ public static class UpdateChallenge
         {
             RuleFor(c => c.Name).NotEmpty();
             RuleFor(c => c.Description).NotEmpty();
+            RuleFor(c => c.Flags).NotEmpty();
         }
     }
 
-    internal sealed class Handler(ApplicationDbContext context) : IRequestHandler<Command, Result>
+    internal sealed class Handler(ApplicationDbContext context, IValidator<Command> validator)
+        : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -40,6 +43,11 @@ public static class UpdateChallenge
             if (challenge is null)
                 return Result.Failure(new Error("UpdateChallenge.NotFound",
                     "The challenge with the specified ID was not found"));
+
+            var validationResult = await validator.ValidateAsync(request, cancellationToken);
+
+            if (!validationResult.IsValid)
+                return Result.Failure<Guid>(new Error("UpdateChallenge.Validation", validationResult.ToString()));
 
             challenge.Name = request.Name;
             challenge.Description = request.Description;
@@ -63,7 +71,7 @@ public static class UpdateChallenge
             app.MapPut("challenges", async (UpdateChallengeRequest request, ISender sender) =>
                 {
                     var command = new Command(request.Id, request.Name, request.Description, request.Points,
-                        request.DeadlineEnabled, request.Deadline, request.MaxAttempts);
+                        request.DeadlineEnabled, request.Deadline, request.MaxAttempts, request.Flags);
 
                     var result = await sender.Send(command);
 

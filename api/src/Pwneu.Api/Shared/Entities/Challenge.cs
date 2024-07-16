@@ -9,5 +9,6 @@ public class Challenge
     public bool DeadlineEnabled { get; set; }
     public DateTime Deadline { get; set; }
     public int MaxAttempts { get; set; }
+    public ICollection<string> Flags { get; set; } = [];
     public ICollection<ChallengeFile> ChallengeFiles { get; set; } = [];
 }

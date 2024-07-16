@@ -15,7 +15,8 @@ public static class CreateChallenge
         int Points,
         bool DeadlineEnabled,
         DateTime Deadline,
-        int MaxAttempts) : IRequest<Result<Guid>>;
+        int MaxAttempts,
+        IEnumerable<string> Flags) : IRequest<Result<Guid>>;
 
     public class Validator : AbstractValidator<Command>
     {
@@ -23,6 +24,7 @@ public static class CreateChallenge
         {
             RuleFor(c => c.Name).NotEmpty();
             RuleFor(c => c.Description).NotEmpty();
+            RuleFor(c => c.Flags).NotEmpty();
         }
     }
 
@@ -44,7 +46,8 @@ public static class CreateChallenge
                 Points = request.Points,
                 DeadlineEnabled = request.DeadlineEnabled,
                 Deadline = request.Deadline,
-                MaxAttempts = request.MaxAttempts
+                MaxAttempts = request.MaxAttempts,
+                Flags = request.Flags.ToList()
             };
 
             context.Add(challenge);
@@ -62,7 +65,7 @@ public static class CreateChallenge
             app.MapPost("challenges", async (CreateChallengeRequest request, ISender sender) =>
                 {
                     var command = new Command(request.Name, request.Description, request.Points,
-                        request.DeadlineEnabled, request.Deadline, request.MaxAttempts);
+                        request.DeadlineEnabled, request.Deadline, request.MaxAttempts, request.Flags);
 
                     var result = await sender.Send(command);
 

@@ -15,7 +15,8 @@ public record CreateChallengeRequest(
     int Points,
     bool DeadlineEnabled,
     DateTime Deadline,
-    int MaxAttempts);
+    int MaxAttempts,
+    IEnumerable<string> Flags);
 
 public record UpdateChallengeRequest(
     Guid Id,
@@ -24,4 +25,5 @@ public record UpdateChallengeRequest(
     int Points,
     bool DeadlineEnabled,
     DateTime Deadline,
-    int MaxAttempts);
+    int MaxAttempts,
+    IEnumerable<string> Flags);

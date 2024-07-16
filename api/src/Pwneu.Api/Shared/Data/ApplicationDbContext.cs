@@ -22,6 +22,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .Entity<Challenge>()
             .Property(c => c.Name)
             .HasMaxLength(100);
+
+        builder
+            .Entity<Challenge>()
+            .Property(c => c.Description)
+            .HasMaxLength(100);
     }
 
     public virtual DbSet<Challenge> Challenges { get; set; } = null!;
