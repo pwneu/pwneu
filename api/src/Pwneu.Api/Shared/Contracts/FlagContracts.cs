@@ -1,6 +1,6 @@
 ﻿namespace Pwneu.Api.Shared.Contracts;
 
-public enum SubmitFlagResponse
+public enum FlagStatus
 {
     Incorrect,
     Correct,

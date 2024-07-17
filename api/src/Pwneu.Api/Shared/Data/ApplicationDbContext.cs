@@ -27,8 +27,28 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .Entity<Challenge>()
             .Property(c => c.Description)
             .HasMaxLength(100);
+
+        builder
+            .Entity<FlagSubmission>()
+            .Property(fs => fs.FlagStatus)
+            .HasConversion<string>();
+
+        builder
+            .Entity<FlagSubmission>()
+            .HasOne(fs => fs.Challenge)
+            .WithMany(c => c.FlagSubmissions)
+            .HasForeignKey(fs => fs.ChallengeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder
+            .Entity<FlagSubmission>()
+            .HasOne(fs => fs.User)
+            .WithMany(u => u.FlagSubmissions)
+            .HasForeignKey(fs => fs.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
     public virtual DbSet<Challenge> Challenges { get; set; } = null!;
     public virtual DbSet<ChallengeFile> ChallengeFiles { get; set; } = null!;
+    public virtual DbSet<FlagSubmission> FlagSubmissions { get; set; } = null!;
 }

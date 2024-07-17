@@ -1,5 +1,6 @@
 ﻿using FluentValidation;
 using MediatR;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Contracts;
@@ -11,7 +12,7 @@ namespace Pwneu.Api.Features.Flags;
 
 public static class SubmitFlag
 {
-    public record Command(Guid ChallengeId, string Value) : IRequest<Result<SubmitFlagResponse>>;
+    public record Command(Guid ChallengeId, string Value) : IRequest<Result<FlagStatus>>;
 
     public class Validator : AbstractValidator<Command>
     {
@@ -25,20 +26,21 @@ public static class SubmitFlag
     internal sealed class Handler(
         ApplicationDbContext context,
         IHttpContextAccessor httpContextAccessor,
+        UserManager<User> userManager,
         IValidator<Command> validator)
-        : IRequestHandler<Command, Result<SubmitFlagResponse>>
+        : IRequestHandler<Command, Result<FlagStatus>>
     {
-        public async Task<Result<SubmitFlagResponse>> Handle(Command request, CancellationToken cancellationToken)
+        public async Task<Result<FlagStatus>> Handle(Command request, CancellationToken cancellationToken)
         {
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
 
             if (!validationResult.IsValid)
-                return Result.Failure<SubmitFlagResponse>(new Error("SubmitFlag.Validation", validationResult.ToString()));
+                return Result.Failure<FlagStatus>(new Error("SubmitFlag.Validation", validationResult.ToString()));
 
             var userId = httpContextAccessor.HttpContext?.User.GetLoggedInUserId<string>();
             // This shouldn't happen since the user must be logged in to access this endpoint
             if (userId is null)
-                return Result.Failure<SubmitFlagResponse>(new Error("SubmitFlag.NoLoggedUser", "No logged user found"));
+                return Result.Failure<FlagStatus>(new Error("SubmitFlag.NoLoggedUser", "No logged user found"));
 
             var challenge = await context
                 .Challenges
@@ -46,23 +48,39 @@ public static class SubmitFlag
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (challenge is null)
-                return Result.Failure<SubmitFlagResponse>(new Error("SubmitFlag.NullChallenge",
+                return Result.Failure<FlagStatus>(new Error("SubmitFlag.NullChallenge",
                     "The challenge with the specified ID was not found"));
 
-            SubmitFlagResponse submitFlagResponse;
+            FlagStatus flagStatus;
 
             // TODO: Add checking of number of attempts
             // TODO: Add checking if already solved
 
             if (challenge.DeadlineEnabled && challenge.Deadline < DateTime.Now)
-                submitFlagResponse = SubmitFlagResponse.DeadlineReached;
+                flagStatus = FlagStatus.DeadlineReached;
             else if (challenge.Flags.Any(f => f.Equals(request.Value)))
-                submitFlagResponse = SubmitFlagResponse.Correct;
-            else submitFlagResponse = SubmitFlagResponse.Incorrect;
+                flagStatus = FlagStatus.Correct;
+            else flagStatus = FlagStatus.Incorrect;
+
+            var user = await userManager.FindByIdAsync(userId);
 
             // TODO: Record flag submission to database
+            var flagSubmission = new FlagSubmission
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                ChallengeId = challenge.Id,
+                Value = request.Value,
+                SubmittedAt = DateTime.UtcNow,
+                FlagStatus = flagStatus,
+                Challenge = challenge,
+                User = user!
+            };
 
-            return submitFlagResponse;
+            context.FlagSubmissions.Add(flagSubmission);
+            await context.SaveChangesAsync(cancellationToken);
+
+            return flagStatus;
         }
     }
 

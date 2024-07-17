@@ -11,4 +11,5 @@ public class Challenge
     public int MaxAttempts { get; set; }
     public List<string> Flags { get; set; } = [];
     public ICollection<ChallengeFile> ChallengeFiles { get; set; } = [];
+    public ICollection<FlagSubmission> FlagSubmissions { get; set; } = [];
 }
