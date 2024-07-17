@@ -59,13 +59,23 @@ public static class SubmitFlag
                 .Where(fs => fs.UserId == userId && fs.ChallengeId == challenge.Id)
                 .CountAsync(cancellationToken);
 
-            FlagStatus flagStatus;
+            var tenSecondsAgo = DateTime.UtcNow.AddSeconds(-10);
 
-            // TODO: Block submissions that are too often (even if it's correct)
+            // TODO: Move recent submissions to Redis to improve performance
+            var submittingTooOften = await context
+                .FlagSubmissions
+                .Where(fs => fs.UserId == userId &&
+                             fs.ChallengeId == challenge.Id &&
+                             fs.SubmittedAt >= tenSecondsAgo)
+                .CountAsync(cancellationToken) > 3;
+
+            FlagStatus flagStatus;
 
             if (await context.Solves.AnyAsync(s =>
                     s.UserId == userId && s.ChallengeId == challenge.Id, cancellationToken))
                 flagStatus = FlagStatus.AlreadySolved;
+            else if (submittingTooOften)
+                flagStatus = FlagStatus.SubmittingTooOften;
             else if (challenge.DeadlineEnabled && challenge.Deadline < DateTime.Now)
                 flagStatus = FlagStatus.DeadlineReached;
             else if (challenge.MaxAttempts > 0 && attemptCount >= challenge.MaxAttempts)
@@ -91,7 +101,10 @@ public static class SubmitFlag
                     await context.SaveChangesAsync(cancellationToken);
                     break;
                 }
-                case FlagStatus.MaxAttemptReached or FlagStatus.AlreadySolved or FlagStatus.DeadlineReached:
+                case FlagStatus.MaxAttemptReached
+                    or FlagStatus.AlreadySolved
+                    or FlagStatus.DeadlineReached
+                    or FlagStatus.SubmittingTooOften:
                     return flagStatus;
             }
 

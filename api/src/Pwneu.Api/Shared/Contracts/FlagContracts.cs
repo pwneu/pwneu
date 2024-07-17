@@ -7,4 +7,5 @@ public enum FlagStatus
     MaxAttemptReached,
     DeadlineReached,
     AlreadySolved,
+    SubmittingTooOften
 }
