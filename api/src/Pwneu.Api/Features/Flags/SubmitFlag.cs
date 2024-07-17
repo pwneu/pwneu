@@ -1,6 +1,5 @@
 ﻿using FluentValidation;
 using MediatR;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Contracts;
@@ -26,7 +25,6 @@ public static class SubmitFlag
     internal sealed class Handler(
         ApplicationDbContext context,
         IHttpContextAccessor httpContextAccessor,
-        UserManager<User> userManager,
         IValidator<Command> validator)
         : IRequestHandler<Command, Result<FlagStatus>>
     {
@@ -51,33 +49,50 @@ public static class SubmitFlag
                 return Result.Failure<FlagStatus>(new Error("SubmitFlag.NullChallenge",
                     "The challenge with the specified ID was not found"));
 
+            var user = await context
+                .Users
+                .Where(u => u.Id == userId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            var attemptCount = await context
+                .FlagSubmissions
+                .Where(fs => fs.UserId == userId && fs.ChallengeId == challenge.Id)
+                .CountAsync(cancellationToken);
+
             FlagStatus flagStatus;
 
-            // TODO: Add checking of number of attempts
+            // TODO: Block submissions that are too often (even if it's correct)
 
-            if (challenge.DeadlineEnabled && challenge.Deadline < DateTime.Now)
-                flagStatus = FlagStatus.DeadlineReached;
-            else if (context.Solves.Any(s => s.UserId == userId && s.ChallengeId == challenge.Id))
+            if (await context.Solves.AnyAsync(s =>
+                    s.UserId == userId && s.ChallengeId == challenge.Id, cancellationToken))
                 flagStatus = FlagStatus.AlreadySolved;
+            else if (challenge.DeadlineEnabled && challenge.Deadline < DateTime.Now)
+                flagStatus = FlagStatus.DeadlineReached;
+            else if (challenge.MaxAttempts > 0 && attemptCount >= challenge.MaxAttempts)
+                flagStatus = FlagStatus.MaxAttemptReached;
             else if (challenge.Flags.Any(f => f.Equals(request.Value)))
                 flagStatus = FlagStatus.Correct;
             else flagStatus = FlagStatus.Incorrect;
 
-            var user = await userManager.FindByIdAsync(userId);
-
-            if (flagStatus == FlagStatus.Correct)
+            switch (flagStatus)
             {
-                var solve = new Solve
+                case FlagStatus.Correct:
                 {
-                    UserId = userId,
-                    ChallengeId = challenge.Id,
-                    User = user!,
-                    Challenge = challenge,
-                    SolvedAt = DateTime.UtcNow
-                };
+                    var solve = new Solve
+                    {
+                        UserId = userId,
+                        ChallengeId = challenge.Id,
+                        User = user!,
+                        Challenge = challenge,
+                        SolvedAt = DateTime.UtcNow
+                    };
 
-                context.Solves.Add(solve);
-                await context.SaveChangesAsync(cancellationToken);
+                    context.Solves.Add(solve);
+                    await context.SaveChangesAsync(cancellationToken);
+                    break;
+                }
+                case FlagStatus.MaxAttemptReached or FlagStatus.AlreadySolved or FlagStatus.DeadlineReached:
+                    return flagStatus;
             }
 
             var flagSubmission = new FlagSubmission
