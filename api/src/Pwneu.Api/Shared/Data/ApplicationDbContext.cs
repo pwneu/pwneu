@@ -46,9 +46,28 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .WithMany(u => u.FlagSubmissions)
             .HasForeignKey(fs => fs.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder
+            .Entity<Solve>()
+            .HasKey(s => new { s.UserId, s.ChallengeId });
+
+        builder
+            .Entity<Solve>()
+            .HasOne(s => s.User)
+            .WithMany(u => u.Solves)
+            .HasForeignKey(s => s.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder
+            .Entity<Solve>()
+            .HasOne(s => s.Challenge)
+            .WithMany(c => c.Solves)
+            .HasForeignKey(s => s.ChallengeId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
     public virtual DbSet<Challenge> Challenges { get; set; } = null!;
     public virtual DbSet<ChallengeFile> ChallengeFiles { get; set; } = null!;
     public virtual DbSet<FlagSubmission> FlagSubmissions { get; set; } = null!;
+    public virtual DbSet<Solve> Solves { get; set; } = null!;
 }

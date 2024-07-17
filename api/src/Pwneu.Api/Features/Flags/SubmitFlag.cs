@@ -54,17 +54,32 @@ public static class SubmitFlag
             FlagStatus flagStatus;
 
             // TODO: Add checking of number of attempts
-            // TODO: Add checking if already solved
 
             if (challenge.DeadlineEnabled && challenge.Deadline < DateTime.Now)
                 flagStatus = FlagStatus.DeadlineReached;
+            else if (context.Solves.Any(s => s.UserId == userId && s.ChallengeId == challenge.Id))
+                flagStatus = FlagStatus.AlreadySolved;
             else if (challenge.Flags.Any(f => f.Equals(request.Value)))
                 flagStatus = FlagStatus.Correct;
             else flagStatus = FlagStatus.Incorrect;
 
             var user = await userManager.FindByIdAsync(userId);
 
-            // TODO: Record flag submission to database
+            if (flagStatus == FlagStatus.Correct)
+            {
+                var solve = new Solve
+                {
+                    UserId = userId,
+                    ChallengeId = challenge.Id,
+                    User = user!,
+                    Challenge = challenge,
+                    SolvedAt = DateTime.UtcNow
+                };
+
+                context.Solves.Add(solve);
+                await context.SaveChangesAsync(cancellationToken);
+            }
+
             var flagSubmission = new FlagSubmission
             {
                 Id = Guid.NewGuid(),

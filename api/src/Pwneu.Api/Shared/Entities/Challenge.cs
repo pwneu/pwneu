@@ -12,4 +12,5 @@ public class Challenge
     public List<string> Flags { get; set; } = [];
     public ICollection<ChallengeFile> ChallengeFiles { get; set; } = [];
     public ICollection<FlagSubmission> FlagSubmissions { get; set; } = [];
+    public ICollection<Solve> Solves { get; set; } = [];
 }

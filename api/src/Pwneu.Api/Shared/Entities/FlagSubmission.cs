@@ -11,5 +11,5 @@ public class FlagSubmission
     public DateTime SubmittedAt { get; set; }
     public FlagStatus FlagStatus { get; set; }
     public Challenge Challenge { get; set; } = null!;
-    public User User { get; set; } = null!;
+    public User User { get; set; } = null!; // TODO: Do something about dependency loop warning
 }
