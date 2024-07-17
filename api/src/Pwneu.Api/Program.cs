@@ -27,7 +27,7 @@ builder.Services.AddCors();
 builder.Services.AddIdentityCore<User>().AddEntityFrameworkStores<ApplicationDbContext>().AddApiEndpoints();
 
 var connection = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite(connection));
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connection));
 
 builder.Services.AddEndpoints();
 
@@ -46,14 +46,13 @@ builder.Services.AddAuthentication(options =>
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// TODO: Remove swagger on deployment
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.MapEndpoints();
 
+// TODO: Only allow frontend framework on deployment
 app.UseCors(x => x
     .AllowAnyMethod()
     .AllowAnyHeader()

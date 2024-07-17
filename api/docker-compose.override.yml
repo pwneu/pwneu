@@ -1,4 +1,4 @@
-version: '3.4'
+version: '3.7'
 
 services:
   pwneu.api:
@@ -7,8 +7,8 @@ services:
       - ASPNETCORE_HTTP_PORTS=7638
       - ASPNETCORE_HTTPS_PORTS=7639
     ports:
-      - "7638"
-      - "7639"
+      - "7638:7638"
+      - "7639:7639"
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
       - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
