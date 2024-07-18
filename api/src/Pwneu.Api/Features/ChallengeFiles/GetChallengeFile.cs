@@ -17,16 +17,17 @@ public class GetChallengeFile
     {
         public async Task<Result<ChallengeFileDataResponse>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var challengeFileDataResponse = await cache.GetOrSetAsync($"challengeFilesData:{request.Id}", async _ =>
-            {
-                var challengeFileData = await context
-                    .ChallengeFiles
-                    .Where(cf => cf.Id == request.Id)
-                    .Select(cf => new ChallengeFileDataResponse(cf.FileName, cf.ContentType, cf.Data))
-                    .FirstOrDefaultAsync(cancellationToken);
+            var challengeFileDataResponse = await cache.GetOrSetAsync($"{nameof(ChallengeFile)}:{request.Id}",
+                async _ =>
+                {
+                    var challengeFileData = await context
+                        .ChallengeFiles
+                        .Where(cf => cf.Id == request.Id)
+                        .Select(cf => new ChallengeFileDataResponse(cf.FileName, cf.ContentType, cf.Data))
+                        .FirstOrDefaultAsync(cancellationToken);
 
-                return challengeFileData;
-            }, token: cancellationToken);
+                    return challengeFileData;
+                }, token: cancellationToken);
 
             if (challengeFileDataResponse is null)
                 return Result.Failure<ChallengeFileDataResponse>(new Error("GetChallengeFile.Null",
