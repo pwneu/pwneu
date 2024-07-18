@@ -26,14 +26,23 @@ builder.Services.AddCors();
 // TODO: Replace default identity endpoints
 builder.Services.AddIdentityCore<User>().AddEntityFrameworkStores<ApplicationDbContext>().AddApiEndpoints();
 
-var connection = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connection));
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+{
+    var connection = builder.Configuration.GetConnectionString("Postgres");
+    options.UseNpgsql(connection);
+});
 
-builder.Services.AddEndpoints();
+builder.Services.AddStackExchangeRedisCache(redisOptions =>
+{
+    var connection = builder.Configuration.GetConnectionString("Redis");
+    redisOptions.Configuration = connection;
+});
 
 var assembly = typeof(Program).Assembly;
 builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(assembly));
 builder.Services.AddValidatorsFromAssembly(assembly);
+
+builder.Services.AddEndpoints();
 
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(options =>
