@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Flags;
 
@@ -10,15 +11,22 @@ public static class GetChallengeFlags
 {
     public record Query(Guid Id) : IRequest<Result<IEnumerable<string>>>;
 
-    internal sealed class Handler(ApplicationDbContext context) : IRequestHandler<Query, Result<IEnumerable<string>>>
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
+        : IRequestHandler<Query, Result<IEnumerable<string>>>
     {
         public async Task<Result<IEnumerable<string>>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var challengeFlagsResponse = await context
-                .Challenges
-                .Where(c => c.Id == request.Id)
-                .Select(c => c.Flags)
-                .FirstOrDefaultAsync(cancellationToken);
+            var challengeFlagsResponse = await cache.GetOrSetAsync(
+                $"{nameof(Challenge)}.{nameof(Challenge.Flags)}:{request.Id}", async _ =>
+                {
+                    var challengeFlag = await context
+                        .Challenges
+                        .Where(c => c.Id == request.Id)
+                        .Select(c => c.Flags)
+                        .FirstOrDefaultAsync(cancellationToken);
+
+                    return challengeFlag;
+                }, token: cancellationToken);
 
             if (challengeFlagsResponse is null)
                 return Result.Failure<IEnumerable<string>>(new Error("GetChallengeFlags.Null",
@@ -42,7 +50,7 @@ public static class GetChallengeFlags
                     var query = new Query(id);
                     var result = await sender.Send(query);
 
-                    return result.IsFailure ? Results.NotFound() : Results.Ok(result.Value);
+                    return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
                 })
                 .RequireAuthorization()
                 .WithTags(nameof(Challenge));

@@ -17,7 +17,7 @@ public static class GetChallenge
     {
         public async Task<Result<ChallengeResponse>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var challengeResponse = await cache.GetOrSetAsync($"{nameof(Challenge)}:{request.Id}", async _ =>
+            var challengeResponse = await cache.GetOrSetAsync($"{nameof(ChallengeResponse)}:{request.Id}", async _ =>
             {
                 var challengeResponse = await context
                     .Challenges
