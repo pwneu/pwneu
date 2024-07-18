@@ -18,7 +18,7 @@ public static class UpdateChallenge
         bool DeadlineEnabled,
         DateTime Deadline,
         int MaxAttempts,
-        IEnumerable<string> Flags) : IRequest<Result<Guid>>;
+        IEnumerable<string> Flags) : IRequest<Result>;
 
     public class Validator : AbstractValidator<Command>
     {
@@ -41,7 +41,7 @@ public static class UpdateChallenge
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (challenge is null)
-                return Result.Failure(new Error("UpdateChallenge.NotFound",
+                return Result.Failure<Guid>(new Error("UpdateChallenge.NotFound",
                     "The challenge with the specified ID was not found"));
 
             var validationResult = await validator.ValidateAsync(request, cancellationToken);

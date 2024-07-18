@@ -1,8 +1,26 @@
-version: '3.4'
+version: '3.9'
 
 services:
   pwneu.api:
     image: ${DOCKER_REGISTRY-}pwneu.api
+    container_name: pwneu.api
+    depends_on: 
+      - pwneu.db
     build:
       context: .
       dockerfile: src/Pwneu.Api/Dockerfile
+    ports:
+      - "7638:7638"
+      - "7639:7639"
+
+  pwneu.db:
+    image: postgres:latest
+    container_name: pwneu.db
+    environment:
+      - POSTGRES_DB=pwneu
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - ./.containers/db:/var/lib/postgresql/data
+    ports:
+      - 7640:5432

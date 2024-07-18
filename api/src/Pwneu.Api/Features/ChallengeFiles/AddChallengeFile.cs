@@ -34,7 +34,6 @@ public static class AddChallengeFile
             if (!validationResult.IsValid)
                 return Result.Failure<Guid>(new Error("AddChallengeFile.Validation", validationResult.ToString()));
 
-            // TODO: Fix exception on ICollection<Flags>
             var challenge = await context
                 .Challenges
                 .Where(c => c.Id == request.ChallengeId)

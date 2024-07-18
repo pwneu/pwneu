@@ -54,6 +54,7 @@ public static class GetUsers
 
                         return result.IsFailure ? Results.StatusCode(500) : Results.Ok(result.Value);
                     })
+                .RequireAuthorization()
                 .WithTags(nameof(User));
         }
     }
