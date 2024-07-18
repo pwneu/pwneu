@@ -27,6 +27,8 @@
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
         <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="8.0.2" />
+        <PackageReference Include="ZiggyCreatures.FusionCache" Version="1.2.0" />
+        <PackageReference Include="ZiggyCreatures.FusionCache.Serialization.NewtonsoftJson" Version="1.2.0" />
     </ItemGroup>
 
     <ItemGroup>
