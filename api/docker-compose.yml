@@ -28,5 +28,6 @@ services:
   
   pwneu.cache:
     image: redis:latest
+    container_name: pwneu.cache
     ports:
       - "6379:6379"
