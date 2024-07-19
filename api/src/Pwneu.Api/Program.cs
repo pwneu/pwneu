@@ -1,11 +1,14 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.OpenApi.Models;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
 using Pwneu.Api.Shared.Extensions;
 using Swashbuckle.AspNetCore.Filters;
+using ZiggyCreatures.Caching.Fusion;
+using ZiggyCreatures.Caching.Fusion.Serialization.NewtonsoftJson;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,14 +29,20 @@ builder.Services.AddCors();
 // TODO: Replace default identity endpoints
 builder.Services.AddIdentityCore<User>().AddEntityFrameworkStores<ApplicationDbContext>().AddApiEndpoints();
 
-var connection = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connection));
+var postgres = builder.Configuration.GetConnectionString("Postgres");
+builder.Services.AddDbContext<ApplicationDbContext>(options => { options.UseNpgsql(postgres); });
 
-builder.Services.AddEndpoints();
+var redis = builder.Configuration.GetConnectionString("Redis");
+builder.Services.AddFusionCache()
+    .WithDefaultEntryOptions(new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(2) })
+    .WithSerializer(new FusionCacheNewtonsoftJsonSerializer())
+    .WithDistributedCache(new RedisCache(new RedisCacheOptions { Configuration = redis }));
 
 var assembly = typeof(Program).Assembly;
 builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(assembly));
 builder.Services.AddValidatorsFromAssembly(assembly);
+
+builder.Services.AddEndpoints();
 
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(options =>

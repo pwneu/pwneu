@@ -5,6 +5,7 @@ using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Challenges;
 
@@ -30,7 +31,7 @@ public static class UpdateChallenge
         }
     }
 
-    internal sealed class Handler(ApplicationDbContext context, IValidator<Command> validator)
+    internal sealed class Handler(ApplicationDbContext context, IValidator<Command> validator, IFusionCache cache)
         : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
@@ -55,10 +56,16 @@ public static class UpdateChallenge
             challenge.DeadlineEnabled = request.DeadlineEnabled;
             challenge.Deadline = request.Deadline;
             challenge.MaxAttempts = request.MaxAttempts;
+            challenge.Flags = request.Flags.ToList();
 
             context.Update(challenge);
 
             await context.SaveChangesAsync(cancellationToken);
+
+            await cache.RemoveAsync($"{nameof(Challenge)}:{challenge.Id}", token: cancellationToken);
+            await cache.RemoveAsync($"{nameof(ChallengeResponse)}:{challenge.Id}", token: cancellationToken);
+            await cache.RemoveAsync($"{nameof(Challenge)}.{nameof(Challenge.Flags)}:{challenge.Id}",
+                token: cancellationToken);
 
             return Result.Success();
         }

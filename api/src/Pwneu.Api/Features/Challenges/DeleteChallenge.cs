@@ -1,8 +1,10 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Common;
+using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Challenges;
 
@@ -10,7 +12,7 @@ public static class DeleteChallenge
 {
     public record Command(Guid Id) : IRequest<Result>;
 
-    internal sealed class Handler(ApplicationDbContext context) : IRequestHandler<Command, Result>
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache) : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -29,6 +31,14 @@ public static class DeleteChallenge
             context.Challenges.Remove(challenge);
 
             await context.SaveChangesAsync(cancellationToken);
+
+            foreach (var file in challenge.ChallengeFiles)
+                await cache.RemoveAsync($"{nameof(ChallengeFile)}:{file.Id}", token: cancellationToken);
+
+            await cache.RemoveAsync($"{nameof(Challenge)}:{challenge.Id}", token: cancellationToken);
+            await cache.RemoveAsync($"{nameof(ChallengeResponse)}:{challenge.Id}", token: cancellationToken);
+            await cache.RemoveAsync($"{nameof(Challenge)}.{nameof(Challenge.Flags)}:{challenge.Id}",
+                token: cancellationToken);
 
             return Result.Success();
         }

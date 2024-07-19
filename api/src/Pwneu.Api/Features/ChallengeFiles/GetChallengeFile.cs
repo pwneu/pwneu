@@ -4,6 +4,7 @@ using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.ChallengeFiles;
 
@@ -11,23 +12,28 @@ public class GetChallengeFile
 {
     public record Query(Guid Id) : IRequest<Result<ChallengeFileDataResponse>>;
 
-    internal sealed class Handler(ApplicationDbContext context)
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
         : IRequestHandler<Query, Result<ChallengeFileDataResponse>>
     {
-        public async Task<Result<ChallengeFileDataResponse>> Handle(Query request,
-            CancellationToken cancellationToken)
+        public async Task<Result<ChallengeFileDataResponse>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var challengeFileResponse = await context
-                .ChallengeFiles
-                .Where(cf => cf.Id == request.Id)
-                .Select(cf => new ChallengeFileDataResponse(cf.FileName, cf.ContentType, cf.Data))
-                .FirstOrDefaultAsync(cancellationToken);
+            var challengeFileDataResponse = await cache.GetOrSetAsync($"{nameof(ChallengeFile)}:{request.Id}",
+                async _ =>
+                {
+                    var challengeFileData = await context
+                        .ChallengeFiles
+                        .Where(cf => cf.Id == request.Id)
+                        .Select(cf => new ChallengeFileDataResponse(cf.FileName, cf.ContentType, cf.Data))
+                        .FirstOrDefaultAsync(cancellationToken);
 
-            if (challengeFileResponse is null)
+                    return challengeFileData;
+                }, token: cancellationToken);
+
+            if (challengeFileDataResponse is null)
                 return Result.Failure<ChallengeFileDataResponse>(new Error("GetChallengeFile.Null",
                     "The challenge file with the specified ID was not found"));
 
-            return challengeFileResponse;
+            return challengeFileDataResponse;
         }
     }
 

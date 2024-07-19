@@ -6,6 +6,7 @@ services:
     container_name: pwneu.api
     depends_on: 
       - pwneu.db
+      - pwneu.cache
     build:
       context: .
       dockerfile: src/Pwneu.Api/Dockerfile
@@ -23,4 +24,10 @@ services:
     volumes:
       - ./.containers/db:/var/lib/postgresql/data
     ports:
-      - 7640:5432
+      - "7640:5432"
+  
+  pwneu.cache:
+    image: redis:latest
+    container_name: pwneu.cache
+    ports:
+      - "6379:6379"
