@@ -4,6 +4,7 @@ using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Users;
 
@@ -11,15 +12,19 @@ public static class GetUser
 {
     public record Query(Guid Id) : IRequest<Result<UserResponse>>;
 
-    internal sealed class Handler(ApplicationDbContext context) : IRequestHandler<Query, Result<UserResponse>>
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
+        : IRequestHandler<Query, Result<UserResponse>>
     {
         public async Task<Result<UserResponse>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var user = await context
-                .Users
-                .Where(u => u.Id == request.Id.ToString())
-                .Select(u => new UserResponse(u.Id, u.Email))
-                .FirstOrDefaultAsync(cancellationToken);
+            var user = await cache.GetOrSetAsync($"{nameof(User)}:{request.Id}", async _ =>
+            {
+                return await context
+                    .Users
+                    .Where(u => u.Id == request.Id.ToString())
+                    .Select(u => new UserResponse(u.Id, u.Email))
+                    .FirstOrDefaultAsync(cancellationToken);
+            }, token: cancellationToken);
 
             if (user is null)
                 return Result.Failure<UserResponse>(new Error("GetUser.Null",
