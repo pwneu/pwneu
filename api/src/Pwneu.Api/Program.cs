@@ -60,12 +60,9 @@ builder.Services.AddValidatorsFromAssembly(assembly);
 
 builder.Services.AddEndpoints();
 
-var issuer = Environment.GetEnvironmentVariable(Env.JwtIssuer) ??
-             throw new InvalidOperationException("No Json Web Token Issuer found");
-var audience = Environment.GetEnvironmentVariable(Env.JwtAudience) ??
-               throw new InvalidOperationException("No Json Web Token Issuer found");
-var signingKey = Environment.GetEnvironmentVariable(Env.JwtSigningKey) ??
-                 throw new InvalidOperationException("No Json Web Token Signing Key found");
+var issuer = Environment.GetEnvironmentVariable(Env.JwtIssuer);
+var audience = Environment.GetEnvironmentVariable(Env.JwtAudience);
+var signingKey = Environment.GetEnvironmentVariable(Env.JwtSigningKey);
 
 builder.Services.AddAuthentication(options =>
     {
@@ -83,7 +80,7 @@ builder.Services.AddAuthentication(options =>
             ValidIssuer = issuer,
             ValidAudience = audience,
             IssuerSigningKey =
-                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey!)),
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateLifetime = true,
