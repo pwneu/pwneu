@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Entities;
 
 namespace Pwneu.Api.Shared.Data;
@@ -14,6 +16,15 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Entity<User>()
             .Property(u => u.FullName)
             .HasMaxLength(100);
+
+        builder
+            .Entity<IdentityRole>()
+            .HasData(new List<IdentityRole>
+            {
+                new() { Name = Constants.Roles.User, NormalizedName = Constants.Roles.User.ToUpper() },
+                new() { Name = Constants.Roles.Faculty, NormalizedName = Constants.Roles.Faculty.ToUpper() },
+                new() { Name = Constants.Roles.Admin, NormalizedName = Constants.Roles.Admin.ToUpper() },
+            });
 
         builder
             .Entity<Challenge>()
