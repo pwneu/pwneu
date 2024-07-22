@@ -11,6 +11,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     {
         base.OnModelCreating(builder);
 
+        builder.Entity<User>()
+            .Property(u => u.FullName)
+            .HasMaxLength(100);
+
         builder
             .Entity<Challenge>()
             .HasMany(c => c.ChallengeFiles)
