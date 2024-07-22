@@ -1,8 +1,12 @@
+using System.Text;
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
 using Pwneu.Api.Shared.Extensions;
@@ -24,15 +28,27 @@ builder.Services.AddSwaggerGen(options =>
 
     options.OperationFilter<SecurityRequirementsOperationFilter>();
 });
+
 builder.Services.AddCors();
 
-// TODO: Replace default identity endpoints
-builder.Services.AddIdentityCore<User>().AddEntityFrameworkStores<ApplicationDbContext>().AddApiEndpoints();
+builder.Services.AddIdentity<User, IdentityRole>(options =>
+    {
+        options.Password.RequireDigit = true;
+        options.Password.RequireLowercase = true;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireNonAlphanumeric = true;
+        options.Password.RequiredLength = 12;
+    })
+    .AddEntityFrameworkStores<ApplicationDbContext>();
 
-var postgres = builder.Configuration.GetConnectionString("Postgres");
+var postgres = builder.Configuration.GetConnectionString("Postgres") ??
+               throw new InvalidOperationException("No Postgres connection found");
+
 builder.Services.AddDbContext<ApplicationDbContext>(options => { options.UseNpgsql(postgres); });
 
-var redis = builder.Configuration.GetConnectionString("Redis");
+var redis = builder.Configuration.GetConnectionString("Redis") ??
+            throw new InvalidOperationException("No Redis connection found");
+
 builder.Services.AddFusionCache()
     .WithDefaultEntryOptions(new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(2) })
     .WithSerializer(new FusionCacheNewtonsoftJsonSerializer())
@@ -44,22 +60,48 @@ builder.Services.AddValidatorsFromAssembly(assembly);
 
 builder.Services.AddEndpoints();
 
-builder.Services.AddAuthorization();
+var issuer = Environment.GetEnvironmentVariable(Env.JwtIssuer) ??
+             throw new InvalidOperationException("No Json Web Token Issuer found");
+var audience = Environment.GetEnvironmentVariable(Env.JwtAudience) ??
+               throw new InvalidOperationException("No Json Web Token Issuer found");
+var signingKey = Environment.GetEnvironmentVariable(Env.JwtSigningKey) ??
+                 throw new InvalidOperationException("No Json Web Token Signing Key found");
+
 builder.Services.AddAuthentication(options =>
     {
-        options.DefaultScheme = IdentityConstants.ApplicationScheme;
-        options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultForbidScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultSignInScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultSignOutScheme = JwtBearerDefaults.AuthenticationScheme;
     })
-    .AddCookie(IdentityConstants.ApplicationScheme)
-    .AddBearerToken(IdentityConstants.BearerScheme);
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidIssuer = issuer,
+            ValidAudience = audience,
+            IssuerSigningKey =
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// TODO: Remove swagger on deployment
-app.UseSwagger();
-app.UseSwaggerUI();
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
-app.MapEndpoints();
+app.ApplyMigrations();
 
 // TODO: Only allow frontend framework on deployment
 app.UseCors(x => x
@@ -68,12 +110,11 @@ app.UseCors(x => x
     .SetIsOriginAllowed(_ => true)
     .AllowCredentials());
 
-app.ApplyMigrations();
-
-app.MapIdentityApi<User>();
-
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapEndpoints();
 
 app.Run();
