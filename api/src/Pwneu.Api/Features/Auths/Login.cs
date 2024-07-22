@@ -52,12 +52,15 @@ public static class Login
                 return Result.Failure<string>(new Error("Login.InvalidCredentials",
                     "Incorrect username or password"));
 
+            var roles = await userManager.GetRolesAsync(user);
             var claims = new List<Claim>
             {
                 new(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
                 new(JwtRegisteredClaimNames.Name, user.UserName ?? string.Empty),
                 new(JwtRegisteredClaimNames.Sub, user.Id),
             };
+
+            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
             var issuer = Environment.GetEnvironmentVariable(Env.JwtIssuer);
             var audience = Environment.GetEnvironmentVariable(Env.JwtAudience);

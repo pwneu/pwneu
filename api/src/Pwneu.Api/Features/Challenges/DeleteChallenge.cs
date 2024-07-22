@@ -55,7 +55,7 @@ public static class DeleteChallenge
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(Policies.FacultyAdminOnly)
                 .WithTags(nameof(Challenge));
         }
     }

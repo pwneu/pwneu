@@ -88,7 +88,10 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy(Policies.AdminOnly, policy => { policy.RequireRole(Constants.Roles.Admin); })
+    .AddPolicy(Policies.FacultyAdminOnly, policy => { policy.RequireRole(Constants.Roles.Faculty); })
+    .AddPolicy(Policies.UserOnly, policy => { policy.RequireRole(Constants.Roles.User); });
 
 var app = builder.Build();
 
@@ -102,7 +105,7 @@ app.ApplyMigrations();
 
 await app.Services.SeedAdminAsync();
 
-// TODO: Only allow frontend framework on deployment
+// TODO -- Only allow frontend framework on deployment
 app.UseCors(x => x
     .AllowAnyMethod()
     .AllowAnyHeader()

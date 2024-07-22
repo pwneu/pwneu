@@ -12,6 +12,7 @@ public static class GetUsers
     public record Query(string? SearchTerm, string? SortBy, string? SortOrder, int? Page, int? PageSize)
         : IRequest<Result<PagedList<UserResponse>>>;
 
+    // TODO -- Change returning email to returning user name
     internal sealed class Handler(ApplicationDbContext context)
         : IRequestHandler<Query, Result<PagedList<UserResponse>>>
     {
@@ -54,7 +55,7 @@ public static class GetUsers
 
                         return result.IsFailure ? Results.StatusCode(500) : Results.Ok(result.Value);
                     })
-                .RequireAuthorization()
+                .RequireAuthorization(Policies.FacultyAdminOnly)
                 .WithTags(nameof(User));
         }
     }

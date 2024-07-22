@@ -37,10 +37,11 @@ public static class AdminSeed
                 "Failed to create admin: " +
                 string.Join(", ", createAdmin.Errors.Select(e => e.Description)));
 
-        var addAdminRole = await userManager.AddToRoleAsync(admin, Constants.Roles.Admin);
-        if (!addAdminRole.Succeeded)
+        var addAdminFacultyRoles =
+            await userManager.AddToRolesAsync(admin, [Constants.Roles.Admin, Constants.Roles.Faculty]);
+        if (!addAdminFacultyRoles.Succeeded)
             throw new InvalidOperationException(
                 "Failed to add admin role: " +
-                string.Join(", ", addAdminRole.Errors.Select(e => e.Description)));
+                string.Join(", ", addAdminFacultyRoles.Errors.Select(e => e.Description)));
     }
 }

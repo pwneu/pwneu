@@ -45,7 +45,7 @@ public static class GetUser
 
                     return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(Policies.FacultyAdminOnly)
                 .WithTags(nameof(User));
         }
     }
