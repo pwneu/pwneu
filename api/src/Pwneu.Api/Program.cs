@@ -100,6 +100,8 @@ if (app.Environment.IsDevelopment())
 
 app.ApplyMigrations();
 
+await app.Services.SeedAdminAsync();
+
 // TODO: Only allow frontend framework on deployment
 app.UseCors(x => x
     .AllowAnyMethod()

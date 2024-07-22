@@ -5,4 +5,5 @@ public static class Env
     public const string JwtIssuer = "JWT_ISSUER";
     public const string JwtAudience = "JWT_AUDIENCE";
     public const string JwtSigningKey = "JWT_SIGNING_KEY";
+    public const string AdminPassword = "ADMIN_PASSWORD";
 }

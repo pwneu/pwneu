@@ -54,8 +54,8 @@ public static class Login
 
             var claims = new List<Claim>
             {
-                new(JwtRegisteredClaimNames.Email, user.Email!),
-                new(JwtRegisteredClaimNames.Name, user.UserName!),
+                new(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
+                new(JwtRegisteredClaimNames.Name, user.UserName ?? string.Empty),
                 new(JwtRegisteredClaimNames.Sub, user.Id),
             };
 

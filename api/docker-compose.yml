@@ -17,6 +17,7 @@ services:
       - JWT_ISSUER=${JWT_ISSUER}
       - JWT_AUDIENCE=${JWT_AUDIENCE}
       - JWT_SIGNING_KEY=${JWT_SIGNING_KEY}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - ConnectionStrings__Postgres=${POSTGRES_CONNECTION}
 
   pwneu.db:
