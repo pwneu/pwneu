@@ -35,6 +35,7 @@ public static class GetLoggedUser
 
                     return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
                 })
+                .RequireAuthorization()
                 .WithTags(nameof(User));
         }
     }
