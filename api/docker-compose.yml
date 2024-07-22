@@ -4,7 +4,7 @@ services:
   pwneu.api:
     image: ${DOCKER_REGISTRY-}pwneu.api
     container_name: pwneu.api
-    depends_on: 
+    depends_on:
       - pwneu.db
       - pwneu.cache
     build:
@@ -13,19 +13,25 @@ services:
     ports:
       - "7638:7638"
       - "7639:7639"
+    environment:
+      - JWT_ISSUER=${JWT_ISSUER}
+      - JWT_AUDIENCE=${JWT_AUDIENCE}
+      - JWT_SIGNING_KEY=${JWT_SIGNING_KEY}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - ConnectionStrings__Postgres=${POSTGRES_CONNECTION}
 
   pwneu.db:
     image: postgres:latest
     container_name: pwneu.db
     environment:
-      - POSTGRES_DB=pwneu
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - ./.containers/db:/var/lib/postgresql/data
     ports:
-      - "7640:5432"
-  
+      - "5432:5432"
+
   pwneu.cache:
     image: redis:latest
     container_name: pwneu.cache

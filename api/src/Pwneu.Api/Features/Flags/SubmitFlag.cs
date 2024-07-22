@@ -178,7 +178,7 @@ public static class SubmitFlag
 
                     return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value.ToString());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(Policies.UserOnly)
                 .WithTags(nameof(Challenge));
         }
     }
