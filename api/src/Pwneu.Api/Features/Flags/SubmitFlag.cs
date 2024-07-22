@@ -176,7 +176,7 @@ public static class SubmitFlag
                     var query = new Command(id, value);
                     var result = await sender.Send(query);
 
-                    return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value.ToString());
+                    return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
                 })
                 .RequireAuthorization()
                 .WithTags(nameof(Challenge));
