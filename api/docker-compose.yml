@@ -4,7 +4,7 @@ services:
   pwneu.api:
     image: ${DOCKER_REGISTRY-}pwneu.api
     container_name: pwneu.api
-    depends_on: 
+    depends_on:
       - pwneu.db
       - pwneu.cache
     build:
@@ -24,7 +24,7 @@ services:
     volumes:
       - ./.containers/db:/var/lib/postgresql/data
     ports:
-      - "7640:5432"
+      - "5432:5432"
   
   pwneu.cache:
     image: redis:latest
