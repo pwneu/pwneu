@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace Pwneu.Api.Shared.Extensions;
 
@@ -17,7 +18,9 @@ public static class ClaimsPrincipalExtensions
 
         if (typeof(T) == typeof(int) || typeof(T) == typeof(long))
         {
-            return loggedInUserId != null ? (T)Convert.ChangeType(loggedInUserId, typeof(T)) : (T)Convert.ChangeType(0, typeof(T));
+            return loggedInUserId != null
+                ? (T)Convert.ChangeType(loggedInUserId, typeof(T))
+                : (T)Convert.ChangeType(0, typeof(T));
         }
 
         throw new Exception("Invalid type provided");
@@ -27,13 +30,13 @@ public static class ClaimsPrincipalExtensions
     {
         ArgumentNullException.ThrowIfNull(principal);
 
-        return principal.FindFirstValue(ClaimTypes.Name);
+        return principal.FindFirstValue(JwtRegisteredClaimNames.Name);
     }
 
     public static string? GetLoggedInUserEmail(this ClaimsPrincipal principal)
     {
         ArgumentNullException.ThrowIfNull(principal);
 
-        return principal.FindFirstValue(ClaimTypes.Email);
+        return principal.FindFirstValue(JwtRegisteredClaimNames.Email);
     }
 }

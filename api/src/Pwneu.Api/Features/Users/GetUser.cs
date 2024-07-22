@@ -22,7 +22,7 @@ public static class GetUser
                 return await context
                     .Users
                     .Where(u => u.Id == request.Id.ToString())
-                    .Select(u => new UserResponse(u.Id, u.Email))
+                    .Select(u => new UserResponse(u.Id, u.UserName))
                     .FirstOrDefaultAsync(cancellationToken);
             }, token: cancellationToken);
 
