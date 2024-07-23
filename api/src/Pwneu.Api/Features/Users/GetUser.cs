@@ -8,29 +8,56 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Users;
 
-public static class GetUser
+/// <summary>
+/// Retrieves a user by ID, excluding those with a role of faculty or admin.
+/// Only users with faculty or admin roles can access this endpoint.
+/// </summary>
+public class GetUser
 {
     public record Query(Guid Id) : IRequest<Result<UserResponse>>;
+
+    private static readonly Error NotFound = new("GetUser.NotFound", "User not found");
 
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
         : IRequestHandler<Query, Result<UserResponse>>
     {
         public async Task<Result<UserResponse>> Handle(Query request, CancellationToken cancellationToken)
         {
+            var managerIds = await cache.GetOrSetAsync("managerIds", async _ =>
+            {
+                var managerRoleIds = await context
+                    .Roles
+                    .Where(r =>
+                        r.Name != null &&
+                        (r.Name.Equals(Constants.Roles.Faculty) ||
+                         r.Name.Equals(Constants.Roles.Admin)))
+                    .Select(r => r.Id)
+                    .Distinct()
+                    .ToListAsync(cancellationToken);
+
+                return await context
+                    .UserRoles
+                    .Where(ur => managerRoleIds.Contains(ur.RoleId))
+                    .Select(ur => ur.UserId)
+                    .Distinct()
+                    .ToListAsync(cancellationToken);
+            }, token: cancellationToken);
+
+            if (managerIds.Contains(request.Id.ToString()))
+                return Result.Failure<UserResponse>(NotFound);
+
             var user = await cache.GetOrSetAsync($"{nameof(User)}:{request.Id}", async _ =>
             {
                 return await context
                     .Users
-                    .Where(u => u.Id == request.Id.ToString())
+                    .Where(u =>
+                        u.Id == request.Id.ToString() &&
+                        !string.Equals(u.UserName, Constants.Roles.User))
                     .Select(u => new UserResponse(u.Id, u.UserName))
                     .FirstOrDefaultAsync(cancellationToken);
             }, token: cancellationToken);
 
-            if (user is null)
-                return Result.Failure<UserResponse>(new Error("GetUser.Null",
-                    "The user with the specified ID was not found"));
-
-            return user;
+            return user ?? Result.Failure<UserResponse>(NotFound);
         }
     }
 

@@ -1,31 +1,57 @@
 using System.Linq.Expressions;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Users;
 
+/// <summary>
+/// Retrieves a paginated list of users, excluding those with a role of faculty or admin.
+/// Only users with faculty or admin roles can access this endpoint.
+/// </summary>
 public static class GetUsers
 {
     public record Query(string? SearchTerm, string? SortBy, string? SortOrder, int? Page, int? PageSize)
         : IRequest<Result<PagedList<UserResponse>>>;
 
-    // TODO -- Change returning email to returning user name
-    internal sealed class Handler(ApplicationDbContext context)
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
         : IRequestHandler<Query, Result<PagedList<UserResponse>>>
     {
         public async Task<Result<PagedList<UserResponse>>> Handle(Query request, CancellationToken cancellationToken)
         {
-            IQueryable<User> usersQuery = context.Users;
+            var managerIds = await cache.GetOrSetAsync("managerIds", async _ =>
+            {
+                var managerRoleIds = await context
+                    .Roles
+                    .Where(r =>
+                        r.Name != null &&
+                        (r.Name.Equals(Constants.Roles.Faculty) ||
+                         r.Name.Equals(Constants.Roles.Admin)))
+                    .Select(r => r.Id)
+                    .Distinct()
+                    .ToListAsync(cancellationToken);
+
+                return await context
+                    .UserRoles
+                    .Where(ur => managerRoleIds.Contains(ur.RoleId))
+                    .Select(ur => ur.UserId)
+                    .Distinct()
+                    .ToListAsync(cancellationToken);
+            }, token: cancellationToken);
+
+            var usersQuery = context.Users
+                .Where(u => !managerIds.Contains(u.Id));
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
-                usersQuery = usersQuery.Where(u => u.Email != default && u.Email.Contains(request.SearchTerm));
+                usersQuery = usersQuery.Where(u => u.UserName != default && u.UserName.Contains(request.SearchTerm));
 
             Expression<Func<User, object>> keySelector = request.SortBy?.ToLower() switch
             {
-                "email" => user => user.Email!,
+                "username" => user => user.UserName!,
                 _ => user => user.CreatedAt
             };
 
@@ -33,7 +59,7 @@ public static class GetUsers
                 ? usersQuery.OrderByDescending(keySelector)
                 : usersQuery.OrderBy(keySelector);
 
-            var userResponsesQuery = usersQuery.Select(u => new UserResponse(u.Id, u.Email!));
+            var userResponsesQuery = usersQuery.Select(u => new UserResponse(u.Id, u.UserName));
 
             var users = await PagedList<UserResponse>.CreateAsync(userResponsesQuery, request.Page ?? 1,
                 request.PageSize ?? 10);
