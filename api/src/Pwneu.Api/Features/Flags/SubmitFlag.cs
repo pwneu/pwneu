@@ -90,7 +90,10 @@ public static class SubmitFlag
 
                     context.Solves.Add(solve);
                     await context.SaveChangesAsync(cancellationToken);
+
                     await cache.SetAsync(solveKey, true, token: cancellationToken);
+                    // Since a user has solved a flag, remove the cache on getting user information
+                    await cache.RemoveAsync($"{nameof(UserDetailsResponse)}:{userId}", token: cancellationToken);
                     break;
                 }
                 case FlagStatus.MaxAttemptReached

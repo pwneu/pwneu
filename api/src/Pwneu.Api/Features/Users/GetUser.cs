@@ -14,14 +14,14 @@ namespace Pwneu.Api.Features.Users;
 /// </summary>
 public class GetUser
 {
-    public record Query(Guid Id) : IRequest<Result<UserResponse>>;
+    public record Query(Guid Id) : IRequest<Result<UserDetailsResponse>>;
 
     private static readonly Error NotFound = new("GetUser.NotFound", "User not found");
 
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
-        : IRequestHandler<Query, Result<UserResponse>>
+        : IRequestHandler<Query, Result<UserDetailsResponse>>
     {
-        public async Task<Result<UserResponse>> Handle(Query request, CancellationToken cancellationToken)
+        public async Task<Result<UserDetailsResponse>> Handle(Query request, CancellationToken cancellationToken)
         {
             var managerIds = await cache.GetOrSetAsync("managerIds", async _ =>
             {
@@ -44,20 +44,21 @@ public class GetUser
             }, token: cancellationToken);
 
             if (managerIds.Contains(request.Id.ToString()))
-                return Result.Failure<UserResponse>(NotFound);
+                return Result.Failure<UserDetailsResponse>(NotFound);
 
-            var user = await cache.GetOrSetAsync($"{nameof(User)}:{request.Id}", async _ =>
+            // TODO -- Check for bugs in cache invalidations
+            var user = await cache.GetOrSetAsync($"{nameof(UserDetailsResponse)}:{request.Id}", async _ =>
             {
                 return await context
                     .Users
-                    .Where(u =>
-                        u.Id == request.Id.ToString() &&
-                        !string.Equals(u.UserName, Constants.Roles.User))
-                    .Select(u => new UserResponse(u.Id, u.UserName))
+                    .Where(u => u.Id == request.Id.ToString())
+                    .Select(u => new UserDetailsResponse(u.Id, u.UserName, u.Email, u.FullName, u.CreatedAt, u.Solves
+                        .Select(s => new SolveResponse(s.ChallengeId, s.Challenge.Name, s.Challenge.Points, s.SolvedAt))
+                        .ToList()))
                     .FirstOrDefaultAsync(cancellationToken);
             }, token: cancellationToken);
 
-            return user ?? Result.Failure<UserResponse>(NotFound);
+            return user ?? Result.Failure<UserDetailsResponse>(NotFound);
         }
     }
 
