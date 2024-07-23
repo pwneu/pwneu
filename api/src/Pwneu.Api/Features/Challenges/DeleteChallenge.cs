@@ -12,6 +12,9 @@ public static class DeleteChallenge
 {
     public record Command(Guid Id) : IRequest<Result>;
 
+    private static readonly Error NotFound = new("DeleteChallenge.NotFound",
+        "The challenge with the specified ID was not found");
+
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache) : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
@@ -23,8 +26,7 @@ public static class DeleteChallenge
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (challenge is null)
-                return Result.Failure(new Error("DeleteChallenge.NotFound",
-                    "The challenge with the specified ID was not found"));
+                return Result.Failure(NotFound);
 
             context.ChallengeFiles.RemoveRange(challenge.ChallengeFiles);
 
@@ -36,7 +38,7 @@ public static class DeleteChallenge
                 await cache.RemoveAsync($"{nameof(ChallengeFile)}:{file.Id}", token: cancellationToken);
 
             await cache.RemoveAsync($"{nameof(Challenge)}:{challenge.Id}", token: cancellationToken);
-            await cache.RemoveAsync($"{nameof(ChallengeResponse)}:{challenge.Id}", token: cancellationToken);
+            await cache.RemoveAsync($"{nameof(ChallengeDetailsResponse)}:{challenge.Id}", token: cancellationToken);
             await cache.RemoveAsync($"{nameof(Challenge)}.{nameof(Challenge.Flags)}:{challenge.Id}",
                 token: cancellationToken);
 
