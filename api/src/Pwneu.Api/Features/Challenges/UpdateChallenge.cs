@@ -100,7 +100,7 @@ public static class UpdateChallenge
                 .WithMessage("Points must be greater than 0.");
 
             RuleFor(c => c.MaxAttempts)
-                .GreaterThan(0)
+                .GreaterThanOrEqualTo(0)
                 .WithMessage("Max attempts must be greater than or equal to 0.");
 
             RuleFor(c => c.Flags)
