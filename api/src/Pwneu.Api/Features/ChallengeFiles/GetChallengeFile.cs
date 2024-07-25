@@ -8,9 +8,15 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.ChallengeFiles;
 
-public class GetChallengeFile
+/// <summary>
+/// Retrieves a challenge file by ID
+/// </summary>
+public static class GetChallengeFile
 {
     public record Query(Guid Id) : IRequest<Result<ChallengeFileDataResponse>>;
+
+    private static readonly Error NotFound = new Error("GetChallengeFile.Null",
+        "The challenge file with the specified ID was not found");
 
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
         : IRequestHandler<Query, Result<ChallengeFileDataResponse>>
@@ -20,20 +26,14 @@ public class GetChallengeFile
             var challengeFileDataResponse = await cache.GetOrSetAsync($"{nameof(ChallengeFile)}:{request.Id}",
                 async _ =>
                 {
-                    var challengeFileData = await context
+                    return await context
                         .ChallengeFiles
                         .Where(cf => cf.Id == request.Id)
                         .Select(cf => new ChallengeFileDataResponse(cf.FileName, cf.ContentType, cf.Data))
                         .FirstOrDefaultAsync(cancellationToken);
-
-                    return challengeFileData;
                 }, token: cancellationToken);
 
-            if (challengeFileDataResponse is null)
-                return Result.Failure<ChallengeFileDataResponse>(new Error("GetChallengeFile.Null",
-                    "The challenge file with the specified ID was not found"));
-
-            return challengeFileDataResponse;
+            return challengeFileDataResponse ?? Result.Failure<ChallengeFileDataResponse>(NotFound);
         }
     }
 
@@ -41,7 +41,7 @@ public class GetChallengeFile
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            // TODO: Find proper url for getting challenge files
+            // TODO -- Find proper url for getting challenge files
             app.MapGet("challenges/files/{id:Guid}",
                     async (Guid id, ISender sender) =>
                     {

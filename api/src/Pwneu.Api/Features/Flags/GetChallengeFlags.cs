@@ -7,9 +7,16 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Flags;
 
+/// <summary>
+/// Retrieves a list of flags in a challenge.
+/// Only users with faculty or admin roles can access this endpoint.
+/// </summary>
 public static class GetChallengeFlags
 {
     public record Query(Guid Id) : IRequest<Result<IEnumerable<string>>>;
+
+    private static readonly Error ChallengeNotFound = new("GetChallengeFlags.ChallengeNotFound",
+        "The challenge with the specified ID was not found");
 
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
         : IRequestHandler<Query, Result<IEnumerable<string>>>
@@ -19,25 +26,14 @@ public static class GetChallengeFlags
             var challengeFlagsResponse = await cache.GetOrSetAsync(
                 $"{nameof(Challenge)}.{nameof(Challenge.Flags)}:{request.Id}", async _ =>
                 {
-                    var challengeFlag = await context
+                    return await context
                         .Challenges
                         .Where(c => c.Id == request.Id)
                         .Select(c => c.Flags)
                         .FirstOrDefaultAsync(cancellationToken);
-
-                    return challengeFlag;
                 }, token: cancellationToken);
 
-            if (challengeFlagsResponse is null)
-                return Result.Failure<IEnumerable<string>>(new Error("GetChallengeFlags.Null",
-                    "The challenge with the specified ID was not found"));
-
-            // This shouldn't happen since a challenge must require at least one flag
-            if (challengeFlagsResponse.Count == 0)
-                return Result.Failure<IEnumerable<string>>(new Error("GetChallengeFlags.NoFlags",
-                    "The challenge with the specified ID doesn't have any flags"));
-
-            return challengeFlagsResponse;
+            return challengeFlagsResponse ?? Result.Failure<IEnumerable<string>>(ChallengeNotFound);
         }
     }
 

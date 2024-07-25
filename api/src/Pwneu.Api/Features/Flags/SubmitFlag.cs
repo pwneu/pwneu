@@ -1,4 +1,5 @@
-﻿using FluentValidation;
+﻿using System.Security.Claims;
+using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Common;
@@ -12,7 +13,10 @@ namespace Pwneu.Api.Features.Flags;
 
 public static class SubmitFlag
 {
-    public record Command(Guid ChallengeId, string Value) : IRequest<Result<FlagStatus>>;
+    public record Command(string UserId, Guid ChallengeId, string Value) : IRequest<Result<FlagStatus>>;
+
+    private static readonly Error ChallengeNotFound = new Error("SubmitFlag.ChallengeNotFound",
+        "The challenge with the specified ID was not found");
 
     public class Validator : AbstractValidator<Command>
     {
@@ -25,7 +29,6 @@ public static class SubmitFlag
 
     internal sealed class Handler(
         ApplicationDbContext context,
-        IHttpContextAccessor httpContextAccessor,
         IFusionCache cache,
         IValidator<Command> validator)
         : IRequestHandler<Command, Result<FlagStatus>>
@@ -37,11 +40,6 @@ public static class SubmitFlag
             if (!validationResult.IsValid)
                 return Result.Failure<FlagStatus>(new Error("SubmitFlag.Validation", validationResult.ToString()));
 
-            var userId = httpContextAccessor.HttpContext?.User.GetLoggedInUserId<string>();
-            // This shouldn't happen since the user must be logged in to access this endpoint
-            if (userId is null)
-                return Result.Failure<FlagStatus>(new Error("SubmitFlag.NoLoggedUser", "No logged user found"));
-
             var challenge = await cache.GetOrSetAsync($"{nameof(Challenge)}:{request.ChallengeId}", async _ =>
             {
                 var challenge = await context
@@ -52,13 +50,11 @@ public static class SubmitFlag
                 return challenge;
             }, token: cancellationToken);
 
-            if (challenge is null)
-                return Result.Failure<FlagStatus>(new Error("SubmitFlag.NullChallenge",
-                    "The challenge with the specified ID was not found"));
+            if (challenge is null) return Result.Failure<FlagStatus>(ChallengeNotFound);
 
-            var attemptCountKey = $"attemptCount:{userId}&&{challenge.Id}";
-            var solveKey = $"solve:{userId}&&{challenge.Id}";
-            var recentSubmissionsKey = $"recentSubmissions:{userId}&&{challenge.Id}";
+            var attemptCountKey = $"attemptCount:{request.UserId}&&{challenge.Id}";
+            var solveKey = $"solve:{request.UserId}&&{challenge.Id}";
+            var recentSubmissionsKey = $"recentSubmissions:{request.UserId}&&{challenge.Id}";
 
             var tenSecondsAgo = DateTime.UtcNow.AddSeconds(-10);
             int attemptCount = default;
@@ -83,14 +79,18 @@ public static class SubmitFlag
                 {
                     var solve = new Solve
                     {
-                        UserId = userId,
+                        UserId = request.UserId,
                         ChallengeId = challenge.Id,
                         SolvedAt = DateTime.UtcNow
                     };
 
                     context.Solves.Add(solve);
                     await context.SaveChangesAsync(cancellationToken);
+
                     await cache.SetAsync(solveKey, true, token: cancellationToken);
+                    // Since a user has solved a flag, remove the cache on getting user information
+                    await cache.RemoveAsync($"{nameof(UserDetailsResponse)}:{request.UserId}",
+                        token: cancellationToken);
                     break;
                 }
                 case FlagStatus.MaxAttemptReached
@@ -103,7 +103,7 @@ public static class SubmitFlag
             var flagSubmission = new FlagSubmission
             {
                 Id = Guid.NewGuid(),
-                UserId = userId,
+                UserId = request.UserId,
                 ChallengeId = challenge.Id,
                 Value = request.Value,
                 SubmittedAt = DateTime.UtcNow,
@@ -111,7 +111,7 @@ public static class SubmitFlag
             };
 
             context.FlagSubmissions.Add(flagSubmission);
-            await context.SaveChangesAsync(cancellationToken); // TODO: Make this faster
+            await context.SaveChangesAsync(cancellationToken);
 
             await cache.SetAsync(attemptCountKey, attemptCount + 1, token: cancellationToken);
 
@@ -126,7 +126,7 @@ public static class SubmitFlag
                 {
                     return await context
                         .Solves
-                        .AnyAsync(s => s.UserId == userId && s.ChallengeId == challenge.Id, cancellationToken);
+                        .AnyAsync(s => s.UserId == request.UserId && s.ChallengeId == challenge.Id, cancellationToken);
                 }, token: cancellationToken);
             }
 
@@ -136,7 +136,7 @@ public static class SubmitFlag
                 {
                     recentSubmissions = await context
                         .FlagSubmissions
-                        .Where(fs => fs.UserId == userId &&
+                        .Where(fs => fs.UserId == request.UserId &&
                                      fs.ChallengeId == challenge.Id &&
                                      fs.SubmittedAt >= tenSecondsAgo)
                         .Select(fs => fs.SubmittedAt)
@@ -156,7 +156,7 @@ public static class SubmitFlag
                 {
                     attemptCount = await context
                         .FlagSubmissions
-                        .Where(fs => fs.UserId == userId && fs.ChallengeId == challenge.Id)
+                        .Where(fs => fs.UserId == request.UserId && fs.ChallengeId == challenge.Id)
                         .CountAsync(cancellationToken);
 
                     return attemptCount;
@@ -171,13 +171,15 @@ public static class SubmitFlag
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("challenges/{id:Guid}/flags/submit", async (Guid id, string value, ISender sender) =>
-                {
-                    var query = new Command(id, value);
-                    var result = await sender.Send(query);
+            app.MapPost("challenges/{challengeId:Guid}/flags/submit",
+                    async (Guid challengeId, string value, ClaimsPrincipal claims, ISender sender) =>
+                    {
+                        var userId = claims.GetLoggedInUserId<string>();
+                        var command = new Command(userId!, challengeId, value);
+                        var result = await sender.Send(command);
 
-                    return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value.ToString());
-                })
+                        return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value.ToString());
+                    })
                 .RequireAuthorization(Policies.UserOnly)
                 .WithTags(nameof(Challenge));
         }

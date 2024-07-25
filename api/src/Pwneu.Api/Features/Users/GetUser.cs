@@ -8,29 +8,57 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Users;
 
+/// <summary>
+/// Retrieves a user by ID, excluding those with a role of faculty or admin.
+/// Only users with faculty or admin roles can access this endpoint.
+/// </summary>
 public static class GetUser
 {
-    public record Query(Guid Id) : IRequest<Result<UserResponse>>;
+    public record Query(Guid Id) : IRequest<Result<UserDetailsResponse>>;
+
+    private static readonly Error NotFound = new("GetUser.NotFound", "User not found");
 
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
-        : IRequestHandler<Query, Result<UserResponse>>
+        : IRequestHandler<Query, Result<UserDetailsResponse>>
     {
-        public async Task<Result<UserResponse>> Handle(Query request, CancellationToken cancellationToken)
+        public async Task<Result<UserDetailsResponse>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var user = await cache.GetOrSetAsync($"{nameof(User)}:{request.Id}", async _ =>
+            var managerIds = await cache.GetOrSetAsync("managerIds", async _ =>
+            {
+                var managerRoleIds = await context
+                    .Roles
+                    .Where(r =>
+                        r.Name != null &&
+                        (r.Name.Equals(Constants.Roles.Faculty) ||
+                         r.Name.Equals(Constants.Roles.Admin)))
+                    .Select(r => r.Id)
+                    .Distinct()
+                    .ToListAsync(cancellationToken);
+
+                return await context
+                    .UserRoles
+                    .Where(ur => managerRoleIds.Contains(ur.RoleId))
+                    .Select(ur => ur.UserId)
+                    .Distinct()
+                    .ToListAsync(cancellationToken);
+            }, token: cancellationToken);
+
+            if (managerIds.Contains(request.Id.ToString()))
+                return Result.Failure<UserDetailsResponse>(NotFound);
+
+            // TODO -- Check for bugs in cache invalidations
+            var user = await cache.GetOrSetAsync($"{nameof(UserDetailsResponse)}:{request.Id}", async _ =>
             {
                 return await context
                     .Users
                     .Where(u => u.Id == request.Id.ToString())
-                    .Select(u => new UserResponse(u.Id, u.UserName))
+                    .Select(u => new UserDetailsResponse(u.Id, u.UserName, u.Email, u.FullName, u.CreatedAt, u.Solves
+                        .Select(s => new SolveResponse(s.ChallengeId, s.Challenge.Name, s.Challenge.Points, s.SolvedAt))
+                        .ToList()))
                     .FirstOrDefaultAsync(cancellationToken);
             }, token: cancellationToken);
 
-            if (user is null)
-                return Result.Failure<UserResponse>(new Error("GetUser.Null",
-                    "The user with the specified ID was not found"));
-
-            return user;
+            return user ?? Result.Failure<UserDetailsResponse>(NotFound);
         }
     }
 

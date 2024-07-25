@@ -10,35 +10,32 @@ namespace Pwneu.Api.Features.Challenges;
 
 public static class GetChallenge
 {
-    public record Query(Guid Id) : IRequest<Result<ChallengeResponse>>;
+    public record Query(Guid Id) : IRequest<Result<ChallengeDetailsResponse>>;
+
+    private static readonly Error NotFound = new("GetChallenge.Null",
+        "The challenge with the specified ID was not found");
 
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
-        : IRequestHandler<Query, Result<ChallengeResponse>>
+        : IRequestHandler<Query, Result<ChallengeDetailsResponse>>
     {
-        public async Task<Result<ChallengeResponse>> Handle(Query request, CancellationToken cancellationToken)
+        public async Task<Result<ChallengeDetailsResponse>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var challengeResponse = await cache.GetOrSetAsync($"{nameof(ChallengeResponse)}:{request.Id}", async _ =>
-            {
-                var challengeResponse = await context
-                    .Challenges
-                    .Where(c => c.Id == request.Id)
-                    .Include(c => c.ChallengeFiles)
-                    .Select(c => new ChallengeResponse(c.Id, c.Name, c.Description, c.Points, c.DeadlineEnabled,
-                        c.Deadline,
-                        c.MaxAttempts, c.ChallengeFiles
-                            .Select(cf => new ChallengeFileResponse(cf.Id, cf.FileName))
-                            .ToList()
-                    ))
-                    .FirstOrDefaultAsync(cancellationToken);
+            var challengeResponse = await cache.GetOrSetAsync($"{nameof(ChallengeDetailsResponse)}:{request.Id}",
+                async _ =>
+                {
+                    return await context
+                        .Challenges
+                        .Where(c => c.Id == request.Id)
+                        .Include(c => c.ChallengeFiles)
+                        .Select(c => new ChallengeDetailsResponse(c.Id, c.Name, c.Description, c.Points,
+                            c.DeadlineEnabled, c.Deadline, c.MaxAttempts, c.ChallengeFiles
+                                .Select(cf => new ChallengeFileResponse(cf.Id, cf.FileName))
+                                .ToList()
+                        ))
+                        .FirstOrDefaultAsync(cancellationToken);
+                }, token: cancellationToken);
 
-                return challengeResponse;
-            }, token: cancellationToken);
-
-            if (challengeResponse is null)
-                return Result.Failure<ChallengeResponse>(new Error("GetChallenge.Null",
-                    "The challenge with the specified ID was not found"));
-
-            return challengeResponse;
+            return challengeResponse ?? Result.Failure<ChallengeDetailsResponse>(NotFound);
         }
     }
 

@@ -8,15 +8,23 @@ using Pwneu.Api.Shared.Entities;
 
 namespace Pwneu.Api.Features.Challenges;
 
+/// <summary>
+/// Retrieves a paginated list of challenges.
+/// </summary>
 public static class GetChallenges
 {
-    public record Query(string? SearchTerm, string? SortColumn, string? SortOrder, int? Page, int? PageSize)
-        : IRequest<Result<PagedList<ChallengeResponse>>>;
+    public record Query(
+        string? SearchTerm = null,
+        string? SortColumn = null,
+        string? SortOrder = null,
+        int? Page = null,
+        int? PageSize = null)
+        : IRequest<Result<PagedList<ChallengeDetailsResponse>>>;
 
     internal sealed class Handler(ApplicationDbContext context)
-        : IRequestHandler<Query, Result<PagedList<ChallengeResponse>>>
+        : IRequestHandler<Query, Result<PagedList<ChallengeDetailsResponse>>>
     {
-        public async Task<Result<PagedList<ChallengeResponse>>> Handle(Query request,
+        public async Task<Result<PagedList<ChallengeDetailsResponse>>> Handle(Query request,
             CancellationToken cancellationToken)
         {
             IQueryable<Challenge> challengesQuery = context.Challenges.Include(c => c.ChallengeFiles);
@@ -30,7 +38,7 @@ public static class GetChallenges
             {
                 "description" => challenge => challenge.Description,
                 "points" => challenge => challenge.Points,
-                "deadline" => challenge => challenge.Deadline, // TODO: Put turned off deadlines on end of query
+                "deadline" => challenge => challenge.Deadline,
                 _ => challenge => challenge.Name
             };
 
@@ -39,11 +47,12 @@ public static class GetChallenges
                 : challengesQuery.OrderBy(keySelector);
 
             var challengeResponsesQuery = challengesQuery
-                .Select(c => new ChallengeResponse(c.Id, c.Name, c.Description, c.Points, c.DeadlineEnabled, c.Deadline,
+                .Select(c => new ChallengeDetailsResponse(c.Id, c.Name, c.Description, c.Points, c.DeadlineEnabled,
+                    c.Deadline,
                     c.MaxAttempts, c.ChallengeFiles.Select(cf => new ChallengeFileResponse(cf.Id, cf.FileName))));
 
             var challenges =
-                await PagedList<ChallengeResponse>.CreateAsync(challengeResponsesQuery, request.Page ?? 1,
+                await PagedList<ChallengeDetailsResponse>.CreateAsync(challengeResponsesQuery, request.Page ?? 1,
                     request.PageSize ?? 10);
 
             return challenges;
