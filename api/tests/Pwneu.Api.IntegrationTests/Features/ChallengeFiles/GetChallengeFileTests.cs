@@ -26,7 +26,6 @@ public class GetChallengeFileTests(IntegrationTestsWebAppFactory factory) : Base
             Flags = F.Lorem.Words().ToList()
         };
         DbContext.Add(challenge);
-        await DbContext.SaveChangesAsync();
 
         var challengeFile = new ChallengeFile
         {

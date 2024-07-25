@@ -1,7 +1,5 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Entities;
 
 namespace Pwneu.Api.Shared.Data;
@@ -13,35 +11,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     {
         base.OnModelCreating(builder);
 
-        builder.Entity<User>()
-            .Property(u => u.FullName)
-            .HasMaxLength(100);
-
-        builder
-            .Entity<IdentityRole>()
-            .HasData(new List<IdentityRole>
-            {
-                new() { Name = Constants.Roles.User, NormalizedName = Constants.Roles.User.ToUpper() },
-                new() { Name = Constants.Roles.Faculty, NormalizedName = Constants.Roles.Faculty.ToUpper() },
-                new() { Name = Constants.Roles.Admin, NormalizedName = Constants.Roles.Admin.ToUpper() },
-            });
-
         builder
             .Entity<Challenge>()
             .HasMany(c => c.ChallengeFiles)
             .WithOne(cf => cf.Challenge)
             .HasForeignKey(cf => cf.ChallengeId)
             .IsRequired();
-
-        builder
-            .Entity<Challenge>()
-            .Property(c => c.Name)
-            .HasMaxLength(100);
-
-        builder
-            .Entity<Challenge>()
-            .Property(c => c.Description)
-            .HasMaxLength(100);
 
         builder
             .Entity<FlagSubmission>()
@@ -81,8 +56,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .OnDelete(DeleteBehavior.Cascade);
     }
 
-    public virtual DbSet<Challenge> Challenges { get; set; } = null!;
-    public virtual DbSet<ChallengeFile> ChallengeFiles { get; set; } = null!;
-    public virtual DbSet<FlagSubmission> FlagSubmissions { get; set; } = null!;
-    public virtual DbSet<Solve> Solves { get; set; } = null!;
+    public virtual DbSet<Challenge> Challenges { get; init; } = null!;
+    public virtual DbSet<ChallengeFile> ChallengeFiles { get; init; } = null!;
+    public virtual DbSet<FlagSubmission> FlagSubmissions { get; init; } = null!;
+    public virtual DbSet<Solve> Solves { get; init; } = null!;
 }

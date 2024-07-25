@@ -84,7 +84,7 @@ public static class UpdateChallenge
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
                 })
-                .RequireAuthorization(Policies.FacultyAdminOnly)
+                .RequireAuthorization(Constants.ManagerAdminOnly)
                 .WithTags(nameof(Challenge));
         }
     }

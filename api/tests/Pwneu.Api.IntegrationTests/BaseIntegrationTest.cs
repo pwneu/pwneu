@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
+using Pwneu.Api.Shared.Extensions;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.IntegrationTests;
@@ -40,16 +41,19 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
     {
         await DbContext.Database.EnsureCreatedAsync();
 
+        await _scope.ServiceProvider.SeedRolesAsync();
+
         var user = new User { UserName = "test" };
         var userManager = _scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        var createUser = userManager.CreateAsync(user, Constants.DefaultAdminPassword).GetAwaiter().GetResult();
-        var addRole = userManager.AddToRoleAsync(user, Constants.Roles.User).GetAwaiter().GetResult();
+        var createUser = await userManager.CreateAsync(user, Constants.DefaultAdminPassword);
+
+        var addRole = await userManager.AddToRoleAsync(user, Constants.Member);
 
         if (!createUser.Succeeded || !addRole.Succeeded)
             throw new InvalidOperationException("Cannot create test user");
 
-        TestUser = userManager.FindByNameAsync("test").GetAwaiter().GetResult()
-                   ?? throw new InvalidOperationException($"Cannot get test user");
+        TestUser = await userManager.FindByNameAsync("test") ??
+                   throw new InvalidOperationException($"Cannot get test user");
     }
 
     public async Task DisposeAsync() => await DbContext.Database.EnsureDeletedAsync();

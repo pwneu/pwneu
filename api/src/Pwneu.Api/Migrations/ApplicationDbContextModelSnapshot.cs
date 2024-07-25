@@ -47,26 +47,6 @@ namespace Pwneu.Api.Migrations
                         .HasDatabaseName("RoleNameIndex");
 
                     b.ToTable("AspNetRoles", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = "dfaac79a-82b3-44c4-8b5d-5a4065ca3e7e",
-                            Name = "User",
-                            NormalizedName = "USER"
-                        },
-                        new
-                        {
-                            Id = "fe139335-c42c-416b-a721-1262de9e3af7",
-                            Name = "Faculty",
-                            NormalizedName = "FACULTY"
-                        },
-                        new
-                        {
-                            Id = "f666afc3-6656-4141-b147-c8f98b533dc7",
-                            Name = "Admin",
-                            NormalizedName = "ADMIN"
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -189,8 +169,8 @@ namespace Pwneu.Api.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
 
                     b.Property<List<string>>("Flags")
                         .IsRequired()
@@ -223,7 +203,8 @@ namespace Pwneu.Api.Migrations
 
                     b.Property<string>("ContentType")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<byte[]>("Data")
                         .IsRequired()
@@ -231,7 +212,8 @@ namespace Pwneu.Api.Migrations
 
                     b.Property<string>("FileName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
 
@@ -258,11 +240,13 @@ namespace Pwneu.Api.Migrations
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
 
                     b.Property<string>("Value")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
 
@@ -276,7 +260,8 @@ namespace Pwneu.Api.Migrations
             modelBuilder.Entity("Pwneu.Api.Shared.Entities.Solve", b =>
                 {
                     b.Property<string>("UserId")
-                        .HasColumnType("text");
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
 
                     b.Property<Guid>("ChallengeId")
                         .HasColumnType("uuid");

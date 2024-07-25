@@ -71,7 +71,7 @@ public static class CreateChallenge
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);
                 })
-                .RequireAuthorization(Policies.FacultyAdminOnly)
+                .RequireAuthorization(Constants.ManagerAdminOnly)
                 .WithTags(nameof(Challenge));
         }
     }

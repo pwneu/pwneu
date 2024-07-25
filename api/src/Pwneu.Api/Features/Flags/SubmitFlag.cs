@@ -180,7 +180,7 @@ public static class SubmitFlag
 
                         return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value.ToString());
                     })
-                .RequireAuthorization(Policies.UserOnly)
+                .RequireAuthorization(Constants.MemberOnly)
                 .WithTags(nameof(Challenge));
         }
     }

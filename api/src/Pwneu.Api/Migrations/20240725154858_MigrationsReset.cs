@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Pwneu.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialPostgreSQL : Migration
+    public partial class MigrationsReset : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -32,6 +32,7 @@ namespace Pwneu.Api.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
+                    FullName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -59,7 +60,7 @@ namespace Pwneu.Api.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Description = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
                     Points = table.Column<int>(type: "integer", nullable: false),
                     DeadlineEnabled = table.Column<bool>(type: "boolean", nullable: false),
                     Deadline = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -183,8 +184,8 @@ namespace Pwneu.Api.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ChallengeId = table.Column<Guid>(type: "uuid", nullable: false),
-                    FileName = table.Column<string>(type: "text", nullable: false),
-                    ContentType = table.Column<string>(type: "text", nullable: false),
+                    FileName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    ContentType = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
                     Data = table.Column<byte[]>(type: "bytea", nullable: false)
                 },
                 constraints: table =>
@@ -192,6 +193,59 @@ namespace Pwneu.Api.Migrations
                     table.PrimaryKey("PK_ChallengeFiles", x => x.Id);
                     table.ForeignKey(
                         name: "FK_ChallengeFiles_Challenges_ChallengeId",
+                        column: x => x.ChallengeId,
+                        principalTable: "Challenges",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "FlagSubmissions",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<string>(type: "character varying(36)", maxLength: 36, nullable: false),
+                    ChallengeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Value = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    SubmittedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    FlagStatus = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_FlagSubmissions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_FlagSubmissions_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_FlagSubmissions_Challenges_ChallengeId",
+                        column: x => x.ChallengeId,
+                        principalTable: "Challenges",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Solves",
+                columns: table => new
+                {
+                    UserId = table.Column<string>(type: "character varying(36)", maxLength: 36, nullable: false),
+                    ChallengeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SolvedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Solves", x => new { x.UserId, x.ChallengeId });
+                    table.ForeignKey(
+                        name: "FK_Solves_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Solves_Challenges_ChallengeId",
                         column: x => x.ChallengeId,
                         principalTable: "Challenges",
                         principalColumn: "Id",
@@ -239,6 +293,21 @@ namespace Pwneu.Api.Migrations
                 name: "IX_ChallengeFiles_ChallengeId",
                 table: "ChallengeFiles",
                 column: "ChallengeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FlagSubmissions_ChallengeId",
+                table: "FlagSubmissions",
+                column: "ChallengeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FlagSubmissions_UserId",
+                table: "FlagSubmissions",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Solves_ChallengeId",
+                table: "Solves",
+                column: "ChallengeId");
         }
 
         /// <inheritdoc />
@@ -261,6 +330,12 @@ namespace Pwneu.Api.Migrations
 
             migrationBuilder.DropTable(
                 name: "ChallengeFiles");
+
+            migrationBuilder.DropTable(
+                name: "FlagSubmissions");
+
+            migrationBuilder.DropTable(
+                name: "Solves");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

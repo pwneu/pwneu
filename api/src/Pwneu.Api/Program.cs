@@ -39,6 +39,7 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
         options.Password.RequireNonAlphanumeric = true;
         options.Password.RequiredLength = 12;
     })
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
 var postgres = builder.Configuration.GetConnectionString("Postgres") ??
@@ -60,9 +61,9 @@ builder.Services.AddValidatorsFromAssembly(assembly);
 
 builder.Services.AddEndpoints();
 
-var issuer = Environment.GetEnvironmentVariable(Env.JwtIssuer);
-var audience = Environment.GetEnvironmentVariable(Env.JwtAudience);
-var signingKey = Environment.GetEnvironmentVariable(Env.JwtSigningKey);
+var issuer = Environment.GetEnvironmentVariable(Constants.JwtIssuer);
+var audience = Environment.GetEnvironmentVariable(Constants.JwtAudience);
+var signingKey = Environment.GetEnvironmentVariable(Constants.JwtSigningKey);
 
 builder.Services.AddAuthentication(options =>
     {
@@ -89,9 +90,9 @@ builder.Services.AddAuthentication(options =>
     });
 
 builder.Services.AddAuthorizationBuilder()
-    .AddPolicy(Policies.AdminOnly, policy => { policy.RequireRole(Constants.Roles.Admin); })
-    .AddPolicy(Policies.FacultyAdminOnly, policy => { policy.RequireRole(Constants.Roles.Faculty); })
-    .AddPolicy(Policies.UserOnly, policy => { policy.RequireRole(Constants.Roles.User); });
+    .AddPolicy(Constants.AdminOnly, policy => { policy.RequireRole(Constants.Admin); })
+    .AddPolicy(Constants.ManagerAdminOnly, policy => { policy.RequireRole(Constants.Manager); })
+    .AddPolicy(Constants.MemberOnly, policy => { policy.RequireRole(Constants.Member); });
 
 var app = builder.Build();
 
@@ -103,6 +104,7 @@ if (app.Environment.IsDevelopment())
 
 app.ApplyMigrations();
 
+await app.Services.SeedRolesAsync();
 await app.Services.SeedAdminAsync();
 
 // TODO -- Only allow frontend framework on deployment

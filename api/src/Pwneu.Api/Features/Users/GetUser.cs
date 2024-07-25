@@ -29,8 +29,8 @@ public static class GetUser
                     .Roles
                     .Where(r =>
                         r.Name != null &&
-                        (r.Name.Equals(Constants.Roles.Faculty) ||
-                         r.Name.Equals(Constants.Roles.Admin)))
+                        (r.Name.Equals(Constants.Manager) ||
+                         r.Name.Equals(Constants.Admin)))
                     .Select(r => r.Id)
                     .Distinct()
                     .ToListAsync(cancellationToken);
@@ -73,7 +73,7 @@ public static class GetUser
 
                     return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
                 })
-                .RequireAuthorization(Policies.FacultyAdminOnly)
+                .RequireAuthorization(Constants.ManagerAdminOnly)
                 .WithTags(nameof(User));
         }
     }
