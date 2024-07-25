@@ -1,4 +1,3 @@
-using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Common;
@@ -17,25 +16,10 @@ public static class AddChallengeFile
 
     private static readonly Error NoChallenge = new("AddChallengeFile.NoChallenge", "No challenge found");
 
-    public class Validator : AbstractValidator<Command>
-    {
-        public Validator()
-        {
-            RuleFor(cf => cf.FileName).NotEmpty();
-            RuleFor(cf => cf.Data).NotEmpty();
-        }
-    }
-
-    internal sealed class Handler(ApplicationDbContext context, IValidator<Command> validator)
-        : IRequestHandler<Command, Result<Guid>>
+    internal sealed class Handler(ApplicationDbContext context) : IRequestHandler<Command, Result<Guid>>
     {
         public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
         {
-            var validationResult = await validator.ValidateAsync(request, cancellationToken);
-
-            if (!validationResult.IsValid)
-                return Result.Failure<Guid>(new Error("AddChallengeFile.Validation", validationResult.ToString()));
-
             var challenge = await context
                 .Challenges
                 .Where(c => c.Id == request.ChallengeId)

@@ -18,15 +18,6 @@ public static class SubmitFlag
     private static readonly Error ChallengeNotFound = new Error("SubmitFlag.ChallengeNotFound",
         "The challenge with the specified ID was not found");
 
-    public class Validator : AbstractValidator<Command>
-    {
-        public Validator()
-        {
-            RuleFor(c => c.ChallengeId).NotEmpty();
-            RuleFor(c => c.Value).NotEmpty();
-        }
-    }
-
     internal sealed class Handler(
         ApplicationDbContext context,
         IFusionCache cache,
@@ -182,6 +173,26 @@ public static class SubmitFlag
                     })
                 .RequireAuthorization(Constants.MemberOnly)
                 .WithTags(nameof(Challenge));
+        }
+    }
+
+    public class Validator : AbstractValidator<Command>
+    {
+        public Validator()
+        {
+            RuleFor(c => c.UserId)
+                .NotEmpty()
+                .WithMessage("User ID is required.");
+
+            RuleFor(c => c.ChallengeId)
+                .NotEmpty()
+                .WithMessage("Challenge ID is required.");
+
+            RuleFor(c => c.Value)
+                .NotEmpty()
+                .WithMessage("Flag value is required.")
+                .MaximumLength(100)
+                .WithMessage("Flag value must be 100 characters or less.");
         }
     }
 }
