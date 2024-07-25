@@ -1,0 +1,51 @@
+using FluentAssertions;
+using Pwneu.Api.Features.Challenges;
+using Pwneu.Api.Shared.Common;
+
+namespace Pwneu.Api.IntegrationTests.Features.Challenges;
+
+[Collection(nameof(IntegrationTestCollection))]
+public class CreateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseIntegrationTest(factory)
+{
+    [Fact]
+    public async Task Handle_Should_NotCreateChallenge_WhenCommandIsNotValid()
+    {
+        // Arrange
+        var createChallenges = new List<CreateChallenge.Command>
+        {
+            new(string.Empty, F.Lorem.Sentence(), 50, false, DateTime.UtcNow, 5, F.Lorem.Words()),
+            new("Sanity Check", string.Empty, 50, false, DateTime.UtcNow, 5, F.Lorem.Words()),
+            new("Sanity Check", F.Lorem.Sentence(), 50, false, DateTime.UtcNow, 5, [])
+        };
+
+        // Act
+        var createChallengeResults = await Task.WhenAll(createChallenges
+            .Select(invalidChallenge => Sender.Send(invalidChallenge))
+            .ToList());
+
+        // Assert
+        foreach (var createChallengeResult in createChallengeResults)
+        {
+            createChallengeResult.Should().BeOfType<Result<Guid>>();
+            createChallengeResult.IsSuccess.Should().BeFalse();
+        }
+    }
+
+    [Fact]
+    public async Task Handle_Should_CreateChallenge_WhenCommandIsValid()
+    {
+        // Arrange
+        var createChallenge = new CreateChallenge.Command("Sanity Check", "The flag is in plain sight", 50, true,
+            DateTime.UtcNow.AddDays(7), 5, ["flag1", "flag2"]);
+
+        // Act
+        var createChallengeResult = await Sender.Send(createChallenge);
+        var challenge = DbContext.Challenges.FirstOrDefault(c => c.Id == createChallengeResult.Value);
+
+        // Assert
+        createChallengeResult.Should().BeOfType<Result<Guid>>();
+        createChallengeResult.IsSuccess.Should().BeTrue();
+        challenge.Should().NotBeNull();
+        challenge.Id.Should().Be(createChallengeResult.Value);
+    }
+}
