@@ -41,7 +41,7 @@ public static class AppSeed
         if (admin is not null)
             return;
 
-        admin = new User { UserName = Constants.Admin };
+        admin = new User { UserName = Constants.Admin.ToLower() };
 
         var createAdmin = await userManager.CreateAsync(admin, password);
         if (!createAdmin.Succeeded)
