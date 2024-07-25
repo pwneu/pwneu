@@ -12,7 +12,7 @@ namespace Pwneu.Api.Features.Users;
 /// Retrieves a user by ID, excluding those with a role of faculty or admin.
 /// Only users with faculty or admin roles can access this endpoint.
 /// </summary>
-public class GetUser
+public static class GetUser
 {
     public record Query(Guid Id) : IRequest<Result<UserDetailsResponse>>;
 

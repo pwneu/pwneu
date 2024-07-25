@@ -8,9 +8,17 @@ using Pwneu.Api.Shared.Entities;
 
 namespace Pwneu.Api.Features.Challenges;
 
+/// <summary>
+/// Retrieves a paginated list of challenges.
+/// </summary>
 public static class GetChallenges
 {
-    public record Query(string? SearchTerm, string? SortColumn, string? SortOrder, int? Page, int? PageSize)
+    public record Query(
+        string? SearchTerm = null,
+        string? SortColumn = null,
+        string? SortOrder = null,
+        int? Page = null,
+        int? PageSize = null)
         : IRequest<Result<PagedList<ChallengeDetailsResponse>>>;
 
     internal sealed class Handler(ApplicationDbContext context)
@@ -30,7 +38,7 @@ public static class GetChallenges
             {
                 "description" => challenge => challenge.Description,
                 "points" => challenge => challenge.Points,
-                "deadline" => challenge => challenge.Deadline, // TODO: Put turned off deadlines on end of query
+                "deadline" => challenge => challenge.Deadline,
                 _ => challenge => challenge.Name
             };
 

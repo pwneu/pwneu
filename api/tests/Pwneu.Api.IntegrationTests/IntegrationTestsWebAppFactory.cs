@@ -24,7 +24,6 @@ public class IntegrationTestsWebAppFactory : WebApplicationFactory<Program>, IAs
 
     private readonly RedisContainer _redisContainer = new RedisBuilder()
         .WithImage("redis:latest")
-        .WithPortBinding(6379, 6379)
         .Build();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
