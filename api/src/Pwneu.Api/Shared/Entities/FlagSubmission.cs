@@ -1,15 +1,15 @@
-﻿using Pwneu.Api.Shared.Contracts;
+﻿using System.ComponentModel.DataAnnotations;
+using Pwneu.Api.Shared.Contracts;
 
 namespace Pwneu.Api.Shared.Entities;
 
 public class FlagSubmission
 {
-    public Guid Id { get; set; }
-    public string UserId { get; set; } = string.Empty;
-    public Guid ChallengeId { get; set; }
-    public string Value { get; set; } = string.Empty;
-    public DateTime SubmittedAt { get; set; }
-    public FlagStatus FlagStatus { get; set; }
-    public Challenge Challenge { get; set; } = null!;
-    public User User { get; set; } = null!; // TODO: Do something about dependency loop warning
+    [MaxLength(36)] public string UserId { get; init; } = string.Empty;
+    public Guid ChallengeId { get; init; }
+    [MaxLength(100)] public string Value { get; init; } = string.Empty;
+    public DateTime SubmittedAt { get; init; }
+    public FlagStatus FlagStatus { get; init; }
+    public Challenge Challenge { get; init; } = null!;
+    public User User { get; init; } = null!;
 }

@@ -1,4 +1,3 @@
-using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Common;
@@ -15,25 +14,12 @@ public static class AddChallengeFile
         string ContentType,
         byte[] Data) : IRequest<Result<Guid>>;
 
-    public class Validator : AbstractValidator<Command>
-    {
-        public Validator()
-        {
-            RuleFor(cf => cf.FileName).NotEmpty();
-            RuleFor(cf => cf.Data).NotEmpty();
-        }
-    }
+    private static readonly Error NoChallenge = new("AddChallengeFile.NoChallenge", "No challenge found");
 
-    internal sealed class Handler(ApplicationDbContext context, IValidator<Command> validator)
-        : IRequestHandler<Command, Result<Guid>>
+    internal sealed class Handler(ApplicationDbContext context) : IRequestHandler<Command, Result<Guid>>
     {
         public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
         {
-            var validationResult = await validator.ValidateAsync(request, cancellationToken);
-
-            if (!validationResult.IsValid)
-                return Result.Failure<Guid>(new Error("AddChallengeFile.Validation", validationResult.ToString()));
-
             var challenge = await context
                 .Challenges
                 .Where(c => c.Id == request.ChallengeId)
@@ -41,7 +27,7 @@ public static class AddChallengeFile
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (challenge is null)
-                return Result.Failure<Guid>(new Error("AddChallengeFile.NoChallenge", "No challenge found"));
+                return Result.Failure<Guid>(NoChallenge);
 
             var challengeFile = new ChallengeFile
             {
@@ -77,7 +63,7 @@ public static class AddChallengeFile
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);
                 })
                 .DisableAntiforgery() // TODO: Check for better ways to fix anti-forgery exception
-                .RequireAuthorization(Policies.FacultyAdminOnly)
+                .RequireAuthorization(Constants.ManagerAdminOnly)
                 .WithTags(nameof(ChallengeFile));
         }
     }

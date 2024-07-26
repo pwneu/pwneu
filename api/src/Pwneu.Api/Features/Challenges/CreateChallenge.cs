@@ -18,16 +18,6 @@ public static class CreateChallenge
         int MaxAttempts,
         IEnumerable<string> Flags) : IRequest<Result<Guid>>;
 
-    public class Validator : AbstractValidator<Command>
-    {
-        public Validator()
-        {
-            RuleFor(c => c.Name).NotEmpty();
-            RuleFor(c => c.Description).NotEmpty();
-            RuleFor(c => c.Flags).NotEmpty();
-        }
-    }
-
     internal sealed class Handler(ApplicationDbContext context, IValidator<Command> validator)
         : IRequestHandler<Command, Result<Guid>>
     {
@@ -71,8 +61,44 @@ public static class CreateChallenge
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);
                 })
-                .RequireAuthorization(Policies.FacultyAdminOnly)
+                .RequireAuthorization(Constants.ManagerAdminOnly)
                 .WithTags(nameof(Challenge));
+        }
+    }
+
+    public class Validator : AbstractValidator<Command>
+    {
+        public Validator()
+        {
+            RuleFor(c => c.Name)
+                .NotEmpty()
+                .WithMessage("Challenge name is required.")
+                .MaximumLength(100)
+                .WithMessage("Challenge name must be 100 characters or less.");
+
+            RuleFor(c => c.Description)
+                .NotEmpty()
+                .WithMessage("Challenge description is required.")
+                .MaximumLength(300)
+                .WithMessage("Challenge description must be 300 characters or less.");
+
+            RuleFor(c => c.Points)
+                .GreaterThan(0)
+                .WithMessage("Points must be greater than 0.");
+
+            RuleFor(c => c.MaxAttempts)
+                .GreaterThanOrEqualTo(0)
+                .WithMessage("Max attempts must be greater than or equal to 0.");
+
+            RuleFor(c => c.Flags)
+                .NotNull()
+                .WithMessage("Flags are required.")
+                .NotEmpty()
+                .WithMessage("Flags cannot be empty.")
+                .Must(flags => flags.All(flag => !string.IsNullOrWhiteSpace(flag)))
+                .WithMessage("All flags must be non-empty.")
+                .Must(flags => flags.All(flag => flag.Length <= 100))
+                .WithMessage("Each flag must be 100 characters or less.");
         }
     }
 }

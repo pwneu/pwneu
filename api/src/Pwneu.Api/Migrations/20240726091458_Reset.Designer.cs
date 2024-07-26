@@ -13,8 +13,8 @@ using Pwneu.Api.Shared.Data;
 namespace Pwneu.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240717082234_AddFlagSubmission")]
-    partial class AddFlagSubmission
+    [Migration("20240726091458_Reset")]
+    partial class Reset
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -172,8 +172,8 @@ namespace Pwneu.Api.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
 
                     b.Property<List<string>>("Flags")
                         .IsRequired()
@@ -206,7 +206,8 @@ namespace Pwneu.Api.Migrations
 
                     b.Property<string>("ContentType")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<byte[]>("Data")
                         .IsRequired()
@@ -214,7 +215,8 @@ namespace Pwneu.Api.Migrations
 
                     b.Property<string>("FileName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
 
@@ -225,9 +227,9 @@ namespace Pwneu.Api.Migrations
 
             modelBuilder.Entity("Pwneu.Api.Shared.Entities.FlagSubmission", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                    b.Property<string>("UserId")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
 
                     b.Property<Guid>("ChallengeId")
                         .HasColumnType("uuid");
@@ -239,21 +241,35 @@ namespace Pwneu.Api.Migrations
                     b.Property<DateTime>("SubmittedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("Value")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
-                    b.HasKey("Id");
+                    b.HasKey("UserId", "ChallengeId");
 
                     b.HasIndex("ChallengeId");
 
-                    b.HasIndex("UserId");
-
                     b.ToTable("FlagSubmissions");
+                });
+
+            modelBuilder.Entity("Pwneu.Api.Shared.Entities.Solve", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<Guid>("ChallengeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("SolvedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UserId", "ChallengeId");
+
+                    b.HasIndex("ChallengeId");
+
+                    b.ToTable("Solves");
                 });
 
             modelBuilder.Entity("Pwneu.Api.Shared.Entities.User", b =>
@@ -277,6 +293,11 @@ namespace Pwneu.Api.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean");
@@ -404,16 +425,39 @@ namespace Pwneu.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Pwneu.Api.Shared.Entities.Solve", b =>
+                {
+                    b.HasOne("Pwneu.Api.Shared.Entities.Challenge", "Challenge")
+                        .WithMany("Solves")
+                        .HasForeignKey("ChallengeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pwneu.Api.Shared.Entities.User", "User")
+                        .WithMany("Solves")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Challenge");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Pwneu.Api.Shared.Entities.Challenge", b =>
                 {
                     b.Navigation("ChallengeFiles");
 
                     b.Navigation("FlagSubmissions");
+
+                    b.Navigation("Solves");
                 });
 
             modelBuilder.Entity("Pwneu.Api.Shared.Entities.User", b =>
                 {
                     b.Navigation("FlagSubmissions");
+
+                    b.Navigation("Solves");
                 });
 #pragma warning restore 612, 618
         }

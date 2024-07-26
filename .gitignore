@@ -1,3 +1,6 @@
 # Docker Containers
 **/.containers/
 /.vs
+
+# Environment Variables
+*.env

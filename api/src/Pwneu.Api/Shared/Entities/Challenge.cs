@@ -1,16 +1,18 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Pwneu.Api.Shared.Entities;
 
 public class Challenge
 {
-    public Guid Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
+    public Guid Id { get; init; }
+    [MaxLength(100)] public string Name { get; set; } = string.Empty;
+    [MaxLength(300)] public string Description { get; set; } = string.Empty;
     public int Points { get; set; }
     public bool DeadlineEnabled { get; set; }
     public DateTime Deadline { get; set; }
     public int MaxAttempts { get; set; }
     public List<string> Flags { get; set; } = [];
-    public ICollection<ChallengeFile> ChallengeFiles { get; set; } = [];
-    public ICollection<FlagSubmission> FlagSubmissions { get; set; } = [];
-    public ICollection<Solve> Solves { get; set; } = [];
+    public ICollection<ChallengeFile> ChallengeFiles { get; init; } = [];
+    public ICollection<FlagSubmission> FlagSubmissions { get; init; } = [];
+    public ICollection<Solve> Solves { get; init; } = [];
 }

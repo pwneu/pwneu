@@ -1,10 +1,12 @@
-﻿namespace Pwneu.Api.Shared.Entities;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Pwneu.Api.Shared.Entities;
 
 public class Solve
 {
-    public string UserId { get; set; } = string.Empty;
-    public Guid ChallengeId { get; set; }
-    public User User { get; set; } = null!; // TODO: Do something about dependency loop warning
-    public Challenge Challenge { get; set; } = null!; // TODO: Do something about dependency loop warning
-    public DateTime SolvedAt { get; set; }
+    [MaxLength(36)] public string UserId { get; init; } = string.Empty;
+    public Guid ChallengeId { get; init; }
+    public User User { get; init; } = null!;
+    public Challenge Challenge { get; init; } = null!;
+    public DateTime SolvedAt { get; init; }
 }

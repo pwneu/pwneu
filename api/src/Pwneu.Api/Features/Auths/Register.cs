@@ -11,15 +11,8 @@ public static class Register
 {
     public record Command(string UserName, string Email, string Password, string FullName) : IRequest<Result>;
 
-    public class Validator : AbstractValidator<Command>
-    {
-        public Validator()
-        {
-            RuleFor(c => c.Email).NotEmpty();
-            RuleFor(c => c.Password).NotEmpty();
-            RuleFor(c => c.FullName).NotEmpty();
-        }
-    }
+    private static readonly Error Failed = new("Register.Failed", "Unable to create user");
+    private static readonly Error AddRoleFailed = new("Register.AddRoleFailed", "Unable to add role to user");
 
     // TODO: Create a register request using register key
     internal sealed class Handler(UserManager<User> userManager, IValidator<Command> validator)
@@ -30,7 +23,7 @@ public static class Register
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
 
             if (!validationResult.IsValid)
-                return Result.Failure(new Error("CreateUser.Validation", validationResult.ToString()));
+                return Result.Failure(new Error("Register.Validation", validationResult.ToString()));
 
             var user = new User
             {
@@ -42,11 +35,11 @@ public static class Register
 
             var createUser = await userManager.CreateAsync(user, request.Password);
             if (!createUser.Succeeded)
-                return Result.Failure(new Error("CreateUser.Failed", "Unable to create user"));
+                return Result.Failure(Failed);
 
-            var addRole = await userManager.AddToRoleAsync(user, Constants.Roles.User);
+            var addRole = await userManager.AddToRoleAsync(user, Constants.Member);
             return !addRole.Succeeded
-                ? Result.Failure(new Error("CreateUser.AddRoleFailed", "Unable to add role to user"))
+                ? Result.Failure(AddRoleFailed)
                 : Result.Success();
         }
     }
@@ -63,6 +56,38 @@ public static class Register
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
                 })
                 .WithTags("Auth");
+        }
+    }
+
+    public class Validator : AbstractValidator<Command>
+    {
+        public Validator()
+        {
+            RuleFor(c => c.Email)
+                .NotEmpty()
+                .WithMessage("Email is required.")
+                .EmailAddress()
+                .WithMessage("Email must be a valid email address.");
+
+            RuleFor(c => c.Password)
+                .NotEmpty()
+                .WithMessage("Password is required.")
+                .MinimumLength(12)
+                .WithMessage("Password must be at least 12 characters long.")
+                .Matches(@"[A-Z]")
+                .WithMessage("Password must contain at least one uppercase letter.")
+                .Matches(@"[a-z]")
+                .WithMessage("Password must contain at least one lowercase letter.")
+                .Matches(@"[0-9]")
+                .WithMessage("Password must contain at least one digit.")
+                .Matches(@"[\W_]")
+                .WithMessage("Password must contain at least one non-alphanumeric character.");
+
+            RuleFor(c => c.FullName)
+                .NotEmpty()
+                .WithMessage("Full Name is required.")
+                .MaximumLength(100)
+                .WithMessage("Full Name must be 100 characters or less.");
         }
     }
 }

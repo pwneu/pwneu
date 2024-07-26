@@ -16,14 +16,7 @@ public static class Login
 {
     public record Command(string UserName, string Password) : IRequest<Result<string>>;
 
-    public class Validator : AbstractValidator<Command>
-    {
-        public Validator()
-        {
-            RuleFor(c => c.UserName).NotEmpty();
-            RuleFor(c => c.Password).NotEmpty();
-        }
-    }
+    private static readonly Error Invalid = new("Login.Invalid", "Incorrect username or password");
 
     internal sealed class Handler(
         UserManager<User> userManager,
@@ -36,21 +29,17 @@ public static class Login
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
 
             if (!validationResult.IsValid)
-                return Result.Failure<string>(new Error("CreateUser.Validation", validationResult.ToString()));
+                return Result.Failure<string>(new Error("Login.Validation", validationResult.ToString()));
 
             var user = await userManager
                 .Users
                 .FirstOrDefaultAsync(u => u.UserName == request.UserName, cancellationToken: cancellationToken);
 
-            if (user is null)
-                return Result.Failure<string>(new Error("Login.InvalidCredentials",
-                    "Incorrect username or password"));
+            if (user is null) return Result.Failure<string>(Invalid);
 
             var signIn = await signInManager.CheckPasswordSignInAsync(user, request.Password, false);
 
-            if (!signIn.Succeeded)
-                return Result.Failure<string>(new Error("Login.InvalidCredentials",
-                    "Incorrect username or password"));
+            if (!signIn.Succeeded) return Result.Failure<string>(Invalid);
 
             var roles = await userManager.GetRolesAsync(user);
             var claims = new List<Claim>
@@ -62,9 +51,9 @@ public static class Login
 
             claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
-            var issuer = Environment.GetEnvironmentVariable(Env.JwtIssuer);
-            var audience = Environment.GetEnvironmentVariable(Env.JwtAudience);
-            var signingKey = Environment.GetEnvironmentVariable(Env.JwtSigningKey);
+            var issuer = Environment.GetEnvironmentVariable(Constants.JwtIssuer);
+            var audience = Environment.GetEnvironmentVariable(Constants.JwtAudience);
+            var signingKey = Environment.GetEnvironmentVariable(Constants.JwtSigningKey);
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey!));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
@@ -94,9 +83,33 @@ public static class Login
                     var command = new Command(request.UserName, request.Password);
                     var result = await sender.Send(command);
 
-                    return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
+                    return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);
                 })
                 .WithTags("Auth");
+        }
+    }
+
+    public class Validator : AbstractValidator<Command>
+    {
+        public Validator()
+        {
+            RuleFor(c => c.UserName)
+                .NotEmpty()
+                .WithMessage("Username is required.");
+
+            RuleFor(c => c.Password)
+                .NotEmpty()
+                .WithMessage("Password is required.")
+                .MinimumLength(12)
+                .WithMessage("Password must be at least 12 characters long.")
+                .Matches(@"[A-Z]")
+                .WithMessage("Password must contain at least one uppercase letter.")
+                .Matches(@"[a-z]")
+                .WithMessage("Password must contain at least one lowercase letter.")
+                .Matches(@"[0-9]")
+                .WithMessage("Password must contain at least one digit.")
+                .Matches(@"[\W_]")
+                .WithMessage("Password must contain at least one non-alphanumeric character.");
         }
     }
 }
