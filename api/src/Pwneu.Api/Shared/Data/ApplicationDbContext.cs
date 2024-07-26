@@ -42,6 +42,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasKey(s => new { s.UserId, s.ChallengeId });
 
         builder
+            .Entity<FlagSubmission>()
+            .HasKey(s => new { s.UserId, s.ChallengeId });
+
+        builder
             .Entity<Solve>()
             .HasOne(s => s.User)
             .WithMany(u => u.Solves)

@@ -13,8 +13,8 @@ using Pwneu.Api.Shared.Data;
 namespace Pwneu.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240725165025_IncreaseMaxLengths")]
-    partial class IncreaseMaxLengths
+    [Migration("20240726091458_Reset")]
+    partial class Reset
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -227,9 +227,9 @@ namespace Pwneu.Api.Migrations
 
             modelBuilder.Entity("Pwneu.Api.Shared.Entities.FlagSubmission", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                    b.Property<string>("UserId")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
 
                     b.Property<Guid>("ChallengeId")
                         .HasColumnType("uuid");
@@ -241,21 +241,14 @@ namespace Pwneu.Api.Migrations
                     b.Property<DateTime>("SubmittedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(36)
-                        .HasColumnType("character varying(36)");
-
                     b.Property<string>("Value")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.HasKey("Id");
+                    b.HasKey("UserId", "ChallengeId");
 
                     b.HasIndex("ChallengeId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("FlagSubmissions");
                 });

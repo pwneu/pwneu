@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Pwneu.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class MigrationsReset : Migration
+    public partial class Reset : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -185,7 +185,7 @@ namespace Pwneu.Api.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ChallengeId = table.Column<Guid>(type: "uuid", nullable: false),
                     FileName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    ContentType = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
+                    ContentType = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Data = table.Column<byte[]>(type: "bytea", nullable: false)
                 },
                 constraints: table =>
@@ -203,7 +203,6 @@ namespace Pwneu.Api.Migrations
                 name: "FlagSubmissions",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<string>(type: "character varying(36)", maxLength: 36, nullable: false),
                     ChallengeId = table.Column<Guid>(type: "uuid", nullable: false),
                     Value = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
@@ -212,7 +211,7 @@ namespace Pwneu.Api.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_FlagSubmissions", x => x.Id);
+                    table.PrimaryKey("PK_FlagSubmissions", x => new { x.UserId, x.ChallengeId });
                     table.ForeignKey(
                         name: "FK_FlagSubmissions_AspNetUsers_UserId",
                         column: x => x.UserId,
@@ -298,11 +297,6 @@ namespace Pwneu.Api.Migrations
                 name: "IX_FlagSubmissions_ChallengeId",
                 table: "FlagSubmissions",
                 column: "ChallengeId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_FlagSubmissions_UserId",
-                table: "FlagSubmissions",
-                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Solves_ChallengeId",

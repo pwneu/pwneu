@@ -93,7 +93,6 @@ public static class SubmitFlag
 
             var flagSubmission = new FlagSubmission
             {
-                Id = Guid.NewGuid(),
                 UserId = request.UserId,
                 ChallengeId = challenge.Id,
                 Value = request.Value,
