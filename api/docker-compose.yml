@@ -19,6 +19,17 @@ services:
       - JWT_SIGNING_KEY=${JWT_SIGNING_KEY}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - ConnectionStrings__Postgres=${POSTGRES_CONNECTION}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://pwneu.dashboard:18889
+    networks:
+      - pwneu
+
+  pwneu.dashboard:
+    image: mcr.microsoft.com/dotnet/nightly/aspire-dashboard:latest
+    container_name: pwneu.dashboard
+    ports:
+      - "18888:18888"
+    networks:
+      - pwneu
 
   pwneu.db:
     image: postgres:latest
@@ -31,9 +42,16 @@ services:
       - ./.containers/db:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    networks:
+      - pwneu
 
   pwneu.cache:
     image: redis:latest
     container_name: pwneu.cache
     ports:
       - "6379:6379"
+    networks:
+      - pwneu
+
+networks:
+  pwneu:
