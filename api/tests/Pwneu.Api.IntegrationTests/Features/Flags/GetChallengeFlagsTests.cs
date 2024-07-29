@@ -11,9 +11,20 @@ public class GetChallengeFlagsTests(IntegrationTestsWebAppFactory factory) : Bas
     public async Task Handle_Should_GetChallengeFlags_WhenChallengeExists()
     {
         // Arrange
+        var categoryId = Guid.NewGuid();
+        var category = new Category
+        {
+            Id = categoryId,
+            Name = F.Lorem.Word(),
+            Description = F.Lorem.Sentence()
+        };
+        DbContext.Add(category);
+        await DbContext.SaveChangesAsync();
+
         var challenge = new Challenge
         {
             Id = Guid.NewGuid(),
+            CategoryId = categoryId,
             Name = F.Lorem.Word(),
             Description = F.Lorem.Sentence(),
             Points = F.Random.Int(1, 100),

@@ -2,6 +2,7 @@ using FluentAssertions;
 using Pwneu.Api.Features.Challenges;
 using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Contracts;
+using Pwneu.Api.Shared.Entities;
 
 namespace Pwneu.Api.IntegrationTests.Features.Challenges;
 
@@ -12,8 +13,18 @@ public class GetChallengeTests(IntegrationTestsWebAppFactory factory) : BaseInte
     public async Task Handle_Should_GetChallenge_WhenChallengeExists()
     {
         // Arrange
-        var createChallenge = new CreateChallenge.Command("Sanity Check", "The flag is in plain sight", 50, true,
-            DateTime.UtcNow.AddDays(7), 5, ["flag1", "flag2"]);
+        var categoryId = Guid.NewGuid();
+        var category = new Category
+        {
+            Id = categoryId,
+            Name = F.Lorem.Word(),
+            Description = F.Lorem.Sentence()
+        };
+        DbContext.Add(category);
+        await DbContext.SaveChangesAsync();
+
+        var createChallenge = new CreateChallenge.Command(categoryId, "Sanity Check", "The flag is in plain sight", 50,
+            true, DateTime.UtcNow.AddDays(7), 5, ["flag1", "flag2"]);
         var challengeId = (await Sender.Send(createChallenge)).Value;
 
         var challenge = new ChallengeDetailsResponse(challengeId, createChallenge.Name, createChallenge.Description,

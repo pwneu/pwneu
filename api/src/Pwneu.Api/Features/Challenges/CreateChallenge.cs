@@ -10,6 +10,7 @@ namespace Pwneu.Api.Features.Challenges;
 public static class CreateChallenge
 {
     public record Command(
+        Guid CategoryId,
         string Name,
         string Description,
         int Points,
@@ -31,6 +32,7 @@ public static class CreateChallenge
             var challenge = new Challenge
             {
                 Id = Guid.NewGuid(),
+                CategoryId = request.CategoryId,
                 Name = request.Name,
                 Description = request.Description,
                 Points = request.Points,
@@ -52,17 +54,18 @@ public static class CreateChallenge
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("challenges", async (CreateChallengeRequest request, ISender sender) =>
-                {
-                    var command = new Command(request.Name, request.Description, request.Points,
-                        request.DeadlineEnabled, request.Deadline, request.MaxAttempts, request.Flags);
+            app.MapPost("categories/{categoryId:Guid}/challenges",
+                    async (Guid categoryId, CreateChallengeRequest request, ISender sender) =>
+                    {
+                        var command = new Command(categoryId, request.Name, request.Description, request.Points,
+                            request.DeadlineEnabled, request.Deadline, request.MaxAttempts, request.Flags);
 
-                    var result = await sender.Send(command);
+                        var result = await sender.Send(command);
 
-                    return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);
-                })
+                        return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);
+                    })
                 .RequireAuthorization(Constants.ManagerAdminOnly)
-                .WithTags(nameof(Challenge));
+                .WithTags(nameof(Challenges));
         }
     }
 

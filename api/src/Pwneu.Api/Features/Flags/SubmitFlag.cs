@@ -15,7 +15,10 @@ public static class SubmitFlag
 {
     public record Command(string UserId, Guid ChallengeId, string Value) : IRequest<Result<FlagStatus>>;
 
-    private static readonly Error ChallengeNotFound = new Error("SubmitFlag.ChallengeNotFound",
+    private static readonly Error UserNotFound = new("SubmitFlag.UserNotFound",
+        "The user with the specified ID was not found");
+
+    private static readonly Error ChallengeNotFound = new("SubmitFlag.ChallengeNotFound",
         "The challenge with the specified ID was not found");
 
     internal sealed class Handler(
@@ -31,21 +34,31 @@ public static class SubmitFlag
             if (!validationResult.IsValid)
                 return Result.Failure<FlagStatus>(new Error("SubmitFlag.Validation", validationResult.ToString()));
 
+            var userId = await cache.GetOrSetAsync($"{nameof(User)}:{request.UserId}", async _ =>
+            {
+                return await context
+                    .Users
+                    .Where(u => u.Id == request.UserId)
+                    .Select(u => u.Id)
+                    .FirstOrDefaultAsync(cancellationToken);
+            }, token: cancellationToken);
+
+            if (string.IsNullOrEmpty(userId))
+                return Result.Failure<FlagStatus>(UserNotFound);
+
             var challenge = await cache.GetOrSetAsync($"{nameof(Challenge)}:{request.ChallengeId}", async _ =>
             {
-                var challenge = await context
+                return await context
                     .Challenges
                     .Where(c => c.Id == request.ChallengeId)
                     .FirstOrDefaultAsync(cancellationToken);
-
-                return challenge;
             }, token: cancellationToken);
 
             if (challenge is null) return Result.Failure<FlagStatus>(ChallengeNotFound);
 
-            var attemptCountKey = $"attemptCount:{request.UserId}&&{challenge.Id}";
-            var solveKey = $"solve:{request.UserId}&&{challenge.Id}";
-            var recentSubmissionsKey = $"recentSubmissions:{request.UserId}&&{challenge.Id}";
+            var attemptCountKey = $"attemptCount:{userId}&&{challenge.Id}";
+            var solveKey = $"solve:{userId}&&{challenge.Id}";
+            var recentSubmissionsKey = $"recentSubmissions:{userId}&&{challenge.Id}";
 
             var tenSecondsAgo = DateTime.UtcNow.AddSeconds(-10);
             int attemptCount = default;
@@ -70,7 +83,7 @@ public static class SubmitFlag
                 {
                     var solve = new Solve
                     {
-                        UserId = request.UserId,
+                        UserId = userId,
                         ChallengeId = challenge.Id,
                         SolvedAt = DateTime.UtcNow
                     };
@@ -80,7 +93,7 @@ public static class SubmitFlag
 
                     await cache.SetAsync(solveKey, true, token: cancellationToken);
                     // Since a user has solved a flag, remove the cache on getting user information
-                    await cache.RemoveAsync($"{nameof(UserDetailsResponse)}:{request.UserId}",
+                    await cache.RemoveAsync($"{nameof(UserDetailsResponse)}:{userId}",
                         token: cancellationToken);
                     break;
                 }
@@ -93,7 +106,7 @@ public static class SubmitFlag
 
             var flagSubmission = new FlagSubmission
             {
-                UserId = request.UserId,
+                UserId = userId,
                 ChallengeId = challenge.Id,
                 Value = request.Value,
                 SubmittedAt = DateTime.UtcNow,
@@ -116,7 +129,7 @@ public static class SubmitFlag
                 {
                     return await context
                         .Solves
-                        .AnyAsync(s => s.UserId == request.UserId && s.ChallengeId == challenge.Id, cancellationToken);
+                        .AnyAsync(s => s.UserId == userId && s.ChallengeId == challenge.Id, cancellationToken);
                 }, token: cancellationToken);
             }
 
@@ -126,7 +139,7 @@ public static class SubmitFlag
                 {
                     recentSubmissions = await context
                         .FlagSubmissions
-                        .Where(fs => fs.UserId == request.UserId &&
+                        .Where(fs => fs.UserId == userId &&
                                      fs.ChallengeId == challenge.Id &&
                                      fs.SubmittedAt >= tenSecondsAgo)
                         .Select(fs => fs.SubmittedAt)
@@ -146,7 +159,7 @@ public static class SubmitFlag
                 {
                     attemptCount = await context
                         .FlagSubmissions
-                        .Where(fs => fs.UserId == request.UserId && fs.ChallengeId == challenge.Id)
+                        .Where(fs => fs.UserId == userId && fs.ChallengeId == challenge.Id)
                         .CountAsync(cancellationToken);
 
                     return attemptCount;
@@ -171,7 +184,7 @@ public static class SubmitFlag
                         return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value.ToString());
                     })
                 .RequireAuthorization(Constants.MemberOnly)
-                .WithTags(nameof(Challenge));
+                .WithTags(nameof(Flags));
         }
     }
 

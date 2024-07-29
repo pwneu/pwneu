@@ -13,12 +13,23 @@ public class GetChallengesTests(IntegrationTestsWebAppFactory factory) : BaseInt
     public async Task Handle_Should_GetChallenges()
     {
         // Arrange
+        var categoryId = Guid.NewGuid();
+        var category = new Category
+        {
+            Id = categoryId,
+            Name = F.Lorem.Word(),
+            Description = F.Lorem.Sentence()
+        };
+        DbContext.Add(category);
+        await DbContext.SaveChangesAsync();
+
         foreach (var unused in Enumerable.Range(1, 3))
         {
             var id = Guid.NewGuid();
             DbContext.Add(new Challenge
             {
                 Id = id,
+                CategoryId = categoryId,
                 Name = F.Lorem.Word(),
                 Description = F.Lorem.Sentence(),
                 Points = F.Random.Int(1, 100),

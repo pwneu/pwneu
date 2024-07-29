@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Newtonsoft.Json;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -82,7 +83,10 @@ var redis = builder.Configuration.GetConnectionString("Redis") ??
 
 builder.Services.AddFusionCache()
     .WithDefaultEntryOptions(new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(2) })
-    .WithSerializer(new FusionCacheNewtonsoftJsonSerializer())
+    .WithSerializer(new FusionCacheNewtonsoftJsonSerializer(new JsonSerializerSettings
+    {
+        ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+    }))
     .WithDistributedCache(new RedisCache(new RedisCacheOptions { Configuration = redis }));
 
 // Assembly scanning of Mediator and Fluent Validations

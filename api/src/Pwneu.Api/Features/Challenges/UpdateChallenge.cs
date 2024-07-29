@@ -65,9 +65,9 @@ public static class UpdateChallenge
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPut("challenges", async (UpdateChallengeRequest request, ISender sender) =>
+            app.MapPut("challenges/{id:Guid}", async (Guid id, UpdateChallengeRequest request, ISender sender) =>
                 {
-                    var command = new Command(request.Id, request.Name, request.Description, request.Points,
+                    var command = new Command(id, request.Name, request.Description, request.Points,
                         request.DeadlineEnabled, request.Deadline, request.MaxAttempts, request.Flags);
 
                     var result = await sender.Send(command);
@@ -75,7 +75,7 @@ public static class UpdateChallenge
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
                 })
                 .RequireAuthorization(Constants.ManagerAdminOnly)
-                .WithTags(nameof(Challenge));
+                .WithTags(nameof(Challenges));
         }
     }
 

@@ -21,10 +21,21 @@ public class DeleteChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
     public async Task Handle_Should_DeleteChallenge_WhenChallengeExists()
     {
         // Arrange
+        var categoryId = Guid.NewGuid();
+        var category = new Category
+        {
+            Id = categoryId,
+            Name = F.Lorem.Word(),
+            Description = F.Lorem.Sentence()
+        };
+        DbContext.Add(category);
+        await DbContext.SaveChangesAsync();
+
         var challengeId = Guid.NewGuid();
         DbContext.Add(new Challenge
         {
             Id = challengeId,
+            CategoryId = categoryId,
             Name = F.Lorem.Word(),
             Description = F.Lorem.Sentence(),
             Points = F.Random.Int(1, 100),
@@ -48,10 +59,21 @@ public class DeleteChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
     public async Task Handle_Should_InvalidateChallengeCache()
     {
         // Arrange
+        var categoryId = Guid.NewGuid();
+        var category = new Category
+        {
+            Id = categoryId,
+            Name = F.Lorem.Word(),
+            Description = F.Lorem.Sentence()
+        };
+        DbContext.Add(category);
+        await DbContext.SaveChangesAsync();
+
         var challengeId = Guid.NewGuid();
         DbContext.Add(new Challenge
         {
             Id = challengeId,
+            CategoryId = categoryId,
             Name = F.Lorem.Word(),
             Description = F.Lorem.Sentence(),
             Points = F.Random.Int(1, 100),

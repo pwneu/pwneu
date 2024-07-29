@@ -20,7 +20,6 @@ public record CreateChallengeRequest(
     IEnumerable<string> Flags);
 
 public record UpdateChallengeRequest(
-    Guid Id,
     string Name,
     string Description,
     int Points,
