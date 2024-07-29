@@ -21,7 +21,7 @@ public static class UpdateCategory
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
             var category = await context
-                .Challenges
+                .Categories
                 .Where(c => c.Id == request.Id)
                 .FirstOrDefaultAsync(cancellationToken);
 
