@@ -5,6 +5,7 @@ namespace Pwneu.Api.Shared.Entities;
 
 public class FlagSubmission
 {
+    public Guid Id { get; init; }
     [MaxLength(36)] public string UserId { get; init; } = string.Empty;
     public Guid ChallengeId { get; init; }
     [MaxLength(100)] public string Value { get; init; } = string.Empty;

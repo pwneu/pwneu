@@ -25,6 +25,9 @@ public static class SubmitFlag
     private static readonly Error ChallengeNotFound = new("SubmitFlag.ChallengeNotFound",
         "The challenge with the specified ID was not found");
 
+    private static readonly Error NoChallengeFlags = new("SubmitFlag.NoChallengeFlags",
+        "The challenge doesn't have flags, which is weird because a challenge must have a flag :/");
+
     internal sealed class Handler(
         ApplicationDbContext context,
         IFusionCache cache,
@@ -47,18 +50,43 @@ public static class SubmitFlag
                     .FirstOrDefaultAsync(cancellationToken);
             }, token: cancellationToken);
 
-            if (string.IsNullOrEmpty(userId))
-                return Result.Failure<FlagStatus>(UserNotFound);
+            if (string.IsNullOrEmpty(userId)) return Result.Failure<FlagStatus>(UserNotFound);
 
-            var challenge = await cache.GetOrSetAsync($"{nameof(Challenge)}:{request.ChallengeId}", async _ =>
-            {
-                return await context
-                    .Challenges
-                    .Where(c => c.Id == request.ChallengeId)
-                    .FirstOrDefaultAsync(cancellationToken);
-            }, token: cancellationToken);
+            // var challenge = await cache.GetOrSetAsync($"{nameof(Challenge)}:{request.ChallengeId}", async _ =>
+            // {
+            //     return await context
+            //         .Challenges
+            //         .Where(c => c.Id == request.ChallengeId)
+            //         .FirstOrDefaultAsync(cancellationToken);
+            // }, token: cancellationToken);
+            var challenge = await cache.GetOrSetAsync($"{nameof(ChallengeDetailsResponse)}:{request.ChallengeId}",
+                async _ =>
+                {
+                    return await context
+                        .Challenges
+                        .Where(c => c.Id == request.ChallengeId)
+                        .Include(c => c.ChallengeFiles)
+                        .Select(c => new ChallengeDetailsResponse(c.Id, c.Name, c.Description, c.Points,
+                            c.DeadlineEnabled, c.Deadline, c.MaxAttempts, c.ChallengeFiles
+                                .Select(cf => new ChallengeFileResponse(cf.Id, cf.FileName))
+                                .ToList()
+                        ))
+                        .FirstOrDefaultAsync(cancellationToken);
+                }, token: cancellationToken);
 
             if (challenge is null) return Result.Failure<FlagStatus>(ChallengeNotFound);
+
+            var challengeFlags = await cache.GetOrSetAsync(
+                $"{nameof(Challenge)}.{nameof(Challenge.Flags)}:{request.ChallengeId}", async _ =>
+                {
+                    return await context
+                        .Challenges
+                        .Where(c => c.Id == request.ChallengeId)
+                        .Select(c => c.Flags)
+                        .FirstOrDefaultAsync(cancellationToken);
+                }, token: cancellationToken);
+
+            if (challengeFlags is null) return Result.Failure<FlagStatus>(NoChallengeFlags);
 
             var attemptCountKey = $"attemptCount:{userId}&&{challenge.Id}";
             var solveKey = $"solve:{userId}&&{challenge.Id}";
@@ -77,7 +105,7 @@ public static class SubmitFlag
                 flagStatus = FlagStatus.DeadlineReached;
             else if (await IsMaxAttemptReachedAsync())
                 flagStatus = FlagStatus.MaxAttemptReached;
-            else if (challenge.Flags.Any(f => f.Equals(request.Value)))
+            else if (challengeFlags.Any(f => f.Equals(request.Value)))
                 flagStatus = FlagStatus.Correct;
             else flagStatus = FlagStatus.Incorrect;
 
@@ -110,6 +138,7 @@ public static class SubmitFlag
 
             var flagSubmission = new FlagSubmission
             {
+                Id = Guid.NewGuid(),
                 UserId = userId,
                 ChallengeId = challenge.Id,
                 Value = request.Value,

@@ -47,10 +47,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .OnDelete(DeleteBehavior.Cascade);
 
         builder
-            .Entity<FlagSubmission>()
-            .HasKey(s => new { s.UserId, s.ChallengeId });
-
-        builder
             .Entity<Solve>()
             .HasKey(s => new { s.UserId, s.ChallengeId });
 
