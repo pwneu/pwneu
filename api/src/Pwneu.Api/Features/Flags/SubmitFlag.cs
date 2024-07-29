@@ -52,13 +52,6 @@ public static class SubmitFlag
 
             if (string.IsNullOrEmpty(userId)) return Result.Failure<FlagStatus>(UserNotFound);
 
-            // var challenge = await cache.GetOrSetAsync($"{nameof(Challenge)}:{request.ChallengeId}", async _ =>
-            // {
-            //     return await context
-            //         .Challenges
-            //         .Where(c => c.Id == request.ChallengeId)
-            //         .FirstOrDefaultAsync(cancellationToken);
-            // }, token: cancellationToken);
             var challenge = await cache.GetOrSetAsync($"{nameof(ChallengeDetailsResponse)}:{request.ChallengeId}",
                 async _ =>
                 {
