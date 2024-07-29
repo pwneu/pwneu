@@ -21,6 +21,9 @@ public static class UpdateChallenge
         int MaxAttempts,
         IEnumerable<string> Flags) : IRequest<Result>;
 
+    private static readonly Error NotFound = new("UpdateChallenge.NotFound",
+        "The challenge with the specified ID was not found");
+
     internal sealed class Handler(ApplicationDbContext context, IValidator<Command> validator, IFusionCache cache)
         : IRequestHandler<Command, Result>
     {
@@ -31,9 +34,7 @@ public static class UpdateChallenge
                 .Where(c => c.Id == request.Id)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (challenge is null)
-                return Result.Failure<Guid>(new Error("UpdateChallenge.NotFound",
-                    "The challenge with the specified ID was not found"));
+            if (challenge is null) return Result.Failure<Guid>(NotFound);
 
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
 

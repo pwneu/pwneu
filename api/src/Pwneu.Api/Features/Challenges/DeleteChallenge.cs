@@ -25,8 +25,7 @@ public static class DeleteChallenge
                 .Include(c => c.ChallengeFiles)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (challenge is null)
-                return Result.Failure(NotFound);
+            if (challenge is null) return Result.Failure(NotFound);
 
             context.ChallengeFiles.RemoveRange(challenge.ChallengeFiles);
 
