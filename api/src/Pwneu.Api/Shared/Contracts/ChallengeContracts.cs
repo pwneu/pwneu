@@ -1,5 +1,7 @@
 namespace Pwneu.Api.Shared.Contracts;
 
+public record ChallengeResponse(Guid Id, string Name);
+
 public record ChallengeDetailsResponse(
     Guid Id,
     string Name,
@@ -20,7 +22,6 @@ public record CreateChallengeRequest(
     IEnumerable<string> Flags);
 
 public record UpdateChallengeRequest(
-    Guid Id,
     string Name,
     string Description,
     int Points,

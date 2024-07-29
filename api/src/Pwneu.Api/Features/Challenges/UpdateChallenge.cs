@@ -9,6 +9,10 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Challenges;
 
+/// <summary>
+/// Updates a challenge under a specified ID.
+/// Only users with manager or admin roles can access this endpoint.
+/// </summary>
 public static class UpdateChallenge
 {
     public record Command(
@@ -21,6 +25,9 @@ public static class UpdateChallenge
         int MaxAttempts,
         IEnumerable<string> Flags) : IRequest<Result>;
 
+    private static readonly Error NotFound = new("UpdateChallenge.NotFound",
+        "The challenge with the specified ID was not found");
+
     internal sealed class Handler(ApplicationDbContext context, IValidator<Command> validator, IFusionCache cache)
         : IRequestHandler<Command, Result>
     {
@@ -31,9 +38,7 @@ public static class UpdateChallenge
                 .Where(c => c.Id == request.Id)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (challenge is null)
-                return Result.Failure<Guid>(new Error("UpdateChallenge.NotFound",
-                    "The challenge with the specified ID was not found"));
+            if (challenge is null) return Result.Failure<Guid>(NotFound);
 
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
 
@@ -52,7 +57,6 @@ public static class UpdateChallenge
 
             await context.SaveChangesAsync(cancellationToken);
 
-            await cache.RemoveAsync($"{nameof(Challenge)}:{challenge.Id}", token: cancellationToken);
             await cache.RemoveAsync($"{nameof(ChallengeDetailsResponse)}:{challenge.Id}", token: cancellationToken);
             await cache.RemoveAsync($"{nameof(Challenge)}.{nameof(Challenge.Flags)}:{challenge.Id}",
                 token: cancellationToken);
@@ -65,9 +69,9 @@ public static class UpdateChallenge
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPut("challenges", async (UpdateChallengeRequest request, ISender sender) =>
+            app.MapPut("challenges/{id:Guid}", async (Guid id, UpdateChallengeRequest request, ISender sender) =>
                 {
-                    var command = new Command(request.Id, request.Name, request.Description, request.Points,
+                    var command = new Command(id, request.Name, request.Description, request.Points,
                         request.DeadlineEnabled, request.Deadline, request.MaxAttempts, request.Flags);
 
                     var result = await sender.Send(command);
@@ -75,7 +79,7 @@ public static class UpdateChallenge
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
                 })
                 .RequireAuthorization(Constants.ManagerAdminOnly)
-                .WithTags(nameof(Challenge));
+                .WithTags(nameof(Challenges));
         }
     }
 

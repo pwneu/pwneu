@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Newtonsoft.Json;
 using Pwneu.Api.Shared.Data;
 using Testcontainers.PostgreSql;
 using Testcontainers.Redis;
@@ -39,7 +40,10 @@ public class IntegrationTestsWebAppFactory : WebApplicationFactory<Program>, IAs
             services.RemoveAll(typeof(IFusionCache));
             services.AddFusionCache()
                 .WithDefaultEntryOptions(new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(2) })
-                .WithSerializer(new FusionCacheNewtonsoftJsonSerializer())
+                .WithSerializer(new FusionCacheNewtonsoftJsonSerializer(new JsonSerializerSettings
+                {
+                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+                }))
                 .WithDistributedCache(new RedisCache(new RedisCacheOptions
                     { Configuration = _redisContainer.GetConnectionString() }));
         });

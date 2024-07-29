@@ -55,7 +55,7 @@ public static class Register
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
                 })
-                .WithTags("Auth");
+                .WithTags(nameof(Auths));
         }
     }
 

@@ -9,7 +9,7 @@ namespace Pwneu.Api.Features.Flags;
 
 /// <summary>
 /// Retrieves a list of flags in a challenge.
-/// Only users with faculty or admin roles can access this endpoint.
+/// Only users with manager or admin roles can access this endpoint.
 /// </summary>
 public static class GetChallengeFlags
 {
@@ -49,7 +49,7 @@ public static class GetChallengeFlags
                     return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
                 })
                 .RequireAuthorization(Constants.ManagerAdminOnly)
-                .WithTags(nameof(Challenge));
+                .WithTags(nameof(Flags));
         }
     }
 }

@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Pwneu.Api.Features.Challenges;
 using Pwneu.Api.Shared.Common;
+using Pwneu.Api.Shared.Entities;
 
 namespace Pwneu.Api.IntegrationTests.Features.Challenges;
 
@@ -11,11 +12,21 @@ public class CreateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
     public async Task Handle_Should_NotCreateChallenge_WhenCommandIsNotValid()
     {
         // Arrange
+        var categoryId = Guid.NewGuid();
+        var category = new Category
+        {
+            Id = categoryId,
+            Name = F.Lorem.Word(),
+            Description = F.Lorem.Sentence()
+        };
+        DbContext.Add(category);
+        await DbContext.SaveChangesAsync();
+
         var createChallenges = new List<CreateChallenge.Command>
         {
-            new(string.Empty, F.Lorem.Sentence(), 50, false, DateTime.UtcNow, 5, F.Lorem.Words()),
-            new("Sanity Check", string.Empty, 50, false, DateTime.UtcNow, 5, F.Lorem.Words()),
-            new("Sanity Check", F.Lorem.Sentence(), 50, false, DateTime.UtcNow, 5, [])
+            new(categoryId, string.Empty, F.Lorem.Sentence(), 50, false, DateTime.UtcNow, 5, F.Lorem.Words()),
+            new(categoryId, "Sanity Check", string.Empty, 50, false, DateTime.UtcNow, 5, F.Lorem.Words()),
+            new(categoryId, "Sanity Check", F.Lorem.Sentence(), 50, false, DateTime.UtcNow, 5, [])
         };
 
         // Act
@@ -35,7 +46,18 @@ public class CreateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
     public async Task Handle_Should_CreateChallenge_WhenCommandIsValid()
     {
         // Arrange
-        var createChallenge = new CreateChallenge.Command("Sanity Check", "The flag is in plain sight", 50, true,
+        var categoryId = Guid.NewGuid();
+        var category = new Category
+        {
+            Id = categoryId,
+            Name = F.Lorem.Word(),
+            Description = F.Lorem.Sentence()
+        };
+        DbContext.Add(category);
+        await DbContext.SaveChangesAsync();
+
+        var createChallenge = new CreateChallenge.Command(categoryId, "Sanity Check", "The flag is in plain sight", 50,
+            true,
             DateTime.UtcNow.AddDays(7), 5, ["flag1", "flag2"]);
 
         // Act

@@ -8,6 +8,10 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Challenges;
 
+/// <summary>
+/// Deletes a challenge by ID.
+/// Only users with manager or admin roles can access this endpoint.
+/// </summary>
 public static class DeleteChallenge
 {
     public record Command(Guid Id) : IRequest<Result>;
@@ -25,8 +29,7 @@ public static class DeleteChallenge
                 .Include(c => c.ChallengeFiles)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (challenge is null)
-                return Result.Failure(NotFound);
+            if (challenge is null) return Result.Failure(NotFound);
 
             context.ChallengeFiles.RemoveRange(challenge.ChallengeFiles);
 
@@ -37,7 +40,6 @@ public static class DeleteChallenge
             foreach (var file in challenge.ChallengeFiles)
                 await cache.RemoveAsync($"{nameof(ChallengeFile)}:{file.Id}", token: cancellationToken);
 
-            await cache.RemoveAsync($"{nameof(Challenge)}:{challenge.Id}", token: cancellationToken);
             await cache.RemoveAsync($"{nameof(ChallengeDetailsResponse)}:{challenge.Id}", token: cancellationToken);
             await cache.RemoveAsync($"{nameof(Challenge)}.{nameof(Challenge.Flags)}:{challenge.Id}",
                 token: cancellationToken);
@@ -58,7 +60,7 @@ public static class DeleteChallenge
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
                 })
                 .RequireAuthorization(Constants.ManagerAdminOnly)
-                .WithTags(nameof(Challenge));
+                .WithTags(nameof(Challenges));
         }
     }
 }

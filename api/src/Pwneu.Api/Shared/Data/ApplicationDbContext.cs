@@ -12,10 +12,19 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         base.OnModelCreating(builder);
 
         builder
+            .Entity<Category>()
+            .HasMany(ctg => ctg.Challenges)
+            .WithOne(c => c.Category)
+            .HasForeignKey(c => c.CategoryId)
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired();
+
+        builder
             .Entity<Challenge>()
             .HasMany(c => c.ChallengeFiles)
             .WithOne(cf => cf.Challenge)
             .HasForeignKey(cf => cf.ChallengeId)
+            .OnDelete(DeleteBehavior.Cascade)
             .IsRequired();
 
         builder
@@ -42,10 +51,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasKey(s => new { s.UserId, s.ChallengeId });
 
         builder
-            .Entity<FlagSubmission>()
-            .HasKey(s => new { s.UserId, s.ChallengeId });
-
-        builder
             .Entity<Solve>()
             .HasOne(s => s.User)
             .WithMany(u => u.Solves)
@@ -64,4 +69,5 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public virtual DbSet<ChallengeFile> ChallengeFiles { get; init; } = null!;
     public virtual DbSet<FlagSubmission> FlagSubmissions { get; init; } = null!;
     public virtual DbSet<Solve> Solves { get; init; } = null!;
+    public virtual DbSet<Category> Categories { get; init; } = null!;
 }

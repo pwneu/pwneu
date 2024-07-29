@@ -10,8 +10,8 @@ using ZiggyCreatures.Caching.Fusion;
 namespace Pwneu.Api.Features.Users;
 
 /// <summary>
-/// Retrieves a paginated list of users, excluding those with a role of faculty or admin.
-/// Only users with faculty or admin roles can access this endpoint.
+/// Retrieves a paginated list of users, excluding those with a role of manager or admin.
+/// Only users with manager or admin roles can access this endpoint.
 /// </summary>
 public static class GetUsers
 {
@@ -82,7 +82,7 @@ public static class GetUsers
                         return result.IsFailure ? Results.StatusCode(500) : Results.Ok(result.Value);
                     })
                 .RequireAuthorization(Constants.ManagerAdminOnly)
-                .WithTags(nameof(User));
+                .WithTags(nameof(Users));
         }
     }
 }

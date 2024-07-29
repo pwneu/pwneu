@@ -64,7 +64,7 @@ public static class AddChallengeFile
                 })
                 .DisableAntiforgery() // TODO: Check for better ways to fix anti-forgery exception
                 .RequireAuthorization(Constants.ManagerAdminOnly)
-                .WithTags(nameof(ChallengeFile));
+                .WithTags(nameof(ChallengeFiles));
         }
     }
 }

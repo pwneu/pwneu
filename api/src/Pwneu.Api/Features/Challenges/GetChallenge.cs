@@ -3,11 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Data;
-using Pwneu.Api.Shared.Entities;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Challenges;
 
+/// <summary>
+/// Retrieves a challenge by ID.
+/// </summary>
 public static class GetChallenge
 {
     public record Query(Guid Id) : IRequest<Result<ChallengeDetailsResponse>>;
@@ -51,7 +53,7 @@ public static class GetChallenge
                     return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
                 })
                 .RequireAuthorization()
-                .WithTags(nameof(Challenge));
+                .WithTags(nameof(Challenges));
         }
     }
 }

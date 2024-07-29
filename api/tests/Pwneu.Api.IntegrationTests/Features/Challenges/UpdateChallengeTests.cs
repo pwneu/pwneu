@@ -15,6 +15,16 @@ public class UpdateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
     public async Task Handle_Should_NotUpdateChallenge_WhenCommandIsNotValid()
     {
         // Arrange
+        var categoryId = Guid.NewGuid();
+        var category = new Category
+        {
+            Id = categoryId,
+            Name = F.Lorem.Word(),
+            Description = F.Lorem.Sentence()
+        };
+        DbContext.Add(category);
+        await DbContext.SaveChangesAsync();
+
         var challengeIds = new List<Guid>();
         foreach (var unused in Enumerable.Range(1, 3))
         {
@@ -23,6 +33,7 @@ public class UpdateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
             DbContext.Add(new Challenge
             {
                 Id = id,
+                CategoryId = categoryId,
                 Name = F.Lorem.Word(),
                 Description = F.Lorem.Sentence(),
                 Points = F.Random.Int(1, 100),
@@ -76,10 +87,21 @@ public class UpdateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
     public async Task Handle_Should_GetDifferentChallengeDetails()
     {
         // Arrange
+        var categoryId = Guid.NewGuid();
+        var category = new Category
+        {
+            Id = categoryId,
+            Name = F.Lorem.Word(),
+            Description = F.Lorem.Sentence()
+        };
+        DbContext.Add(category);
+        await DbContext.SaveChangesAsync();
+
         var challengeId = Guid.NewGuid();
         DbContext.Add(new Challenge
         {
             Id = challengeId,
+            CategoryId = categoryId,
             Name = F.Lorem.Word(),
             Description = F.Lorem.Sentence(),
             Points = F.Random.Int(1, 100),
@@ -132,9 +154,20 @@ public class UpdateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
     public async Task Handle_Should_InvalidateChallengeCache()
     {
         // Arrange
+        var categoryId = Guid.NewGuid();
+        var category = new Category
+        {
+            Id = categoryId,
+            Name = F.Lorem.Word(),
+            Description = F.Lorem.Sentence()
+        };
+        DbContext.Add(category);
+        await DbContext.SaveChangesAsync();
+
         var challenge = new Challenge
         {
             Id = Guid.NewGuid(),
+            CategoryId = categoryId,
             Name = F.Lorem.Word(),
             Description = F.Lorem.Sentence(),
             Points = F.Random.Int(1, 100),

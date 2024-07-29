@@ -9,8 +9,8 @@ using ZiggyCreatures.Caching.Fusion;
 namespace Pwneu.Api.Features.Users;
 
 /// <summary>
-/// Retrieves a user by ID, excluding those with a role of faculty or admin.
-/// Only users with faculty or admin roles can access this endpoint.
+/// Retrieves a user by ID, excluding those with a role of manager or admin.
+/// Only users with manager or admin roles can access this endpoint.
 /// </summary>
 public static class GetUser
 {
@@ -74,7 +74,7 @@ public static class GetUser
                     return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
                 })
                 .RequireAuthorization(Constants.ManagerAdminOnly)
-                .WithTags(nameof(User));
+                .WithTags(nameof(Users));
         }
     }
 }

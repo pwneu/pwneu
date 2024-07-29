@@ -15,10 +15,21 @@ public class SubmitFlagTests(IntegrationTestsWebAppFactory factory) : BaseIntegr
         params string[] flags)
     {
         // Arrange
+        var categoryId = Guid.NewGuid();
+        var category = new Category
+        {
+            Id = categoryId,
+            Name = F.Lorem.Word(),
+            Description = F.Lorem.Sentence()
+        };
+        DbContext.Add(category);
+        await DbContext.SaveChangesAsync();
+
         var challengeId = Guid.NewGuid();
         DbContext.Add(new Challenge
         {
             Id = challengeId,
+            CategoryId = categoryId,
             Name = F.Lorem.Word(),
             Description = F.Lorem.Sentence(),
             Points = F.Random.Int(1, 100),
