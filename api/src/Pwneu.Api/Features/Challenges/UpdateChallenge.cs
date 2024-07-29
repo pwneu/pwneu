@@ -57,7 +57,6 @@ public static class UpdateChallenge
 
             await context.SaveChangesAsync(cancellationToken);
 
-            await cache.RemoveAsync($"{nameof(Challenge)}:{challenge.Id}", token: cancellationToken);
             await cache.RemoveAsync($"{nameof(ChallengeDetailsResponse)}:{challenge.Id}", token: cancellationToken);
             await cache.RemoveAsync($"{nameof(Challenge)}.{nameof(Challenge.Flags)}:{challenge.Id}",
                 token: cancellationToken);

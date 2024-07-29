@@ -43,7 +43,6 @@ public static class DeleteCategory
                 foreach (var file in challenge.ChallengeFiles)
                     await cache.RemoveAsync($"{nameof(ChallengeFile)}:{file.Id}", token: cancellationToken);
 
-                await cache.RemoveAsync($"{nameof(Challenge)}:{challenge.Id}", token: cancellationToken);
                 await cache.RemoveAsync($"{nameof(ChallengeDetailsResponse)}:{challenge.Id}", token: cancellationToken);
                 await cache.RemoveAsync($"{nameof(Challenge)}.{nameof(Challenge.Flags)}:{challenge.Id}",
                     token: cancellationToken);
