@@ -9,6 +9,10 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Challenges;
 
+/// <summary>
+/// Updates a challenge under a specified ID.
+/// Only users with manager or admin roles can access this endpoint.
+/// </summary>
 public static class UpdateChallenge
 {
     public record Command(

@@ -8,6 +8,10 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Categories;
 
+/// <summary>
+/// Deletes a category by ID.
+/// Only users with manager or admin roles can access this endpoint.
+/// </summary>
 public static class DeleteCategory
 {
     private static readonly Error NotFound = new("DeleteCategory.NotFound",

@@ -7,6 +7,10 @@ using Pwneu.Api.Shared.Entities;
 
 namespace Pwneu.Api.Features.Categories;
 
+/// <summary>
+/// Creates a category.
+/// Only users with manager or admin roles can access this endpoint.
+/// </summary>
 public static class CreateCategory
 {
     public record Command(string Name, string Description) : IRequest<Result<Guid>>;

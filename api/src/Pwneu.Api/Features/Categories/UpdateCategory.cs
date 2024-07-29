@@ -8,6 +8,10 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Categories;
 
+/// <summary>
+/// Updates a challenge under a specified ID.
+/// Only users with manager or admin roles can access this endpoint.
+/// </summary>
 public static class UpdateCategory
 {
     public record Command(Guid Id, string Name, string Description) : IRequest<Result>;

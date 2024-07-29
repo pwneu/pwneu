@@ -8,6 +8,10 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Challenges;
 
+/// <summary>
+/// Deletes a challenge by ID.
+/// Only users with manager or admin roles can access this endpoint.
+/// </summary>
 public static class DeleteChallenge
 {
     public record Command(Guid Id) : IRequest<Result>;

@@ -8,6 +8,9 @@ using Pwneu.Api.Shared.Entities;
 
 namespace Pwneu.Api.Features.Categories;
 
+/// <summary>
+/// Retrieves a paginated list of categories.
+/// </summary>
 public static class GetCategories
 {
     public record Query(

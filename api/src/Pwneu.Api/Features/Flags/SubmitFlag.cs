@@ -11,6 +11,10 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Flags;
 
+/// <summary>
+/// Submits a flag and stores the submission in the database for tracking user performance.
+/// Only users with a member role can access this endpoint.
+/// </summary>
 public static class SubmitFlag
 {
     public record Command(string UserId, Guid ChallengeId, string Value) : IRequest<Result<FlagStatus>>;

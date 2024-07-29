@@ -7,6 +7,10 @@ using Pwneu.Api.Shared.Entities;
 
 namespace Pwneu.Api.Features.Challenges;
 
+/// <summary>
+/// Creates a challenge under a specified category ID.
+/// Only users with manager or admin roles can access this endpoint.
+/// </summary>
 public static class CreateChallenge
 {
     public record Command(

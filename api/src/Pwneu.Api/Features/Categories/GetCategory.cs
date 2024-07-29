@@ -7,6 +7,9 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Categories;
 
+/// <summary>
+/// Retrieves a category by ID.
+/// </summary>
 public static class GetCategory
 {
     private static readonly Error NotFound = new("GetCategory.Null",
