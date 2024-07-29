@@ -54,7 +54,7 @@ public static class GetChallengeFile
                             : Results.File(result.Value.Data, result.Value.ContentType, result.Value.FileName);
                     })
                 .RequireAuthorization()
-                .WithTags(nameof(ChallengeFile));
+                .WithTags(nameof(ChallengeFiles));
         }
     }
 }

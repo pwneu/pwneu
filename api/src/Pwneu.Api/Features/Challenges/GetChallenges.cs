@@ -73,7 +73,7 @@ public static class GetChallenges
                         return result.IsFailure ? Results.StatusCode(500) : Results.Ok(result.Value);
                     })
                 .RequireAuthorization()
-                .WithTags(nameof(Challenge));
+                .WithTags(nameof(Challenges));
         }
     }
 }

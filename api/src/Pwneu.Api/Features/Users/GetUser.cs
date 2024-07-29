@@ -74,7 +74,7 @@ public static class GetUser
                     return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
                 })
                 .RequireAuthorization(Constants.ManagerAdminOnly)
-                .WithTags(nameof(User));
+                .WithTags(nameof(Users));
         }
     }
 }

@@ -82,7 +82,7 @@ public static class GetUsers
                         return result.IsFailure ? Results.StatusCode(500) : Results.Ok(result.Value);
                     })
                 .RequireAuthorization(Constants.ManagerAdminOnly)
-                .WithTags(nameof(User));
+                .WithTags(nameof(Users));
         }
     }
 }

@@ -85,7 +85,7 @@ public static class Login
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);
                 })
-                .WithTags("Auth");
+                .WithTags(nameof(Auths));
         }
     }
 

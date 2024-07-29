@@ -51,7 +51,7 @@ public static class GetChallenge
                     return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
                 })
                 .RequireAuthorization()
-                .WithTags(nameof(Challenge));
+                .WithTags(nameof(Challenges));
         }
     }
 }
