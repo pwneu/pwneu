@@ -16,6 +16,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasMany(ctg => ctg.Challenges)
             .WithOne(c => c.Category)
             .HasForeignKey(c => c.CategoryId)
+            .OnDelete(DeleteBehavior.Cascade)
             .IsRequired();
 
         builder
@@ -23,6 +24,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasMany(c => c.ChallengeFiles)
             .WithOne(cf => cf.Challenge)
             .HasForeignKey(cf => cf.ChallengeId)
+            .OnDelete(DeleteBehavior.Cascade)
             .IsRequired();
 
         builder

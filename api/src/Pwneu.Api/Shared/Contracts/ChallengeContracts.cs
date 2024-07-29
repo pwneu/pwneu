@@ -1,5 +1,7 @@
 namespace Pwneu.Api.Shared.Contracts;
 
+public record ChallengeResponse(Guid Id, string Name);
+
 public record ChallengeDetailsResponse(
     Guid Id,
     string Name,
