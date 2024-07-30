@@ -1,3 +1,5 @@
 namespace Pwneu.Api.Shared.Contracts;
 
-public record SolveResponse(Guid Id, string ChallengeName, int Points, DateTime SolvedAt);
+public record UserSolveResponse(Guid ChallengeId, string ChallengeName, DateTime SolvedAt);
+
+public record ChallengeSolveResponse(string UserId, string? UserName, DateTime SolvedAt);

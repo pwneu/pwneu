@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Data;
-using Pwneu.Api.Shared.Entities;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Users;
@@ -52,9 +51,10 @@ public static class GetUser
                 return await context
                     .Users
                     .Where(u => u.Id == request.Id.ToString())
-                    .Select(u => new UserDetailsResponse(u.Id, u.UserName, u.Email, u.FullName, u.CreatedAt, u.Solves
-                        .Select(s => new SolveResponse(s.ChallengeId, s.Challenge.Name, s.Challenge.Points, s.SolvedAt))
-                        .ToList()))
+                    .Select(u => new UserDetailsResponse(u.Id, u.UserName, u.Email, u.FullName, u.CreatedAt,
+                        u.Solves.Sum(s => s.Challenge.Points),
+                        u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Correct),
+                        u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Incorrect)))
                     .FirstOrDefaultAsync(cancellationToken);
             }, token: cancellationToken);
 

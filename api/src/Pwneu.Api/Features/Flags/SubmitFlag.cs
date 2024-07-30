@@ -14,6 +14,7 @@ namespace Pwneu.Api.Features.Flags;
 /// <summary>
 /// Submits a flag and stores the submission in the database for tracking user performance.
 /// Only users with a member role can access this endpoint.
+/// It uses a Write-through caching pattern to improve performance.
 /// </summary>
 public static class SubmitFlag
 {
@@ -41,16 +42,19 @@ public static class SubmitFlag
             if (!validationResult.IsValid)
                 return Result.Failure<FlagStatus>(new Error("SubmitFlag.Validation", validationResult.ToString()));
 
-            var userId = await cache.GetOrSetAsync($"{nameof(User)}:{request.UserId}", async _ =>
+            var user = await cache.GetOrSetAsync($"{nameof(UserDetailsResponse)}:{request.UserId}", async _ =>
             {
                 return await context
                     .Users
                     .Where(u => u.Id == request.UserId)
-                    .Select(u => u.Id)
+                    .Select(u => new UserDetailsResponse(u.Id, u.UserName, u.Email, u.FullName, u.CreatedAt,
+                        u.Solves.Sum(s => s.Challenge.Points),
+                        u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Correct),
+                        u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Incorrect)))
                     .FirstOrDefaultAsync(cancellationToken);
             }, token: cancellationToken);
 
-            if (string.IsNullOrEmpty(userId)) return Result.Failure<FlagStatus>(UserNotFound);
+            if (user is null) return Result.Failure<FlagStatus>(UserNotFound);
 
             var challenge = await cache.GetOrSetAsync($"{nameof(ChallengeDetailsResponse)}:{request.ChallengeId}",
                 async _ =>
@@ -79,11 +83,12 @@ public static class SubmitFlag
                         .FirstOrDefaultAsync(cancellationToken);
                 }, token: cancellationToken);
 
-            if (challengeFlags is null) return Result.Failure<FlagStatus>(NoChallengeFlags);
+            if (challengeFlags is null || challengeFlags.Count == 0)
+                return Result.Failure<FlagStatus>(NoChallengeFlags);
 
-            var attemptCountKey = $"attemptCount:{userId}&&{challenge.Id}";
-            var solveKey = $"solve:{userId}&&{challenge.Id}";
-            var recentSubmissionsKey = $"recentSubmissions:{userId}&&{challenge.Id}";
+            var attemptCountKey = $"attemptCount:{user.Id}&&{challenge.Id}";
+            var solveKey = $"solve:{user.Id}&&{challenge.Id}";
+            var recentSubmissionsKey = $"recentSubmissions:{user.Id}&&{challenge.Id}";
 
             var tenSecondsAgo = DateTime.UtcNow.AddSeconds(-10);
             int attemptCount = default;
@@ -108,7 +113,7 @@ public static class SubmitFlag
                 {
                     var solve = new Solve
                     {
-                        UserId = userId,
+                        UserId = user.Id,
                         ChallengeId = challenge.Id,
                         SolvedAt = DateTime.UtcNow
                     };
@@ -117,9 +122,6 @@ public static class SubmitFlag
                     await context.SaveChangesAsync(cancellationToken);
 
                     await cache.SetAsync(solveKey, true, token: cancellationToken);
-                    // Since a user has solved a flag, remove the cache on getting user information
-                    await cache.RemoveAsync($"{nameof(UserDetailsResponse)}:{userId}",
-                        token: cancellationToken);
                     break;
                 }
                 case FlagStatus.MaxAttemptReached
@@ -132,7 +134,7 @@ public static class SubmitFlag
             var flagSubmission = new FlagSubmission
             {
                 Id = Guid.NewGuid(),
-                UserId = userId,
+                UserId = user.Id,
                 ChallengeId = challenge.Id,
                 Value = request.Value,
                 SubmittedAt = DateTime.UtcNow,
@@ -147,6 +149,13 @@ public static class SubmitFlag
             recentSubmissions.Add(flagSubmission.SubmittedAt);
             await cache.SetAsync(recentSubmissionsKey, recentSubmissions, token: cancellationToken);
 
+            // Since a user has submitted a flag, update the cache on getting user information
+            await cache.SetAsync($"{nameof(UserDetailsResponse)}:{user.Id}",
+                flagStatus == FlagStatus.Correct
+                    ? user with { CorrectAttempts = user.CorrectAttempts + 1 }
+                    : user with { IncorrectAttempts = user.IncorrectAttempts + 1 },
+                token: cancellationToken);
+
             return flagStatus;
 
             async Task<bool> HasAlreadySolvedAsync()
@@ -155,7 +164,7 @@ public static class SubmitFlag
                 {
                     return await context
                         .Solves
-                        .AnyAsync(s => s.UserId == userId && s.ChallengeId == challenge.Id, cancellationToken);
+                        .AnyAsync(s => s.UserId == user.Id && s.ChallengeId == challenge.Id, cancellationToken);
                 }, token: cancellationToken);
             }
 
@@ -163,15 +172,13 @@ public static class SubmitFlag
             {
                 recentSubmissions = await cache.GetOrSetAsync(recentSubmissionsKey, async _ =>
                 {
-                    recentSubmissions = await context
+                    return await context
                         .FlagSubmissions
-                        .Where(fs => fs.UserId == userId &&
+                        .Where(fs => fs.UserId == user.Id &&
                                      fs.ChallengeId == challenge.Id &&
                                      fs.SubmittedAt >= tenSecondsAgo)
                         .Select(fs => fs.SubmittedAt)
                         .ToListAsync(cancellationToken);
-
-                    return recentSubmissions;
                 }, token: cancellationToken);
 
                 recentSubmissions = recentSubmissions.Where(rs => rs >= tenSecondsAgo).ToList();
@@ -183,12 +190,10 @@ public static class SubmitFlag
             {
                 attemptCount = await cache.GetOrSetAsync(attemptCountKey, async _ =>
                 {
-                    attemptCount = await context
+                    return await context
                         .FlagSubmissions
-                        .Where(fs => fs.UserId == userId && fs.ChallengeId == challenge.Id)
+                        .Where(fs => fs.UserId == user.Id && fs.ChallengeId == challenge.Id)
                         .CountAsync(cancellationToken);
-
-                    return attemptCount;
                 }, token: cancellationToken);
 
                 return challenge.MaxAttempts > 0 && attemptCount >= challenge.MaxAttempts;

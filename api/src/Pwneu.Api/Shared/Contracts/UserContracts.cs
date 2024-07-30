@@ -8,7 +8,9 @@ public record UserDetailsResponse(
     string? Email,
     string FullName,
     DateTime CreatedAt,
-    IEnumerable<SolveResponse> SolvedChallenges);
+    int TotalPoints,
+    int CorrectAttempts,
+    int IncorrectAttempts);
 
 public record CreateUserRequest(string UserName, string Email, string Password, string FullName);
 
