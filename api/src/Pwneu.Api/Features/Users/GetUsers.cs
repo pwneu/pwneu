@@ -15,7 +15,12 @@ namespace Pwneu.Api.Features.Users;
 /// </summary>
 public static class GetUsers
 {
-    public record Query(string? SearchTerm, string? SortBy, string? SortOrder, int? Page, int? PageSize)
+    public record Query(
+        string? SearchTerm = null,
+        string? SortBy = null,
+        string? SortOrder = null,
+        int? Page = null,
+        int? PageSize = null)
         : IRequest<Result<PagedList<UserResponse>>>;
 
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
@@ -43,8 +48,7 @@ public static class GetUsers
                     .ToListAsync(cancellationToken);
             }, token: cancellationToken);
 
-            var usersQuery = context.Users
-                .Where(u => !managerIds.Contains(u.Id));
+            var usersQuery = context.Users.Where(u => !managerIds.Contains(u.Id));
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
                 usersQuery = usersQuery.Where(u => u.UserName != default && u.UserName.Contains(request.SearchTerm));

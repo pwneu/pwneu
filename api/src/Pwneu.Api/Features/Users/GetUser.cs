@@ -13,7 +13,7 @@ namespace Pwneu.Api.Features.Users;
 /// </summary>
 public static class GetUser
 {
-    public record Query(Guid Id) : IRequest<Result<UserDetailsResponse>>;
+    public record Query(string Id) : IRequest<Result<UserDetailsResponse>>;
 
     private static readonly Error NotFound = new("GetUser.NotFound", "User not found");
 
@@ -42,7 +42,7 @@ public static class GetUser
                     .ToListAsync(cancellationToken);
             }, token: cancellationToken);
 
-            if (managerIds.Contains(request.Id.ToString()))
+            if (managerIds.Contains(request.Id))
                 return Result.Failure<UserDetailsResponse>(NotFound);
 
             // TODO -- Check for bugs in cache invalidations
@@ -50,7 +50,7 @@ public static class GetUser
             {
                 return await context
                     .Users
-                    .Where(u => u.Id == request.Id.ToString())
+                    .Where(u => u.Id == request.Id)
                     .Select(u => new UserDetailsResponse(u.Id, u.UserName, u.Email, u.FullName, u.CreatedAt,
                         u.Solves.Sum(s => s.Challenge.Points),
                         u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Correct),
@@ -68,7 +68,7 @@ public static class GetUser
         {
             app.MapGet("users/{id:Guid}", async (Guid id, ISender sender) =>
                 {
-                    var query = new Query(id);
+                    var query = new Query(id.ToString());
                     var result = await sender.Send(query);
 
                     return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);

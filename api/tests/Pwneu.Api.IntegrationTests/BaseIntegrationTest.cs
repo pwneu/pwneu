@@ -21,6 +21,7 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
         Sender = _scope.ServiceProvider.GetRequiredService<ISender>();
         DbContext = _scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Cache = _scope.ServiceProvider.GetRequiredService<IFusionCache>();
+        UserManager = _scope.ServiceProvider.GetRequiredService<UserManager<User>>();
 
         AssertionOptions.AssertEquivalencyUsing(options =>
         {
@@ -34,6 +35,7 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
     protected User TestUser { get; private set; } = null!;
     protected ISender Sender { get; }
     protected IFusionCache Cache { get; }
+    protected UserManager<User> UserManager { get; }
     protected ApplicationDbContext DbContext { get; }
     protected Faker F { get; } = new();
 
@@ -42,17 +44,17 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
         await DbContext.Database.EnsureCreatedAsync();
 
         await _scope.ServiceProvider.SeedRolesAsync();
+        await _scope.ServiceProvider.SeedAdminAsync();
 
         var user = new User { UserName = "test" };
-        var userManager = _scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        var createUser = await userManager.CreateAsync(user, Constants.DefaultAdminPassword);
+        var createUser = await UserManager.CreateAsync(user, Constants.DefaultAdminPassword);
 
-        var addRole = await userManager.AddToRoleAsync(user, Constants.Member);
+        var addRole = await UserManager.AddToRoleAsync(user, Constants.Member);
 
         if (!createUser.Succeeded || !addRole.Succeeded)
             throw new InvalidOperationException("Cannot create test user");
 
-        TestUser = await userManager.FindByNameAsync("test") ??
+        TestUser = await UserManager.FindByNameAsync("test") ??
                    throw new InvalidOperationException($"Cannot get test user");
     }
 
