@@ -10,6 +10,7 @@ public record ChallengeDetailsResponse(
     bool DeadlineEnabled,
     DateTime Deadline,
     int MaxAttempts,
+    int SolveCount,
     IEnumerable<ChallengeFileResponse> ChallengeFiles);
 
 public record CreateChallengeRequest(

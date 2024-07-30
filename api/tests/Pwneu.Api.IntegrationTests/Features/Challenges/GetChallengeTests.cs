@@ -29,7 +29,7 @@ public class GetChallengeTests(IntegrationTestsWebAppFactory factory) : BaseInte
 
         var challenge = new ChallengeDetailsResponse(challengeId, createChallenge.Name, createChallenge.Description,
             createChallenge.Points, createChallenge.DeadlineEnabled, createChallenge.Deadline,
-            createChallenge.MaxAttempts, []);
+            createChallenge.MaxAttempts, 0, []);
 
         // Act
         var getChallenge = new GetChallenge.Query(challengeId);

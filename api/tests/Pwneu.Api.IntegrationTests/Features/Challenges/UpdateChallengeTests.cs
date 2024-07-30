@@ -120,6 +120,7 @@ public class UpdateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
             DeadlineEnabled: F.Random.Bool(),
             Deadline: DateTime.UtcNow,
             MaxAttempts: F.Random.Int(1, 10),
+            SolveCount: 0,
             ChallengeFiles: []);
 
         // Act
@@ -139,7 +140,7 @@ public class UpdateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
             .Where(c => c.Id == challenge.Id)
             .Include(c => c.ChallengeFiles)
             .Select(c => new ChallengeDetailsResponse(c.Id, c.Name, c.Description, c.Points, c.DeadlineEnabled,
-                c.Deadline, c.MaxAttempts, c.ChallengeFiles
+                c.Deadline, c.MaxAttempts, 0, c.ChallengeFiles
                     .Select(cf => new ChallengeFileResponse(cf.Id, cf.FileName))
                     .ToList()))
             .FirstOrDefaultAsync();

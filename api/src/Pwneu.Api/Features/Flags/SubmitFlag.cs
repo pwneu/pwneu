@@ -64,7 +64,7 @@ public static class SubmitFlag
                         .Where(c => c.Id == request.ChallengeId)
                         .Include(c => c.ChallengeFiles)
                         .Select(c => new ChallengeDetailsResponse(c.Id, c.Name, c.Description, c.Points,
-                            c.DeadlineEnabled, c.Deadline, c.MaxAttempts, c.ChallengeFiles
+                            c.DeadlineEnabled, c.Deadline, c.MaxAttempts, c.Solves.Count, c.ChallengeFiles
                                 .Select(cf => new ChallengeFileResponse(cf.Id, cf.FileName))
                                 .ToList()
                         ))
@@ -122,6 +122,8 @@ public static class SubmitFlag
                     await context.SaveChangesAsync(cancellationToken);
 
                     await cache.SetAsync(solveKey, true, token: cancellationToken);
+                    await cache.SetAsync($"{nameof(ChallengeDetailsResponse)}:{request.ChallengeId}",
+                        challenge with { SolveCount = challenge.SolveCount + 1 }, token: cancellationToken);
                     break;
                 }
                 case FlagStatus.MaxAttemptReached
