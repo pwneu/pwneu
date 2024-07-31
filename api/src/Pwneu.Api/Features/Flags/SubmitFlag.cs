@@ -42,6 +42,7 @@ public static class SubmitFlag
             if (!validationResult.IsValid)
                 return Result.Failure<FlagStatus>(new Error("SubmitFlag.Validation", validationResult.ToString()));
 
+            // Get user details in the cache or the database.
             var user = await cache.GetOrSetAsync($"{nameof(UserDetailsResponse)}:{request.UserId}", async _ =>
                 await context
                     .Users
@@ -52,8 +53,13 @@ public static class SubmitFlag
                         u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Incorrect)))
                     .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
+            // Check if the user exists.
             if (user is null) return Result.Failure<FlagStatus>(UserNotFound);
 
+            // Get the challenge in the cache or the database.
+            // We're using the cache of ChallengeDetailsResponse 
+            // because the user has already loaded the challenge details in the cache
+            // before submitting a flag.
             var challenge = await cache.GetOrSetAsync($"{nameof(ChallengeDetailsResponse)}:{request.ChallengeId}",
                 async _ =>
                     await context
@@ -67,8 +73,10 @@ public static class SubmitFlag
                         ))
                         .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
+            // Check if the challenge exists.
             if (challenge is null) return Result.Failure<FlagStatus>(ChallengeNotFound);
 
+            // Get the challenge flags in the cache or the database.
             var challengeFlags = await cache.GetOrSetAsync(
                 $"{nameof(Challenge)}.{nameof(Challenge.Flags)}:{request.ChallengeId}", async _ =>
                     await context
@@ -77,56 +85,52 @@ public static class SubmitFlag
                         .Select(c => c.Flags)
                         .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
+            // Check if there are flags in the challenge.
             if (challengeFlags is null || challengeFlags.Count == 0)
                 return Result.Failure<FlagStatus>(NoChallengeFlags);
 
+            // Initialize cache keys (required for the methods below after the return statement).
             var attemptCountKey = $"attemptCount:{user.Id}&&{challenge.Id}";
             var solveKey = $"solve:{user.Id}&&{challenge.Id}";
             var recentSubmissionsKey = $"recentSubmissions:{user.Id}&&{challenge.Id}";
 
-            var tenSecondsAgo = DateTime.UtcNow.AddSeconds(-10);
+            // Cache variables for the methods below.
             int attemptCount = default;
             List<DateTime> recentSubmissions = [];
-            FlagStatus flagStatus;
+            var flagStatus = FlagStatus.Incorrect;
 
+            // Flag value checking.
             if (await HasAlreadySolvedAsync())
-                flagStatus = FlagStatus.AlreadySolved;
-            else if (await IsSubmittingTooOftenAsync())
-                flagStatus = FlagStatus.SubmittingTooOften;
-            else if (challenge.DeadlineEnabled && challenge.Deadline < DateTime.Now)
-                flagStatus = FlagStatus.DeadlineReached;
-            else if (await IsMaxAttemptReachedAsync())
-                flagStatus = FlagStatus.MaxAttemptReached;
-            else if (challengeFlags.Any(f => f.Equals(request.Value)))
-                flagStatus = FlagStatus.Correct;
-            else flagStatus = FlagStatus.Incorrect;
-
-            switch (flagStatus)
+                return FlagStatus.AlreadySolved;
+            if (await IsSubmittingTooOftenAsync())
+                return FlagStatus.SubmittingTooOften;
+            if (challenge.DeadlineEnabled &&
+                challenge.Deadline < DateTime.Now) // Check if the deadline has been reached.
+                return FlagStatus.DeadlineReached;
+            if (await IsMaxAttemptReachedAsync())
+                return FlagStatus.MaxAttemptReached;
+            if (challengeFlags.Any(f => f.Equals(request.Value))) // Check if the submission is correct.
             {
-                case FlagStatus.Correct:
+                flagStatus = FlagStatus.Correct;
+                var solve = new Solve
                 {
-                    var solve = new Solve
-                    {
-                        UserId = user.Id,
-                        ChallengeId = challenge.Id,
-                        SolvedAt = DateTime.UtcNow
-                    };
+                    UserId = user.Id,
+                    ChallengeId = challenge.Id,
+                    SolvedAt = DateTime.UtcNow
+                };
 
-                    context.Solves.Add(solve);
-                    await context.SaveChangesAsync(cancellationToken);
+                // Save the submission to the Solves table.
+                context.Solves.Add(solve);
+                await context.SaveChangesAsync(cancellationToken);
 
-                    await cache.SetAsync(solveKey, true, token: cancellationToken);
-                    await cache.SetAsync($"{nameof(ChallengeDetailsResponse)}:{request.ChallengeId}",
-                        challenge with { SolveCount = challenge.SolveCount + 1 }, token: cancellationToken);
-                    break;
-                }
-                case FlagStatus.MaxAttemptReached
-                    or FlagStatus.AlreadySolved
-                    or FlagStatus.DeadlineReached
-                    or FlagStatus.SubmittingTooOften:
-                    return flagStatus;
+                // Since the user has solved the challenge, update the cache of checking if already solved to true.
+                await cache.SetAsync(solveKey, true, token: cancellationToken);
+                // Increase the count of users who have solved the challenge in the cache.
+                await cache.SetAsync($"{nameof(ChallengeDetailsResponse)}:{request.ChallengeId}",
+                    challenge with { SolveCount = challenge.SolveCount + 1 }, token: cancellationToken);
             }
 
+            // If no conditions have been reached, the flag status must be incorrect at this point.
             var flagSubmission = new FlagSubmission
             {
                 Id = Guid.NewGuid(),
@@ -137,15 +141,20 @@ public static class SubmitFlag
                 FlagStatus = flagStatus,
             };
 
+            // Save the submission to the database.
             context.FlagSubmissions.Add(flagSubmission);
             await context.SaveChangesAsync(cancellationToken);
 
+            // Increase attempt count from the cache.
             await cache.SetAsync(attemptCountKey, attemptCount + 1, token: cancellationToken);
 
+            // Add the current submission to recent submissions and update the cache.
+            // Recent submissions in the cache
+            // which isn't ten seconds ago will be cleaned up in the method below.
             recentSubmissions.Add(flagSubmission.SubmittedAt);
             await cache.SetAsync(recentSubmissionsKey, recentSubmissions, token: cancellationToken);
 
-            // Since a user has submitted a flag, update the cache on getting user information
+            // Since a user has submitted a flag, update the cache on getting user details.
             await cache.SetAsync($"{nameof(UserDetailsResponse)}:{user.Id}",
                 flagStatus == FlagStatus.Correct
                     ? user with { CorrectAttempts = user.CorrectAttempts + 1 }
@@ -165,6 +174,8 @@ public static class SubmitFlag
 
             async Task<bool> IsSubmittingTooOftenAsync()
             {
+                var tenSecondsAgo = DateTime.UtcNow.AddSeconds(-10);
+                // Get all the submissions of the user where the submission date is 10 seconds ago.
                 recentSubmissions = await cache.GetOrSetAsync(recentSubmissionsKey, async _ =>
                     await context
                         .FlagSubmissions
@@ -174,13 +185,18 @@ public static class SubmitFlag
                         .Select(fs => fs.SubmittedAt)
                         .ToListAsync(cancellationToken), token: cancellationToken);
 
+                // Remove all submissions that aren't ten seconds ago.
+                // This is useful when there's a cache hit.
                 recentSubmissions = recentSubmissions.Where(rs => rs >= tenSecondsAgo).ToList();
 
+                // If the user has submitted more than 3 times in the last 10 seconds,
+                // that means that the user is submitting too often.
                 return recentSubmissions.Count > 3;
             }
 
             async Task<bool> IsMaxAttemptReachedAsync()
             {
+                // Update the attempt count first
                 attemptCount = await cache.GetOrSetAsync(attemptCountKey, async _ =>
                     await context
                         .FlagSubmissions
@@ -188,6 +204,7 @@ public static class SubmitFlag
                                      fs.ChallengeId == challenge.Id)
                         .CountAsync(cancellationToken), token: cancellationToken);
 
+                // If the max attempts of the challenge is 0, it means that the challenge has unlimited attempts.
                 return challenge.MaxAttempts > 0 && attemptCount >= challenge.MaxAttempts;
             }
         }
@@ -197,11 +214,13 @@ public static class SubmitFlag
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("challenges/{challengeId:Guid}/flags/submit",
+            app.MapPost("challenges/{challengeId:Guid}/submit",
                     async (Guid challengeId, string value, ClaimsPrincipal claims, ISender sender) =>
                     {
                         var userId = claims.GetLoggedInUserId<string>();
-                        var command = new Command(userId!, challengeId, value);
+                        if (userId is null) return Results.BadRequest();
+
+                        var command = new Command(userId, challengeId, value);
                         var result = await sender.Send(command);
 
                         return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value.ToString());
