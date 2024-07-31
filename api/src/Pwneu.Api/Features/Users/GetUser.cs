@@ -24,19 +24,15 @@ public static class GetUser
         {
             var managerIds = await cache.GetOrSetAsync("managerIds", async _ =>
             {
-                var managerRoleIds = await context
-                    .Roles
-                    .Where(r =>
-                        r.Name != null &&
-                        (r.Name.Equals(Constants.Manager) ||
-                         r.Name.Equals(Constants.Admin)))
-                    .Select(r => r.Id)
-                    .Distinct()
-                    .ToListAsync(cancellationToken);
-
                 return await context
                     .UserRoles
-                    .Where(ur => managerRoleIds.Contains(ur.RoleId))
+                    .Where(ur => context.Roles
+                        .Where(r =>
+                            r.Name != null &&
+                            (r.Name.Equals(Constants.Manager) ||
+                             r.Name.Equals(Constants.Admin)))
+                        .Select(r => r.Id)
+                        .Contains(ur.RoleId))
                     .Select(ur => ur.UserId)
                     .Distinct()
                     .ToListAsync(cancellationToken);
