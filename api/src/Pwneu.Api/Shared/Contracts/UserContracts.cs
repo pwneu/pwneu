@@ -12,6 +12,8 @@ public record UserDetailsResponse(
     int CorrectAttempts,
     int IncorrectAttempts);
 
+public record UserStatsResponse(IEnumerable<CategoryEvalResponse> CategoryEvaluations);
+
 public record CreateUserRequest(string UserName, string Email, string Password, string FullName);
 
 public record LoginRequest(string UserName, string Password);
