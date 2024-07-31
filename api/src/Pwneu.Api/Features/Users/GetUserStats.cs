@@ -19,8 +19,7 @@ public static class GetUserStats
         public async Task<Result<UserStatsResponse>> Handle(Query request, CancellationToken cancellationToken)
         {
             var managerIds = await cache.GetOrSetAsync("managerIds", async _ =>
-            {
-                return await context
+                await context
                     .UserRoles
                     .Where(ur => context.Roles
                         .Where(r =>
@@ -31,8 +30,7 @@ public static class GetUserStats
                         .Contains(ur.RoleId))
                     .Select(ur => ur.UserId)
                     .Distinct()
-                    .ToListAsync(cancellationToken);
-            }, token: cancellationToken);
+                    .ToListAsync(cancellationToken), token: cancellationToken);
 
             if (managerIds.Contains(request.Id))
                 return Result.Failure<UserStatsResponse>(NotFound);
@@ -40,8 +38,7 @@ public static class GetUserStats
             // TODO -- Get stats in categories one by one for efficient caching
             // TODO -- Invalidate cache user stats cache
             var userStats = await cache.GetOrSetAsync($"{nameof(UserStatsResponse)}:{request.Id}", async _ =>
-            {
-                return new UserStatsResponse(await context
+                new UserStatsResponse(await context
                     .Categories
                     .Select(c => new CategoryEvalResponse(
                         c.Id,
@@ -56,8 +53,7 @@ public static class GetUserStats
                         c.Challenges
                             .SelectMany(ch => ch.FlagSubmissions)
                             .Count(fs => fs.UserId == request.Id && fs.FlagStatus == FlagStatus.Incorrect)))
-                    .ToListAsync(cancellationToken));
-            }, token: cancellationToken);
+                    .ToListAsync(cancellationToken)), token: cancellationToken);
 
             return userStats;
         }

@@ -20,24 +20,22 @@ public static class GetChallenge
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
         : IRequestHandler<Query, Result<ChallengeDetailsResponse>>
     {
-        public async Task<Result<ChallengeDetailsResponse>> Handle(Query request, CancellationToken cancellationToken)
+        public async Task<Result<ChallengeDetailsResponse>> Handle(Query request,
+            CancellationToken cancellationToken)
         {
-            var challengeResponse = await cache.GetOrSetAsync($"{nameof(ChallengeDetailsResponse)}:{request.Id}",
-                async _ =>
-                {
-                    return await context
-                        .Challenges
-                        .Where(c => c.Id == request.Id)
-                        .Include(c => c.ChallengeFiles)
-                        .Select(c => new ChallengeDetailsResponse(c.Id, c.Name, c.Description, c.Points,
-                            c.DeadlineEnabled, c.Deadline, c.MaxAttempts, c.Solves.Count, c.ChallengeFiles
-                                .Select(cf => new ChallengeFileResponse(cf.Id, cf.FileName))
-                                .ToList()
-                        ))
-                        .FirstOrDefaultAsync(cancellationToken);
-                }, token: cancellationToken);
+            var challenge = await cache.GetOrSetAsync($"{nameof(ChallengeDetailsResponse)}:{request.Id}", async _ =>
+                await context
+                    .Challenges
+                    .Where(c => c.Id == request.Id)
+                    .Include(c => c.ChallengeFiles)
+                    .Select(c => new ChallengeDetailsResponse(c.Id, c.Name, c.Description, c.Points,
+                        c.DeadlineEnabled, c.Deadline, c.MaxAttempts, c.Solves.Count, c.ChallengeFiles
+                            .Select(cf => new ChallengeFileResponse(cf.Id, cf.FileName))
+                            .ToList()
+                    ))
+                    .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
-            return challengeResponse ?? Result.Failure<ChallengeDetailsResponse>(NotFound);
+            return challenge ?? Result.Failure<ChallengeDetailsResponse>(NotFound);
         }
     }
 

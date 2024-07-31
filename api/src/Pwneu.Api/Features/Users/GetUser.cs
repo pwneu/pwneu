@@ -23,8 +23,7 @@ public static class GetUser
         public async Task<Result<UserDetailsResponse>> Handle(Query request, CancellationToken cancellationToken)
         {
             var managerIds = await cache.GetOrSetAsync("managerIds", async _ =>
-            {
-                return await context
+                await context
                     .UserRoles
                     .Where(ur => context.Roles
                         .Where(r =>
@@ -35,24 +34,21 @@ public static class GetUser
                         .Contains(ur.RoleId))
                     .Select(ur => ur.UserId)
                     .Distinct()
-                    .ToListAsync(cancellationToken);
-            }, token: cancellationToken);
+                    .ToListAsync(cancellationToken), token: cancellationToken);
 
             if (managerIds.Contains(request.Id))
                 return Result.Failure<UserDetailsResponse>(NotFound);
 
             // TODO -- Check for bugs in cache invalidations
             var user = await cache.GetOrSetAsync($"{nameof(UserDetailsResponse)}:{request.Id}", async _ =>
-            {
-                return await context
+                await context
                     .Users
                     .Where(u => u.Id == request.Id)
                     .Select(u => new UserDetailsResponse(u.Id, u.UserName, u.Email, u.FullName, u.CreatedAt,
                         u.Solves.Sum(s => s.Challenge.Points),
                         u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Correct),
                         u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Incorrect)))
-                    .FirstOrDefaultAsync(cancellationToken);
-            }, token: cancellationToken);
+                    .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
             return user ?? Result.Failure<UserDetailsResponse>(NotFound);
         }

@@ -25,13 +25,11 @@ public static class GetChallengeFile
         {
             var challengeFileDataResponse = await cache.GetOrSetAsync($"{nameof(ChallengeFile)}:{request.Id}",
                 async _ =>
-                {
-                    return await context
+                    await context
                         .ChallengeFiles
                         .Where(cf => cf.Id == request.Id)
                         .Select(cf => new ChallengeFileDataResponse(cf.FileName, cf.ContentType, cf.Data))
-                        .FirstOrDefaultAsync(cancellationToken);
-                }, token: cancellationToken);
+                        .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
             return challengeFileDataResponse ?? Result.Failure<ChallengeFileDataResponse>(NotFound);
         }

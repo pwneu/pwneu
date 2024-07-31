@@ -23,17 +23,15 @@ public static class GetChallengeFlags
     {
         public async Task<Result<IEnumerable<string>>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var challengeFlagsResponse = await cache.GetOrSetAsync(
+            var challengeFlags = await cache.GetOrSetAsync(
                 $"{nameof(Challenge)}.{nameof(Challenge.Flags)}:{request.Id}", async _ =>
-                {
-                    return await context
+                    await context
                         .Challenges
                         .Where(c => c.Id == request.Id)
                         .Select(c => c.Flags)
-                        .FirstOrDefaultAsync(cancellationToken);
-                }, token: cancellationToken);
+                        .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
-            return challengeFlagsResponse ?? Result.Failure<IEnumerable<string>>(ChallengeNotFound);
+            return challengeFlags ?? Result.Failure<IEnumerable<string>>(ChallengeNotFound);
         }
     }
 

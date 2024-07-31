@@ -14,7 +14,7 @@ namespace Pwneu.Api.Features.Flags;
 /// <summary>
 /// Submits a flag and stores the submission in the database for tracking user performance.
 /// Only users with a member role can access this endpoint.
-/// It uses a Write-through caching pattern to improve performance.
+/// It uses Write-through caching patterns to improve performance.
 /// </summary>
 public static class SubmitFlag
 {
@@ -43,23 +43,20 @@ public static class SubmitFlag
                 return Result.Failure<FlagStatus>(new Error("SubmitFlag.Validation", validationResult.ToString()));
 
             var user = await cache.GetOrSetAsync($"{nameof(UserDetailsResponse)}:{request.UserId}", async _ =>
-            {
-                return await context
+                await context
                     .Users
                     .Where(u => u.Id == request.UserId)
                     .Select(u => new UserDetailsResponse(u.Id, u.UserName, u.Email, u.FullName, u.CreatedAt,
                         u.Solves.Sum(s => s.Challenge.Points),
                         u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Correct),
                         u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Incorrect)))
-                    .FirstOrDefaultAsync(cancellationToken);
-            }, token: cancellationToken);
+                    .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
             if (user is null) return Result.Failure<FlagStatus>(UserNotFound);
 
             var challenge = await cache.GetOrSetAsync($"{nameof(ChallengeDetailsResponse)}:{request.ChallengeId}",
                 async _ =>
-                {
-                    return await context
+                    await context
                         .Challenges
                         .Where(c => c.Id == request.ChallengeId)
                         .Include(c => c.ChallengeFiles)
@@ -68,20 +65,17 @@ public static class SubmitFlag
                                 .Select(cf => new ChallengeFileResponse(cf.Id, cf.FileName))
                                 .ToList()
                         ))
-                        .FirstOrDefaultAsync(cancellationToken);
-                }, token: cancellationToken);
+                        .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
             if (challenge is null) return Result.Failure<FlagStatus>(ChallengeNotFound);
 
             var challengeFlags = await cache.GetOrSetAsync(
                 $"{nameof(Challenge)}.{nameof(Challenge.Flags)}:{request.ChallengeId}", async _ =>
-                {
-                    return await context
+                    await context
                         .Challenges
                         .Where(c => c.Id == request.ChallengeId)
                         .Select(c => c.Flags)
-                        .FirstOrDefaultAsync(cancellationToken);
-                }, token: cancellationToken);
+                        .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
             if (challengeFlags is null || challengeFlags.Count == 0)
                 return Result.Failure<FlagStatus>(NoChallengeFlags);
@@ -163,25 +157,22 @@ public static class SubmitFlag
             async Task<bool> HasAlreadySolvedAsync()
             {
                 return await cache.GetOrSetAsync(solveKey, async _ =>
-                {
-                    return await context
+                    await context
                         .Solves
-                        .AnyAsync(s => s.UserId == user.Id && s.ChallengeId == challenge.Id, cancellationToken);
-                }, token: cancellationToken);
+                        .AnyAsync(s => s.UserId == user.Id &&
+                                       s.ChallengeId == challenge.Id, cancellationToken), token: cancellationToken);
             }
 
             async Task<bool> IsSubmittingTooOftenAsync()
             {
                 recentSubmissions = await cache.GetOrSetAsync(recentSubmissionsKey, async _ =>
-                {
-                    return await context
+                    await context
                         .FlagSubmissions
                         .Where(fs => fs.UserId == user.Id &&
                                      fs.ChallengeId == challenge.Id &&
                                      fs.SubmittedAt >= tenSecondsAgo)
                         .Select(fs => fs.SubmittedAt)
-                        .ToListAsync(cancellationToken);
-                }, token: cancellationToken);
+                        .ToListAsync(cancellationToken), token: cancellationToken);
 
                 recentSubmissions = recentSubmissions.Where(rs => rs >= tenSecondsAgo).ToList();
 
@@ -191,12 +182,11 @@ public static class SubmitFlag
             async Task<bool> IsMaxAttemptReachedAsync()
             {
                 attemptCount = await cache.GetOrSetAsync(attemptCountKey, async _ =>
-                {
-                    return await context
+                    await context
                         .FlagSubmissions
-                        .Where(fs => fs.UserId == user.Id && fs.ChallengeId == challenge.Id)
-                        .CountAsync(cancellationToken);
-                }, token: cancellationToken);
+                        .Where(fs => fs.UserId == user.Id &&
+                                     fs.ChallengeId == challenge.Id)
+                        .CountAsync(cancellationToken), token: cancellationToken);
 
                 return challenge.MaxAttempts > 0 && attemptCount >= challenge.MaxAttempts;
             }

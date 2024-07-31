@@ -29,8 +29,7 @@ public static class GetUsers
         public async Task<Result<PagedList<UserResponse>>> Handle(Query request, CancellationToken cancellationToken)
         {
             var managerIds = await cache.GetOrSetAsync("managerIds", async _ =>
-            {
-                return await context
+                await context
                     .UserRoles
                     .Where(ur => context.Roles
                         .Where(r =>
@@ -41,8 +40,7 @@ public static class GetUsers
                         .Contains(ur.RoleId))
                     .Select(ur => ur.UserId)
                     .Distinct()
-                    .ToListAsync(cancellationToken);
-            }, token: cancellationToken);
+                    .ToListAsync(cancellationToken), token: cancellationToken);
 
             var usersQuery = context.Users.Where(u => !managerIds.Contains(u.Id));
 
