@@ -1,6 +1,10 @@
 namespace Pwneu.Api.Shared.Contracts;
 
-public record CategoryResponse(Guid Id, string Name, string Description, IEnumerable<ChallengeResponse> Challenges);
+public record CategoryResponse(
+    Guid Id,
+    string Name,
+    string Description,
+    IEnumerable<ChallengeResponse> Challenges);
 
 public record CategoryEvalResponse(
     Guid CategoryId,
