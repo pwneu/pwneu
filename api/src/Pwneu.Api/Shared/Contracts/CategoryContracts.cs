@@ -7,11 +7,11 @@ public record CategoryResponse(
     IEnumerable<ChallengeResponse> Challenges);
 
 public record CategoryEvalResponse(
+    string UserId,
     Guid CategoryId,
     string CategoryName,
     int TotalChallenges,
     int TotalSolves,
-    int CorrectAttempts,
     int IncorrectAttempts);
 
 public record CreateCategoryRequest(string Name, string Description);

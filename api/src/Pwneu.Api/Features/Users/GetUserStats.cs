@@ -35,27 +35,55 @@ public static class GetUserStats
             if (managerIds.Contains(request.Id))
                 return Result.Failure<UserStatsResponse>(NotFound);
 
-            // TODO -- Get stats in categories one by one for efficient caching
-            // TODO -- Invalidate cache user stats cache
             var userStats = await cache.GetOrSetAsync($"{nameof(UserStatsResponse)}:{request.Id}", async _ =>
                 new UserStatsResponse(await context
                     .Categories
-                    .Select(c => new CategoryEvalResponse(
-                        c.Id,
-                        c.Name,
-                        c.Challenges.Count,
-                        c.Challenges
+                    .Select(c => new CategoryEvalResponse(request.Id, c.Id, c.Name, c.Challenges.Count, c.Challenges
                             .SelectMany(ch => ch.Solves)
                             .Count(s => s.UserId == request.Id),
-                        c.Challenges
-                            .SelectMany(ch => ch.FlagSubmissions)
-                            .Count(fs => fs.UserId == request.Id && fs.FlagStatus == FlagStatus.Correct),
                         c.Challenges
                             .SelectMany(ch => ch.FlagSubmissions)
                             .Count(fs => fs.UserId == request.Id && fs.FlagStatus == FlagStatus.Incorrect)))
                     .ToListAsync(cancellationToken)), token: cancellationToken);
 
             return userStats;
+
+            // Get all category Ids and evaluate each (multiple queries)
+            // Use this just in case if the current approach is slower
+#pragma warning disable CS8321
+            async Task<UserStatsResponse> GetEvaluations()
+#pragma warning restore CS8321
+            {
+                // For invalidating cache
+                // await cache.RemoveAsync($"categoryIds", token: cancellationToken);
+                var categoryIds = await cache.GetOrSetAsync($"categoryIds", async _ =>
+                    await context
+                        .Categories
+                        .Select(c => c.Id)
+                        .ToListAsync(cancellationToken), token: cancellationToken);
+
+                var evaluations = new List<CategoryEvalResponse>();
+                foreach (var categoryId in categoryIds)
+                {
+                    var categoryEval = await cache.GetOrSetAsync($"category:{categoryId}:eval:{request.Id}", async _ =>
+                        await context
+                            .Categories
+                            .Where(c => c.Id == categoryId)
+                            .Select(c => new CategoryEvalResponse(request.Id, c.Id, c.Name, c.Challenges.Count,
+                                c.Challenges
+                                    .SelectMany(ch => ch.Solves)
+                                    .Count(s => s.UserId == request.Id),
+                                c.Challenges
+                                    .SelectMany(ch => ch.FlagSubmissions)
+                                    .Count(fs => fs.UserId == request.Id && fs.FlagStatus == FlagStatus.Incorrect)))
+                            .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
+
+                    if (categoryEval is not null)
+                        evaluations.Add(categoryEval);
+                }
+
+                return new UserStatsResponse(evaluations);
+            }
         }
     }
 
