@@ -15,6 +15,7 @@ using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
 using Pwneu.Api.Shared.Extensions;
+using Pwneu.Api.Shared.Services;
 using Swashbuckle.AspNetCore.Filters;
 using ZiggyCreatures.Caching.Fusion;
 using ZiggyCreatures.Caching.Fusion.Serialization.NewtonsoftJson;
@@ -130,6 +131,8 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy(Consts.AdminOnly, policy => { policy.RequireRole(Consts.Admin); })
     .AddPolicy(Consts.ManagerAdminOnly, policy => { policy.RequireRole(Consts.Manager); })
     .AddPolicy(Consts.MemberOnly, policy => { policy.RequireRole(Consts.Member); });
+
+builder.Services.AddScoped<IAccessControl, AccessControl>();
 
 var app = builder.Build();
 

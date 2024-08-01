@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Data;
+using Pwneu.Api.Shared.Services;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Users;
@@ -17,24 +18,12 @@ public static class GetUser
 
     private static readonly Error NotFound = new("GetUser.NotFound", "User not found");
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, IAccessControl accessControl)
         : IRequestHandler<Query, Result<UserDetailsResponse>>
     {
         public async Task<Result<UserDetailsResponse>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var managerIds = await cache.GetOrSetAsync("managerIds", async _ =>
-                await context
-                    .UserRoles
-                    .Where(ur => context.Roles
-                        .Where(r =>
-                            r.Name != null &&
-                            (r.Name.Equals(Consts.Manager) ||
-                             r.Name.Equals(Consts.Admin)))
-                        .Select(r => r.Id)
-                        .Contains(ur.RoleId))
-                    .Select(ur => ur.UserId)
-                    .Distinct()
-                    .ToListAsync(cancellationToken), token: cancellationToken);
+            var managerIds = await accessControl.GetManagerIdsAsync(cancellationToken);
 
             if (managerIds.Contains(request.Id))
                 return Result.Failure<UserDetailsResponse>(NotFound);

@@ -5,6 +5,7 @@ using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
+using Pwneu.Api.Shared.Services;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Users;
@@ -23,24 +24,12 @@ public static class GetUsers
         int? PageSize = null)
         : IRequest<Result<PagedList<UserResponse>>>;
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, IAccessControl accessControl)
         : IRequestHandler<Query, Result<PagedList<UserResponse>>>
     {
         public async Task<Result<PagedList<UserResponse>>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var managerIds = await cache.GetOrSetAsync("managerIds", async _ =>
-                await context
-                    .UserRoles
-                    .Where(ur => context.Roles
-                        .Where(r =>
-                            r.Name != null &&
-                            (r.Name.Equals(Consts.Manager) ||
-                             r.Name.Equals(Consts.Admin)))
-                        .Select(r => r.Id)
-                        .Contains(ur.RoleId))
-                    .Select(ur => ur.UserId)
-                    .Distinct()
-                    .ToListAsync(cancellationToken), token: cancellationToken);
+            var managerIds = await accessControl.GetManagerIdsAsync(cancellationToken);
 
             var usersQuery = context.Users.Where(u => !managerIds.Contains(u.Id));
 
