@@ -12,7 +12,7 @@ public record UserDetailsResponse(
     int CorrectAttempts,
     int IncorrectAttempts);
 
-public record UserStatsResponse(IEnumerable<CategoryEvalResponse> Evaluations);
+public record UserStatsResponse(string Id, IEnumerable<CategoryEvalResponse> Evaluations);
 
 public record CreateUserRequest(string UserName, string Email, string Password, string FullName);
 

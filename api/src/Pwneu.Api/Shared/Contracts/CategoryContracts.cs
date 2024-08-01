@@ -7,9 +7,8 @@ public record CategoryResponse(
     IEnumerable<ChallengeResponse> Challenges);
 
 public record CategoryEvalResponse(
-    string UserId,
-    Guid CategoryId,
-    string CategoryName,
+    Guid Id,
+    string Name,
     int TotalChallenges,
     int TotalSolves,
     int IncorrectAttempts);

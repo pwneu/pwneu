@@ -36,9 +36,9 @@ public static class GetUserStats
                 return Result.Failure<UserStatsResponse>(NotFound);
 
             var userStats = await cache.GetOrSetAsync($"{nameof(UserStatsResponse)}:{request.Id}", async _ =>
-                new UserStatsResponse(await context
+                new UserStatsResponse(request.Id, await context
                     .Categories
-                    .Select(c => new CategoryEvalResponse(request.Id, c.Id, c.Name, c.Challenges.Count, c.Challenges
+                    .Select(c => new CategoryEvalResponse(c.Id, c.Name, c.Challenges.Count, c.Challenges
                             .SelectMany(ch => ch.Solves)
                             .Count(s => s.UserId == request.Id),
                         c.Challenges
@@ -54,8 +54,6 @@ public static class GetUserStats
             async Task<UserStatsResponse> GetEvaluations()
 #pragma warning restore CS8321
             {
-                // For invalidating cache
-                // await cache.RemoveAsync($"categoryIds", token: cancellationToken);
                 var categoryIds = await cache.GetOrSetAsync($"categoryIds", async _ =>
                     await context
                         .Categories
@@ -69,7 +67,7 @@ public static class GetUserStats
                         await context
                             .Categories
                             .Where(c => c.Id == categoryId)
-                            .Select(c => new CategoryEvalResponse(request.Id, c.Id, c.Name, c.Challenges.Count,
+                            .Select(c => new CategoryEvalResponse(c.Id, c.Name, c.Challenges.Count,
                                 c.Challenges
                                     .SelectMany(ch => ch.Solves)
                                     .Count(s => s.UserId == request.Id),
@@ -82,7 +80,7 @@ public static class GetUserStats
                         evaluations.Add(categoryEval);
                 }
 
-                return new UserStatsResponse(evaluations);
+                return new UserStatsResponse(request.Id, evaluations);
             }
         }
     }
