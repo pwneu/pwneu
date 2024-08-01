@@ -37,7 +37,7 @@ public static class Register
             if (!createUser.Succeeded)
                 return Result.Failure(Failed);
 
-            var addRole = await userManager.AddToRoleAsync(user, Constants.Member);
+            var addRole = await userManager.AddToRoleAsync(user, Consts.Member);
             return !addRole.Succeeded
                 ? Result.Failure(AddRoleFailed)
                 : Result.Success();

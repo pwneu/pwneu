@@ -15,6 +15,7 @@ using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
 using Pwneu.Api.Shared.Extensions;
+using Pwneu.Api.Shared.Services;
 using Swashbuckle.AspNetCore.Filters;
 using ZiggyCreatures.Caching.Fusion;
 using ZiggyCreatures.Caching.Fusion.Serialization.NewtonsoftJson;
@@ -98,9 +99,9 @@ builder.Services.AddValidatorsFromAssembly(assembly);
 builder.Services.AddEndpoints();
 
 // Authentication and Authorization (JSON Web Token)
-var issuer = Environment.GetEnvironmentVariable(Constants.JwtIssuer);
-var audience = Environment.GetEnvironmentVariable(Constants.JwtAudience);
-var signingKey = Environment.GetEnvironmentVariable(Constants.JwtSigningKey);
+var issuer = Environment.GetEnvironmentVariable(Consts.JwtIssuer);
+var audience = Environment.GetEnvironmentVariable(Consts.JwtAudience);
+var signingKey = Environment.GetEnvironmentVariable(Consts.JwtSigningKey);
 
 builder.Services.AddAuthentication(options =>
     {
@@ -127,9 +128,11 @@ builder.Services.AddAuthentication(options =>
     });
 
 builder.Services.AddAuthorizationBuilder()
-    .AddPolicy(Constants.AdminOnly, policy => { policy.RequireRole(Constants.Admin); })
-    .AddPolicy(Constants.ManagerAdminOnly, policy => { policy.RequireRole(Constants.Manager); })
-    .AddPolicy(Constants.MemberOnly, policy => { policy.RequireRole(Constants.Member); });
+    .AddPolicy(Consts.AdminOnly, policy => { policy.RequireRole(Consts.Admin); })
+    .AddPolicy(Consts.ManagerAdminOnly, policy => { policy.RequireRole(Consts.Manager); })
+    .AddPolicy(Consts.MemberOnly, policy => { policy.RequireRole(Consts.Member); });
+
+builder.Services.AddScoped<IAccessControl, AccessControl>();
 
 var app = builder.Build();
 

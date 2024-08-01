@@ -14,7 +14,7 @@ public class Challenge
     public int MaxAttempts { get; set; }
     public List<string> Flags { get; set; } = [];
     public Category Category { get; init; } = null!;
-    public ICollection<ChallengeFile> ChallengeFiles { get; init; } = [];
+    public ICollection<Artifact> Artifacts { get; init; } = [];
     public ICollection<FlagSubmission> FlagSubmissions { get; init; } = [];
     public ICollection<Solve> Solves { get; init; } = [];
 }

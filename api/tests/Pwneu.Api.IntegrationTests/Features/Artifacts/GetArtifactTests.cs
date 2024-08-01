@@ -1,17 +1,17 @@
 using System.Text;
 using FluentAssertions;
-using Pwneu.Api.Features.ChallengeFiles;
+using Pwneu.Api.Features.Artifacts;
 using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Entities;
 
-namespace Pwneu.Api.IntegrationTests.Features.ChallengeFiles;
+namespace Pwneu.Api.IntegrationTests.Features.Artifacts;
 
 [Collection(nameof(IntegrationTestCollection))]
-public class GetChallengeFileTests(IntegrationTestsWebAppFactory factory) : BaseIntegrationTest(factory)
+public class GetArtifactTests(IntegrationTestsWebAppFactory factory) : BaseIntegrationTest(factory)
 {
     [Fact]
-    public async Task Handle_Should_GetChallengeFile_WhenChallengeFileExists()
+    public async Task Handle_Should_GetArtifact_WhenArtifactExists()
     {
         // Arrange
         var categoryId = Guid.NewGuid();
@@ -38,7 +38,7 @@ public class GetChallengeFileTests(IntegrationTestsWebAppFactory factory) : Base
         };
         DbContext.Add(challenge);
 
-        var challengeFile = new ChallengeFile
+        var artifact = new Artifact
         {
             Id = Guid.NewGuid(),
             ChallengeId = challenge.Id,
@@ -47,32 +47,32 @@ public class GetChallengeFileTests(IntegrationTestsWebAppFactory factory) : Base
             Data = Encoding.UTF8.GetBytes(F.Lorem.Text()),
             Challenge = challenge
         };
-        DbContext.Add(challengeFile);
+        DbContext.Add(artifact);
 
         await DbContext.SaveChangesAsync();
 
-        var challengeFileData = new ChallengeFileDataResponse(
-            FileName: challengeFile.FileName,
-            ContentType: challengeFile.ContentType,
-            Data: challengeFile.Data);
+        var artifactData = new ArtifactDataResponse(
+            FileName: artifact.FileName,
+            ContentType: artifact.ContentType,
+            Data: artifact.Data);
 
         // Act
-        var getChallengeFile = await Sender.Send(new GetChallengeFile.Query(challengeFile.Id));
+        var getArtifact = await Sender.Send(new GetArtifact.Query(artifact.Id));
 
         // Assert
-        getChallengeFile.Should().NotBeNull();
-        getChallengeFile.Should().BeOfType<Result<ChallengeFileDataResponse>>();
-        getChallengeFile.Value.Should().BeEquivalentTo(challengeFileData);
+        getArtifact.Should().NotBeNull();
+        getArtifact.Should().BeOfType<Result<ArtifactDataResponse>>();
+        getArtifact.Value.Should().BeEquivalentTo(artifactData);
     }
 
     [Fact]
-    public async Task Handle_Should_NotGetChallengeFile_WhenChallengeFileDoesNotExists()
+    public async Task Handle_Should_NotGetArtifact_WhenArtifactDoesNotExists()
     {
         // Act
-        var getChallengeFile = new GetChallengeFile.Query(Guid.NewGuid());
-        var challengeFile = await Sender.Send(getChallengeFile);
+        var getArtifact = new GetArtifact.Query(Guid.NewGuid());
+        var artifact = await Sender.Send(getArtifact);
 
         // Assert
-        challengeFile.IsSuccess.Should().BeFalse();
+        artifact.IsSuccess.Should().BeFalse();
     }
 }

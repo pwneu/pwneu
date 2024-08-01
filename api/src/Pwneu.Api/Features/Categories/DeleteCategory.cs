@@ -1,9 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Common;
-using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Data;
-using Pwneu.Api.Shared.Entities;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Categories;
@@ -27,7 +25,7 @@ public static class DeleteCategory
                 .Categories
                 .Where(ctg => ctg.Id == request.Id)
                 .Include(ctg => ctg.Challenges)
-                .ThenInclude(c => c.ChallengeFiles)
+                .ThenInclude(c => c.Artifacts)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (category is null) return Result.Failure(NotFound);
@@ -36,16 +34,15 @@ public static class DeleteCategory
 
             await context.SaveChangesAsync(cancellationToken);
 
-            await cache.RemoveAsync($"{nameof(CategoryResponse)}:{category.Id}", token: cancellationToken);
+            await cache.RemoveAsync(Keys.Category(category.Id), token: cancellationToken);
 
             foreach (var challenge in category.Challenges)
             {
-                foreach (var file in challenge.ChallengeFiles)
-                    await cache.RemoveAsync($"{nameof(ChallengeFile)}:{file.Id}", token: cancellationToken);
+                foreach (var file in challenge.Artifacts)
+                    await cache.RemoveAsync(Keys.Artifact(file.Id), token: cancellationToken);
 
-                await cache.RemoveAsync($"{nameof(ChallengeDetailsResponse)}:{challenge.Id}", token: cancellationToken);
-                await cache.RemoveAsync($"{nameof(Challenge)}.{nameof(Challenge.Flags)}:{challenge.Id}",
-                    token: cancellationToken);
+                await cache.RemoveAsync(Keys.Challenge(challenge.Id), token: cancellationToken);
+                await cache.RemoveAsync(Keys.Flags(challenge.Id), token: cancellationToken);
             }
 
             return Result.Success();
@@ -63,7 +60,7 @@ public static class DeleteCategory
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
                 })
-                .RequireAuthorization(Constants.ManagerAdminOnly)
+                .RequireAuthorization(Consts.ManagerAdminOnly)
                 .WithTags(nameof(Categories));
         }
     }

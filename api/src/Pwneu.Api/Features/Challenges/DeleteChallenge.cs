@@ -1,9 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Common;
-using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Data;
-using Pwneu.Api.Shared.Entities;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Challenges;
@@ -26,23 +24,22 @@ public static class DeleteChallenge
             var challenge = await context
                 .Challenges
                 .Where(c => c.Id == request.Id)
-                .Include(c => c.ChallengeFiles)
+                .Include(c => c.Artifacts)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (challenge is null) return Result.Failure(NotFound);
 
-            context.ChallengeFiles.RemoveRange(challenge.ChallengeFiles);
+            context.Artifacts.RemoveRange(challenge.Artifacts);
 
             context.Challenges.Remove(challenge);
 
             await context.SaveChangesAsync(cancellationToken);
 
-            foreach (var file in challenge.ChallengeFiles)
-                await cache.RemoveAsync($"{nameof(ChallengeFile)}:{file.Id}", token: cancellationToken);
+            foreach (var artifact in challenge.Artifacts)
+                await cache.RemoveAsync(Keys.Artifact(artifact.Id), token: cancellationToken);
 
-            await cache.RemoveAsync($"{nameof(ChallengeDetailsResponse)}:{challenge.Id}", token: cancellationToken);
-            await cache.RemoveAsync($"{nameof(Challenge)}.{nameof(Challenge.Flags)}:{challenge.Id}",
-                token: cancellationToken);
+            await cache.RemoveAsync(Keys.Challenge(challenge.Id), token: cancellationToken);
+            await cache.RemoveAsync(Keys.Flags(challenge.Id), token: cancellationToken);
 
             return Result.Success();
         }
@@ -59,7 +56,7 @@ public static class DeleteChallenge
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
                 })
-                .RequireAuthorization(Constants.ManagerAdminOnly)
+                .RequireAuthorization(Consts.ManagerAdminOnly)
                 .WithTags(nameof(Challenges));
         }
     }

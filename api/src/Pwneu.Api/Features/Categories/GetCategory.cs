@@ -22,19 +22,16 @@ public static class GetCategory
     {
         public async Task<Result<CategoryResponse>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var categoryResponse = await cache.GetOrSetAsync($"{nameof(CategoryResponse)}:{request.Id}",
-                async _ =>
-                {
-                    return await context
-                        .Categories
-                        .Where(ctg => ctg.Id == request.Id)
-                        .Select(ctg => new CategoryResponse(ctg.Id, ctg.Name, ctg.Description,
-                            ctg.Challenges.Select(c => new ChallengeResponse(c.Id, c.Name)).ToList()
-                        ))
-                        .FirstOrDefaultAsync(cancellationToken);
-                }, token: cancellationToken);
+            var category = await cache.GetOrSetAsync(Keys.Category(request.Id), async _ =>
+                await context
+                    .Categories
+                    .Where(ctg => ctg.Id == request.Id)
+                    .Select(ctg => new CategoryResponse(ctg.Id, ctg.Name, ctg.Description,
+                        ctg.Challenges.Select(c => new ChallengeResponse(c.Id, c.Name)).ToList()
+                    ))
+                    .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
-            return categoryResponse ?? Result.Failure<CategoryResponse>(NotFound);
+            return category ?? Result.Failure<CategoryResponse>(NotFound);
         }
     }
 

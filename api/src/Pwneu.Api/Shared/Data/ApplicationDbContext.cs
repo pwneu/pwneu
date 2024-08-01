@@ -21,9 +21,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
         builder
             .Entity<Challenge>()
-            .HasMany(c => c.ChallengeFiles)
-            .WithOne(cf => cf.Challenge)
-            .HasForeignKey(cf => cf.ChallengeId)
+            .HasMany(c => c.Artifacts)
+            .WithOne(a => a.Challenge)
+            .HasForeignKey(a => a.ChallengeId)
             .OnDelete(DeleteBehavior.Cascade)
             .IsRequired();
 
@@ -66,7 +66,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     }
 
     public virtual DbSet<Challenge> Challenges { get; init; } = null!;
-    public virtual DbSet<ChallengeFile> ChallengeFiles { get; init; } = null!;
+    public virtual DbSet<Artifact> Artifacts { get; init; } = null!;
     public virtual DbSet<FlagSubmission> FlagSubmissions { get; init; } = null!;
     public virtual DbSet<Solve> Solves { get; init; } = null!;
     public virtual DbSet<Category> Categories { get; init; } = null!;

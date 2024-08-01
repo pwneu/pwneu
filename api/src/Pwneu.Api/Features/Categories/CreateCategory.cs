@@ -52,7 +52,7 @@ public static class CreateCategory
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);
                 })
-                .RequireAuthorization(Constants.ManagerAdminOnly)
+                .RequireAuthorization(Consts.ManagerAdminOnly)
                 .WithTags(nameof(Categories));
         }
     }

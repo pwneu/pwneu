@@ -1,16 +1,16 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
-using Pwneu.Api.Features.ChallengeFiles;
+using Pwneu.Api.Features.Artifacts;
 using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Entities;
 
-namespace Pwneu.Api.IntegrationTests.Features.ChallengeFiles;
+namespace Pwneu.Api.IntegrationTests.Features.Artifacts;
 
 [Collection(nameof(IntegrationTestCollection))]
-public class AddChallengeFileTests(IntegrationTestsWebAppFactory factory) : BaseIntegrationTest(factory)
+public class AddArtifactTests(IntegrationTestsWebAppFactory factory) : BaseIntegrationTest(factory)
 {
     [Fact]
-    public async Task Handle_Should_AddChallengeFile_WhenChallengeExists()
+    public async Task Handle_Should_AddArtifact_WhenChallengeExists()
     {
         // Arrange
         var categoryId = Guid.NewGuid();
@@ -50,17 +50,17 @@ public class AddChallengeFileTests(IntegrationTestsWebAppFactory factory) : Base
         using var stream = new MemoryStream();
         await file.CopyToAsync(stream);
 
-        var addChallengeFile = await Sender.Send(new AddChallengeFile.Command(
+        var addArtifact = await Sender.Send(new AddArtifact.Command(
             ChallengeId: challengeId,
             FileName: file.FileName,
             ContentType: file.ContentType,
             Data: stream.ToArray()));
 
-        var challengeFile = DbContext.ChallengeFiles.FirstOrDefault(cf => cf.Id == addChallengeFile.Value);
+        var artifact = DbContext.Artifacts.FirstOrDefault(a => a.Id == addArtifact.Value);
 
         // Assert
-        addChallengeFile.Should().BeOfType<Result<Guid>>();
-        addChallengeFile.IsSuccess.Should().BeTrue();
-        challengeFile.Should().NotBeNull();
+        addArtifact.Should().BeOfType<Result<Guid>>();
+        addArtifact.IsSuccess.Should().BeTrue();
+        artifact.Should().NotBeNull();
     }
 }

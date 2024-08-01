@@ -43,7 +43,7 @@ public static class UpdateCategory
 
             await context.SaveChangesAsync(cancellationToken);
 
-            await cache.RemoveAsync($"{nameof(CategoryResponse)}:{category.Id}", token: cancellationToken);
+            await cache.RemoveAsync(Keys.Category(request.Id), token: cancellationToken);
 
             return Result.Success();
         }
@@ -61,7 +61,7 @@ public static class UpdateCategory
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
                 })
-                .RequireAuthorization(Constants.ManagerAdminOnly)
+                .RequireAuthorization(Consts.ManagerAdminOnly)
                 .WithTags(nameof(Categories));
         }
     }

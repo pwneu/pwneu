@@ -1,6 +1,6 @@
 namespace Pwneu.Api.Shared.Common;
 
-public static class Constants
+public static class Consts
 {
     public const string DefaultAdminPassword = "PwneuPwneu!1";
 
