@@ -27,7 +27,7 @@ public static class DeleteCategory
                 .Categories
                 .Where(ctg => ctg.Id == request.Id)
                 .Include(ctg => ctg.Challenges)
-                .ThenInclude(c => c.ChallengeFiles)
+                .ThenInclude(c => c.Artifacts)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (category is null) return Result.Failure(NotFound);
@@ -40,8 +40,8 @@ public static class DeleteCategory
 
             foreach (var challenge in category.Challenges)
             {
-                foreach (var file in challenge.ChallengeFiles)
-                    await cache.RemoveAsync($"{nameof(ChallengeFile)}:{file.Id}", token: cancellationToken);
+                foreach (var file in challenge.Artifacts)
+                    await cache.RemoveAsync($"{nameof(Artifact)}:{file.Id}", token: cancellationToken);
 
                 await cache.RemoveAsync($"{nameof(ChallengeDetailsResponse)}:{challenge.Id}", token: cancellationToken);
                 await cache.RemoveAsync($"{nameof(Challenge)}.{nameof(Challenge.Flags)}:{challenge.Id}",

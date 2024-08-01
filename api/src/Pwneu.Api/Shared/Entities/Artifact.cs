@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Pwneu.Api.Shared.Entities;
 
-public class ChallengeFile
+public class Artifact
 {
     public Guid Id { get; init; }
     public Guid ChallengeId { get; init; }

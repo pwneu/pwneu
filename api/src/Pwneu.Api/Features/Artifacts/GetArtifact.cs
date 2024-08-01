@@ -6,32 +6,32 @@ using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
 using ZiggyCreatures.Caching.Fusion;
 
-namespace Pwneu.Api.Features.ChallengeFiles;
+namespace Pwneu.Api.Features.Artifacts;
 
 /// <summary>
-/// Retrieves a challenge file by ID
+/// Retrieves an artifact by ID
 /// </summary>
-public static class GetChallengeFile
+public static class GetArtifact
 {
-    public record Query(Guid Id) : IRequest<Result<ChallengeFileDataResponse>>;
+    public record Query(Guid Id) : IRequest<Result<ArtifactDataResponse>>;
 
-    private static readonly Error NotFound = new Error("GetChallengeFile.Null",
-        "The challenge file with the specified ID was not found");
+    private static readonly Error NotFound = new ("GetArtifact.NotFound",
+        "The artifact with the specified ID was not found");
 
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
-        : IRequestHandler<Query, Result<ChallengeFileDataResponse>>
+        : IRequestHandler<Query, Result<ArtifactDataResponse>>
     {
-        public async Task<Result<ChallengeFileDataResponse>> Handle(Query request, CancellationToken cancellationToken)
+        public async Task<Result<ArtifactDataResponse>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var challengeFileDataResponse = await cache.GetOrSetAsync($"{nameof(ChallengeFile)}:{request.Id}",
+            var artifact = await cache.GetOrSetAsync($"{nameof(Artifact)}:{request.Id}",
                 async _ =>
                     await context
-                        .ChallengeFiles
-                        .Where(cf => cf.Id == request.Id)
-                        .Select(cf => new ChallengeFileDataResponse(cf.FileName, cf.ContentType, cf.Data))
+                        .Artifacts
+                        .Where(a => a.Id == request.Id)
+                        .Select(a => new ArtifactDataResponse(a.FileName, a.ContentType, a.Data))
                         .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
-            return challengeFileDataResponse ?? Result.Failure<ChallengeFileDataResponse>(NotFound);
+            return artifact ?? Result.Failure<ArtifactDataResponse>(NotFound);
         }
     }
 
@@ -39,8 +39,7 @@ public static class GetChallengeFile
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            // TODO -- Find proper url for getting challenge files
-            app.MapGet("challenges/files/{id:Guid}",
+            app.MapGet("artifacts/{id:Guid}",
                     async (Guid id, ISender sender) =>
                     {
                         var query = new Query(id);
@@ -52,7 +51,7 @@ public static class GetChallengeFile
                             : Results.File(result.Value.Data, result.Value.ContentType, result.Value.FileName);
                     })
                 .RequireAuthorization()
-                .WithTags(nameof(ChallengeFiles));
+                .WithTags(nameof(Artifacts));
         }
     }
 }

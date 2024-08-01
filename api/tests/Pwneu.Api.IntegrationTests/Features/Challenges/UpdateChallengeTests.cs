@@ -121,7 +121,7 @@ public class UpdateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
             Deadline: DateTime.UtcNow,
             MaxAttempts: F.Random.Int(1, 10),
             SolveCount: 0,
-            ChallengeFiles: []);
+            Artifacts: []);
 
         // Act
         var faker = new Faker();
@@ -138,10 +138,10 @@ public class UpdateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
         var updatedChallenge = await DbContext
             .Challenges
             .Where(c => c.Id == challenge.Id)
-            .Include(c => c.ChallengeFiles)
+            .Include(c => c.Artifacts)
             .Select(c => new ChallengeDetailsResponse(c.Id, c.Name, c.Description, c.Points, c.DeadlineEnabled,
-                c.Deadline, c.MaxAttempts, 0, c.ChallengeFiles
-                    .Select(cf => new ChallengeFileResponse(cf.Id, cf.FileName))
+                c.Deadline, c.MaxAttempts, 0, c.Artifacts
+                    .Select(a => new ArtifactResponse(a.Id, a.FileName))
                     .ToList()))
             .FirstOrDefaultAsync();
 

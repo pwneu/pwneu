@@ -27,7 +27,7 @@ public static class GetChallenges
         public async Task<Result<PagedList<ChallengeDetailsResponse>>> Handle(Query request,
             CancellationToken cancellationToken)
         {
-            IQueryable<Challenge> challengesQuery = context.Challenges.Include(c => c.ChallengeFiles);
+            IQueryable<Challenge> challengesQuery = context.Challenges.Include(c => c.Artifacts);
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
                 challengesQuery = challengesQuery.Where(c =>
@@ -49,7 +49,7 @@ public static class GetChallenges
             var challengeResponsesQuery = challengesQuery
                 .Select(c => new ChallengeDetailsResponse(c.Id, c.Name, c.Description, c.Points, c.DeadlineEnabled,
                     c.Deadline, c.MaxAttempts, c.Solves.Count,
-                    c.ChallengeFiles.Select(cf => new ChallengeFileResponse(cf.Id, cf.FileName))));
+                    c.Artifacts.Select(a => new ArtifactResponse(a.Id, a.FileName))));
 
             var challenges =
                 await PagedList<ChallengeDetailsResponse>.CreateAsync(challengeResponsesQuery, request.Page ?? 1,

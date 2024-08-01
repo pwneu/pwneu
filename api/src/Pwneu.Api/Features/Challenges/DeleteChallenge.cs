@@ -26,19 +26,19 @@ public static class DeleteChallenge
             var challenge = await context
                 .Challenges
                 .Where(c => c.Id == request.Id)
-                .Include(c => c.ChallengeFiles)
+                .Include(c => c.Artifacts)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (challenge is null) return Result.Failure(NotFound);
 
-            context.ChallengeFiles.RemoveRange(challenge.ChallengeFiles);
+            context.Artifacts.RemoveRange(challenge.Artifacts);
 
             context.Challenges.Remove(challenge);
 
             await context.SaveChangesAsync(cancellationToken);
 
-            foreach (var file in challenge.ChallengeFiles)
-                await cache.RemoveAsync($"{nameof(ChallengeFile)}:{file.Id}", token: cancellationToken);
+            foreach (var file in challenge.Artifacts)
+                await cache.RemoveAsync($"{nameof(Artifact)}:{file.Id}", token: cancellationToken);
 
             await cache.RemoveAsync($"{nameof(ChallengeDetailsResponse)}:{challenge.Id}", token: cancellationToken);
             await cache.RemoveAsync($"{nameof(Challenge)}.{nameof(Challenge.Flags)}:{challenge.Id}",

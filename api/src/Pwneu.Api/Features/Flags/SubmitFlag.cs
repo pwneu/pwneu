@@ -65,10 +65,10 @@ public static class SubmitFlag
                     await context
                         .Challenges
                         .Where(c => c.Id == request.ChallengeId)
-                        .Include(c => c.ChallengeFiles)
+                        .Include(c => c.Artifacts)
                         .Select(c => new ChallengeDetailsResponse(c.Id, c.Name, c.Description, c.Points,
-                            c.DeadlineEnabled, c.Deadline, c.MaxAttempts, c.Solves.Count, c.ChallengeFiles
-                                .Select(cf => new ChallengeFileResponse(cf.Id, cf.FileName))
+                            c.DeadlineEnabled, c.Deadline, c.MaxAttempts, c.Solves.Count, c.Artifacts
+                                .Select(a => new ArtifactResponse(a.Id, a.FileName))
                                 .ToList()
                         ))
                         .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
