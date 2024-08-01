@@ -46,7 +46,7 @@ public static class GetChallengeFlags
 
                     return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
                 })
-                .RequireAuthorization(Constants.ManagerAdminOnly)
+                .RequireAuthorization(Consts.ManagerAdminOnly)
                 .WithTags(nameof(Flags));
         }
     }

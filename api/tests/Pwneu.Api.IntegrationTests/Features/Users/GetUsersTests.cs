@@ -18,6 +18,6 @@ public class GetUsersTests(IntegrationTestsWebAppFactory factory) : BaseIntegrat
         // Assert
         getUsers.IsSuccess.Should().BeTrue();
         getUsers.Should().BeOfType<Result<PagedList<UserResponse>>>();
-        userNames.Should().NotContain(Constants.Admin);
+        userNames.Should().NotContain(Consts.Admin);
     }
 }

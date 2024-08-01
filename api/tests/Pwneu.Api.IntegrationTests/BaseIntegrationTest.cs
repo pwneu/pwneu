@@ -47,9 +47,9 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
         await _scope.ServiceProvider.SeedAdminAsync();
 
         var user = new User { UserName = "test" };
-        var createUser = await UserManager.CreateAsync(user, Constants.DefaultAdminPassword);
+        var createUser = await UserManager.CreateAsync(user, Consts.DefaultAdminPassword);
 
-        var addRole = await UserManager.AddToRoleAsync(user, Constants.Member);
+        var addRole = await UserManager.AddToRoleAsync(user, Consts.Member);
 
         if (!createUser.Succeeded || !addRole.Succeeded)
             throw new InvalidOperationException("Cannot create test user");

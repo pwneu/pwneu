@@ -225,7 +225,7 @@ public static class SubmitFlag
 
                         return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value.ToString());
                     })
-                .RequireAuthorization(Constants.MemberOnly)
+                .RequireAuthorization(Consts.MemberOnly)
                 .WithTags(nameof(Flags));
         }
     }

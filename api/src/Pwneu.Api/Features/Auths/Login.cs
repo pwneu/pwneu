@@ -51,9 +51,9 @@ public static class Login
 
             claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
-            var issuer = Environment.GetEnvironmentVariable(Constants.JwtIssuer);
-            var audience = Environment.GetEnvironmentVariable(Constants.JwtAudience);
-            var signingKey = Environment.GetEnvironmentVariable(Constants.JwtSigningKey);
+            var issuer = Environment.GetEnvironmentVariable(Consts.JwtIssuer);
+            var audience = Environment.GetEnvironmentVariable(Consts.JwtAudience);
+            var signingKey = Environment.GetEnvironmentVariable(Consts.JwtSigningKey);
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey!));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);

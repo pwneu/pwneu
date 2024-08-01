@@ -63,7 +63,7 @@ public static class AddChallengeFile
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);
                 })
                 .DisableAntiforgery() // TODO: Check for better ways to fix anti-forgery exception
-                .RequireAuthorization(Constants.ManagerAdminOnly)
+                .RequireAuthorization(Consts.ManagerAdminOnly)
                 .WithTags(nameof(ChallengeFiles));
         }
     }

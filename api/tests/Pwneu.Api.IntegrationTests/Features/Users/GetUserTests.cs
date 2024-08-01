@@ -9,7 +9,7 @@ namespace Pwneu.Api.IntegrationTests.Features.Users;
 public class GetUserTests(IntegrationTestsWebAppFactory factory) : BaseIntegrationTest(factory)
 {
     [Theory]
-    [InlineData(Constants.Admin, false)]
+    [InlineData(Consts.Admin, false)]
     [InlineData("test", true)]
     public async Task Handle_Should_GetUser_WhenUserIsNotManagerOrAdmin(string userName, bool expected)
     {

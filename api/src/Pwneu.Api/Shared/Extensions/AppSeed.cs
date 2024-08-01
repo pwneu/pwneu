@@ -12,7 +12,7 @@ public static class AppSeed
 
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-        string[] roleNames = [Constants.Member, Constants.Manager, Constants.Admin];
+        string[] roleNames = [Consts.Member, Consts.Manager, Consts.Admin];
 
         foreach (var roleName in roleNames)
         {
@@ -33,15 +33,15 @@ public static class AppSeed
 
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
 
-        var password = Environment.GetEnvironmentVariable(Constants.AdminPassword) ?? Constants.DefaultAdminPassword;
+        var password = Environment.GetEnvironmentVariable(Consts.AdminPassword) ?? Consts.DefaultAdminPassword;
 
-        var admin = await userManager.FindByNameAsync(Constants.Admin);
+        var admin = await userManager.FindByNameAsync(Consts.Admin);
 
         // TODO -- Decide if only use the password in the env once or change the password everytime the application starts
         if (admin is not null)
             return;
 
-        admin = new User { UserName = Constants.Admin.ToLower() };
+        admin = new User { UserName = Consts.Admin.ToLower() };
 
         var createAdmin = await userManager.CreateAsync(admin, password);
         if (!createAdmin.Succeeded)
@@ -50,7 +50,7 @@ public static class AppSeed
                 string.Join(", ", createAdmin.Errors.Select(e => e.Description)));
 
         var addManagerAdminRoles =
-            await userManager.AddToRolesAsync(admin, [Constants.Admin, Constants.Manager]);
+            await userManager.AddToRolesAsync(admin, [Consts.Admin, Consts.Manager]);
         if (!addManagerAdminRoles.Succeeded)
             throw new InvalidOperationException(
                 "Failed to add admin role: " +

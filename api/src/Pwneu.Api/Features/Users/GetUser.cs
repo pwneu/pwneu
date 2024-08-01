@@ -28,8 +28,8 @@ public static class GetUser
                     .Where(ur => context.Roles
                         .Where(r =>
                             r.Name != null &&
-                            (r.Name.Equals(Constants.Manager) ||
-                             r.Name.Equals(Constants.Admin)))
+                            (r.Name.Equals(Consts.Manager) ||
+                             r.Name.Equals(Consts.Admin)))
                         .Select(r => r.Id)
                         .Contains(ur.RoleId))
                     .Select(ur => ur.UserId)
@@ -65,7 +65,7 @@ public static class GetUser
 
                     return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
                 })
-                .RequireAuthorization(Constants.ManagerAdminOnly)
+                .RequireAuthorization(Consts.ManagerAdminOnly)
                 .WithTags(nameof(Users));
         }
     }
