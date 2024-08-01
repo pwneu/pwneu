@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Data;
-using Pwneu.Api.Shared.Entities;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Challenges;
@@ -57,9 +56,8 @@ public static class UpdateChallenge
 
             await context.SaveChangesAsync(cancellationToken);
 
-            await cache.RemoveAsync($"{nameof(ChallengeDetailsResponse)}:{challenge.Id}", token: cancellationToken);
-            await cache.RemoveAsync($"{nameof(Challenge)}.{nameof(Challenge.Flags)}:{challenge.Id}",
-                token: cancellationToken);
+            await cache.RemoveAsync(Keys.Challenge(challenge.Id), token: cancellationToken);
+            await cache.RemoveAsync(Keys.Flags(challenge.Id), token: cancellationToken);
 
             return Result.Success();
         }

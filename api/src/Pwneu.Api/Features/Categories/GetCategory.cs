@@ -22,7 +22,7 @@ public static class GetCategory
     {
         public async Task<Result<CategoryResponse>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var category = await cache.GetOrSetAsync($"{nameof(CategoryResponse)}:{request.Id}", async _ =>
+            var category = await cache.GetOrSetAsync(Keys.Category(request.Id), async _ =>
                 await context
                     .Categories
                     .Where(ctg => ctg.Id == request.Id)

@@ -43,7 +43,7 @@ public static class SubmitFlag
                 return Result.Failure<FlagStatus>(new Error("SubmitFlag.Validation", validationResult.ToString()));
 
             // Get user details in the cache or the database.
-            var user = await cache.GetOrSetAsync($"{nameof(UserDetailsResponse)}:{request.UserId}", async _ =>
+            var user = await cache.GetOrSetAsync(Keys.User(request.UserId), async _ =>
                 await context
                     .Users
                     .Where(u => u.Id == request.UserId)
@@ -60,41 +60,39 @@ public static class SubmitFlag
             // We're using the cache of ChallengeDetailsResponse 
             // because the user has already loaded the challenge details in the cache
             // before submitting a flag.
-            var challenge = await cache.GetOrSetAsync($"{nameof(ChallengeDetailsResponse)}:{request.ChallengeId}",
-                async _ =>
-                    await context
-                        .Challenges
-                        .Where(c => c.Id == request.ChallengeId)
-                        .Include(c => c.Artifacts)
-                        .Select(c => new ChallengeDetailsResponse(c.Id, c.Name, c.Description, c.Points,
-                            c.DeadlineEnabled, c.Deadline, c.MaxAttempts, c.Solves.Count, c.Artifacts
-                                .Select(a => new ArtifactResponse(a.Id, a.FileName))
-                                .ToList()
-                        ))
-                        .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
+            var challenge = await cache.GetOrSetAsync(Keys.Challenge(request.ChallengeId), async _ =>
+                await context
+                    .Challenges
+                    .Where(c => c.Id == request.ChallengeId)
+                    .Include(c => c.Artifacts)
+                    .Select(c => new ChallengeDetailsResponse(c.Id, c.Name, c.Description, c.Points,
+                        c.DeadlineEnabled, c.Deadline, c.MaxAttempts, c.Solves.Count, c.Artifacts
+                            .Select(a => new ArtifactResponse(a.Id, a.FileName))
+                            .ToList()
+                    ))
+                    .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
             // Check if the challenge exists.
             if (challenge is null) return Result.Failure<FlagStatus>(ChallengeNotFound);
 
             // Get the challenge flags in the cache or the database.
-            var challengeFlags = await cache.GetOrSetAsync(
-                $"{nameof(Challenge)}.{nameof(Challenge.Flags)}:{request.ChallengeId}", async _ =>
-                    await context
-                        .Challenges
-                        .Where(c => c.Id == request.ChallengeId)
-                        .Select(c => c.Flags)
-                        .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
+            var challengeFlags = await cache.GetOrSetAsync(Keys.Flags(request.ChallengeId), async _ =>
+                await context
+                    .Challenges
+                    .Where(c => c.Id == request.ChallengeId)
+                    .Select(c => c.Flags)
+                    .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
             // Check if there are flags in the challenge.
             if (challengeFlags is null || challengeFlags.Count == 0)
                 return Result.Failure<FlagStatus>(NoChallengeFlags);
 
             // Initialize cache keys (required for the methods below after the return statement).
-            var attemptCountKey = $"attemptCount:{user.Id}&&{challenge.Id}";
-            var solveKey = $"solve:{user.Id}&&{challenge.Id}";
-            var recentSubmissionsKey = $"recentSubmissions:{user.Id}&&{challenge.Id}";
+            var attemptCountKey = $"attemptCount:{user.Id}:{challenge.Id}";
+            var hasSolvedKey = $"hasSolved:{user.Id}:{challenge.Id}";
+            var recentSubmissionsKey = $"recentSubmissions:{user.Id}:{challenge.Id}";
 
-            // Cache variables for the methods below.
+            // Cached variables for the methods below.
             int attemptCount = default;
             List<DateTime> recentSubmissions = [];
             var flagStatus = FlagStatus.Incorrect;
@@ -124,9 +122,9 @@ public static class SubmitFlag
                 await context.SaveChangesAsync(cancellationToken);
 
                 // Since the user has solved the challenge, update the cache of checking if already solved to true.
-                await cache.SetAsync(solveKey, true, token: cancellationToken);
+                await cache.SetAsync(hasSolvedKey, true, token: cancellationToken);
                 // Increase the count of users who have solved the challenge in the cache.
-                await cache.SetAsync($"{nameof(ChallengeDetailsResponse)}:{request.ChallengeId}",
+                await cache.SetAsync(Keys.Challenge(request.ChallengeId),
                     challenge with { SolveCount = challenge.SolveCount + 1 }, token: cancellationToken);
             }
 
@@ -155,7 +153,7 @@ public static class SubmitFlag
             await cache.SetAsync(recentSubmissionsKey, recentSubmissions, token: cancellationToken);
 
             // Since a user has submitted a flag, update the cache on getting user details.
-            await cache.SetAsync($"{nameof(UserDetailsResponse)}:{user.Id}",
+            await cache.SetAsync(Keys.User(request.UserId),
                 flagStatus == FlagStatus.Correct
                     ? user with { CorrectAttempts = user.CorrectAttempts + 1 }
                     : user with { IncorrectAttempts = user.IncorrectAttempts + 1 },
@@ -165,7 +163,7 @@ public static class SubmitFlag
 
             async Task<bool> HasAlreadySolvedAsync()
             {
-                return await cache.GetOrSetAsync(solveKey, async _ =>
+                return await cache.GetOrSetAsync(hasSolvedKey, async _ =>
                     await context
                         .Solves
                         .AnyAsync(s => s.UserId == user.Id &&

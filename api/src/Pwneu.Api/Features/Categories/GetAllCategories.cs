@@ -17,7 +17,7 @@ public static class GetAllCategories
         public async Task<Result<IEnumerable<CategoryResponse>>> Handle(Query request,
             CancellationToken cancellationToken)
         {
-            var categories = await cache.GetOrSetAsync($"{nameof(CategoryResponse)}", async _ =>
+            var categories = await cache.GetOrSetAsync(Keys.Categories(), async _ =>
                 await context
                     .Categories
                     .Select(c => new CategoryResponse(c.Id, c.Name, c.Description,

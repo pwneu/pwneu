@@ -40,7 +40,7 @@ public static class GetUser
                 return Result.Failure<UserDetailsResponse>(NotFound);
 
             // TODO -- Check for bugs in cache invalidations
-            var user = await cache.GetOrSetAsync($"{nameof(UserDetailsResponse)}:{request.Id}", async _ =>
+            var user = await cache.GetOrSetAsync(Keys.User(request.Id), async _ =>
                 await context
                     .Users
                     .Where(u => u.Id == request.Id)

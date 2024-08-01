@@ -23,7 +23,7 @@ public static class GetChallenge
         public async Task<Result<ChallengeDetailsResponse>> Handle(Query request,
             CancellationToken cancellationToken)
         {
-            var challenge = await cache.GetOrSetAsync($"{nameof(ChallengeDetailsResponse)}:{request.Id}", async _ =>
+            var challenge = await cache.GetOrSetAsync(Keys.Challenge(request.Id), async _ =>
                 await context
                     .Challenges
                     .Where(c => c.Id == request.Id)

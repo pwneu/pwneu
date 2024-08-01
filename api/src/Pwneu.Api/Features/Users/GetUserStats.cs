@@ -35,7 +35,7 @@ public static class GetUserStats
             if (managerIds.Contains(request.Id))
                 return Result.Failure<UserStatsResponse>(NotFound);
 
-            var userStats = await cache.GetOrSetAsync($"{nameof(UserStatsResponse)}:{request.Id}", async _ =>
+            var userStats = await cache.GetOrSetAsync(Keys.UserStats(request.Id), async _ =>
                 new UserStatsResponse(request.Id, await context
                     .Categories
                     .Select(c => new CategoryEvalResponse(c.Id, c.Name, c.Challenges.Count, c.Challenges

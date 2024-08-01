@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Data;
-using Pwneu.Api.Shared.Entities;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Artifacts;
@@ -15,7 +14,7 @@ public static class GetArtifact
 {
     public record Query(Guid Id) : IRequest<Result<ArtifactDataResponse>>;
 
-    private static readonly Error NotFound = new ("GetArtifact.NotFound",
+    private static readonly Error NotFound = new("GetArtifact.NotFound",
         "The artifact with the specified ID was not found");
 
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
@@ -23,13 +22,12 @@ public static class GetArtifact
     {
         public async Task<Result<ArtifactDataResponse>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var artifact = await cache.GetOrSetAsync($"{nameof(Artifact)}:{request.Id}",
-                async _ =>
-                    await context
-                        .Artifacts
-                        .Where(a => a.Id == request.Id)
-                        .Select(a => new ArtifactDataResponse(a.FileName, a.ContentType, a.Data))
-                        .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
+            var artifact = await cache.GetOrSetAsync(Keys.Artifact(request.Id), async _ =>
+                await context
+                    .Artifacts
+                    .Where(a => a.Id == request.Id)
+                    .Select(a => new ArtifactDataResponse(a.FileName, a.ContentType, a.Data))
+                    .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
             return artifact ?? Result.Failure<ArtifactDataResponse>(NotFound);
         }

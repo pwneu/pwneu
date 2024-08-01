@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Data;
-using Pwneu.Api.Shared.Entities;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Flags;
@@ -13,7 +12,7 @@ namespace Pwneu.Api.Features.Flags;
 /// </summary>
 public static class GetChallengeFlags
 {
-    public record Query(Guid Id) : IRequest<Result<IEnumerable<string>>>;
+    public record Query(Guid ChallengeId) : IRequest<Result<IEnumerable<string>>>;
 
     private static readonly Error ChallengeNotFound = new("GetChallengeFlags.ChallengeNotFound",
         "The challenge with the specified ID was not found");
@@ -23,15 +22,14 @@ public static class GetChallengeFlags
     {
         public async Task<Result<IEnumerable<string>>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var challengeFlags = await cache.GetOrSetAsync(
-                $"{nameof(Challenge)}.{nameof(Challenge.Flags)}:{request.Id}", async _ =>
-                    await context
-                        .Challenges
-                        .Where(c => c.Id == request.Id)
-                        .Select(c => c.Flags)
-                        .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
+            var flags = await cache.GetOrSetAsync(Keys.Flags(request.ChallengeId), async _ =>
+                await context
+                    .Challenges
+                    .Where(c => c.Id == request.ChallengeId)
+                    .Select(c => c.Flags)
+                    .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
-            return challengeFlags ?? Result.Failure<IEnumerable<string>>(ChallengeNotFound);
+            return flags ?? Result.Failure<IEnumerable<string>>(ChallengeNotFound);
         }
     }
 
