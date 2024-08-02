@@ -15,12 +15,18 @@ services:
       - "7638:7638"
       - "7639:7639"
     environment:
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
+      - ASPNETCORE_HTTP_PORTS=7638
+      - ASPNETCORE_HTTPS_PORTS=7639
       - JWT_ISSUER=${JWT_ISSUER}
       - JWT_AUDIENCE=${JWT_AUDIENCE}
       - JWT_SIGNING_KEY=${JWT_SIGNING_KEY}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - ConnectionStrings__Postgres=${POSTGRES_CONNECTION}
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://pwneu.dashboard:18889
+    volumes:
+      - ./.containers/certs:/home/app/.aspnet/https:ro
     networks:
       - pwneu
 
