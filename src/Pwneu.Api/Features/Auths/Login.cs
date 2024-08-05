@@ -51,11 +51,7 @@ public static class Login
 
             claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
-            var issuer = Environment.GetEnvironmentVariable(Consts.JwtIssuer);
-            var audience = Environment.GetEnvironmentVariable(Consts.JwtAudience);
-            var signingKey = Environment.GetEnvironmentVariable(Consts.JwtSigningKey);
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey!));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Envs.JwtSigningKey()));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
 
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -63,8 +59,8 @@ public static class Login
                 Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = credentials,
-                Issuer = issuer,
-                Audience = audience
+                Issuer = Envs.JwtIssuer(),
+                Audience = Envs.JwtAudience()
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();

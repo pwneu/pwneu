@@ -47,7 +47,7 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
         await _scope.ServiceProvider.SeedAdminAsync();
 
         var user = new User { UserName = "test" };
-        var createUser = await UserManager.CreateAsync(user, Consts.DefaultAdminPassword);
+        var createUser = await UserManager.CreateAsync(user, Envs.AdminPassword());
 
         var addRole = await UserManager.AddToRoleAsync(user, Consts.Member);
 

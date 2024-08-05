@@ -33,7 +33,7 @@ public static class AppSeed
 
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
 
-        var password = Environment.GetEnvironmentVariable(Consts.AdminPassword) ?? Consts.DefaultAdminPassword;
+        var password = Envs.AdminPassword();
 
         var admin = await userManager.FindByNameAsync(Consts.Admin);
 

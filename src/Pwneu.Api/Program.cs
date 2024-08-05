@@ -99,10 +99,6 @@ builder.Services.AddValidatorsFromAssembly(assembly);
 builder.Services.AddEndpoints();
 
 // Authentication and Authorization (JSON Web Token)
-var issuer = Environment.GetEnvironmentVariable(Consts.JwtIssuer);
-var audience = Environment.GetEnvironmentVariable(Consts.JwtAudience);
-var signingKey = Environment.GetEnvironmentVariable(Consts.JwtSigningKey);
-
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -116,14 +112,14 @@ builder.Services.AddAuthentication(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidIssuer = issuer,
-            ValidAudience = audience,
-            IssuerSigningKey =
-                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey!)),
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateLifetime = true,
-            ValidateIssuerSigningKey = true
+            ValidateIssuerSigningKey = true,
+            ClockSkew = TimeSpan.FromSeconds(0),
+            ValidIssuer = Envs.JwtIssuer(),
+            ValidAudience = Envs.JwtAudience(),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Envs.JwtSigningKey())),
         };
     });
 
