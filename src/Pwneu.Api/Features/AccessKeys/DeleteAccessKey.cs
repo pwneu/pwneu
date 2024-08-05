@@ -46,7 +46,7 @@ public static class DeleteAccessKey
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
                 })
                 .RequireAuthorization(Consts.AdminOnly)
-                .WithTags(nameof(Categories));
+                .WithTags(nameof(AccessKeys));
         }
     }
 }

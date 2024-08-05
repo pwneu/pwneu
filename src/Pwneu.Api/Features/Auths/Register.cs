@@ -1,23 +1,33 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Contracts;
+using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Auths;
 
 public static class Register
 {
-    public record Command(string UserName, string Email, string Password, string FullName) : IRequest<Result>;
-
     private static readonly Error Failed = new("Register.Failed", "Unable to create user");
     private static readonly Error AddRoleFailed = new("Register.AddRoleFailed", "Unable to add role to user");
 
-    // TODO: Create a register request using register key
-    internal sealed class Handler(UserManager<User> userManager, IValidator<Command> validator)
-        : IRequestHandler<Command, Result>
+    public record Command(string UserName, string Email, string Password, string FullName, string? AccessKey = null)
+        : IRequest<Result>;
+
+    internal sealed class Handler(
+        ApplicationDbContext context,
+        UserManager<User> userManager,
+        IFusionCache cache,
+        IValidator<Command> validator,
+        IOptions<AppOptions> appOptions) : IRequestHandler<Command, Result>
     {
+        private readonly AppOptions _appOptions = appOptions.Value;
+
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
@@ -25,12 +35,32 @@ public static class Register
             if (!validationResult.IsValid)
                 return Result.Failure(new Error("Register.Validation", validationResult.ToString()));
 
+            List<AccessKey>? accessKeys = default;
+            AccessKey? accessKey = default;
+
+            // Check if a registration key is required.
+            if (_appOptions.RequireRegistrationKey)
+            {
+                // Set values of the variables above.
+                accessKeys = await cache.GetOrSetAsync(Keys.AccessKeys(), async _ =>
+                    await context
+                        .AccessKeys
+                        .ToListAsync(cancellationToken), token: cancellationToken);
+
+                accessKey = accessKeys.FirstOrDefault(a =>
+                    a.Id.ToString() == request.AccessKey && a.Expiration > DateTime.UtcNow);
+
+                // If no access key matched, don't register the user.
+                if (accessKey is null)
+                    return Result.Failure(Failed);
+            }
+
             var user = new User
             {
                 UserName = request.UserName,
                 Email = request.Email,
                 FullName = request.FullName,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow
             };
 
             var createUser = await userManager.CreateAsync(user, request.Password);
@@ -38,9 +68,23 @@ public static class Register
                 return Result.Failure(Failed);
 
             var addRole = await userManager.AddToRoleAsync(user, Consts.Member);
-            return !addRole.Succeeded
-                ? Result.Failure(AddRoleFailed)
-                : Result.Success();
+            if (!addRole.Succeeded)
+                return Result.Failure(AddRoleFailed);
+
+            // If a registration key is not required, accessKey and accessKeys should be null at this point.
+            // But still check if the values are null just in case.
+            if (!_appOptions.RequireRegistrationKey || accessKey is null || accessKeys is null || accessKey.CanBeReused)
+                return Result.Success();
+
+            // Remove key since it cannot be reused.
+            context.AccessKeys.Remove(accessKey);
+            await context.SaveChangesAsync(cancellationToken);
+
+            // Update cache by removing the used key in the key list.
+            await cache.SetAsync(Keys.AccessKeys(), accessKeys.Where(a => a.Id != accessKey.Id).ToList(),
+                token: cancellationToken);
+
+            return Result.Success();
         }
     }
 
@@ -50,7 +94,8 @@ public static class Register
         {
             app.MapPost("register", async (RegisterRequest request, ISender sender) =>
                 {
-                    var command = new Command(request.UserName, request.Email, request.Password, request.FullName);
+                    var command = new Command(request.UserName, request.Email, request.Password, request.FullName,
+                        request.AccessKey);
                     var result = await sender.Send(command);
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();

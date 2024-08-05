@@ -130,6 +130,12 @@ builder.Services.AddAuthorizationBuilder()
 
 builder.Services.AddScoped<IAccessControl, AccessControl>();
 
+builder.Services
+    .AddOptions<AppOptions>()
+    .BindConfiguration($"{nameof(AppOptions)}")
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())

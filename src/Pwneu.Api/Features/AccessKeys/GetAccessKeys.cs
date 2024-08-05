@@ -14,15 +14,17 @@ public static class GetAccessKeys
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
         : IRequestHandler<Query, Result<IEnumerable<AccessKeyResponse>>>
     {
-        public async Task<Result<IEnumerable<AccessKeyResponse>>> Handle(Query request, CancellationToken cancellationToken)
+        public async Task<Result<IEnumerable<AccessKeyResponse>>> Handle(Query request,
+            CancellationToken cancellationToken)
         {
             var accessKeys = await cache.GetOrSetAsync(Keys.AccessKeys(), async _ =>
                 await context
                     .AccessKeys
-                    .Select(a => new AccessKeyResponse(a.Id, a.Key, a.CanBeReused, a.Expiration))
                     .ToListAsync(cancellationToken), token: cancellationToken);
 
-            return accessKeys;
+            return accessKeys
+                .Select(a => new AccessKeyResponse(a.Id, a.CanBeReused, a.Expiration))
+                .ToList();
         }
     }
 
@@ -38,7 +40,7 @@ public static class GetAccessKeys
                     return result.IsFailure ? Results.StatusCode(500) : Results.Ok(result.Value);
                 })
                 .RequireAuthorization(Consts.AdminOnly)
-                .WithTags(nameof(Categories));
+                .WithTags(nameof(AccessKeys));
         }
     }
 }

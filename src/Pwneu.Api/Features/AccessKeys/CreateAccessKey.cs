@@ -1,4 +1,3 @@
-using FluentValidation;
 using MediatR;
 using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Contracts;
@@ -10,33 +9,27 @@ namespace Pwneu.Api.Features.AccessKeys;
 
 public static class CreateAccessKey
 {
-    public record Command(string Key, bool CanBeReused, DateTime Expiration) : IRequest<Result>;
+    public record Command(bool CanBeReused, DateTime Expiration) : IRequest<Result<Guid>>;
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, IValidator<Command> validator)
-        : IRequestHandler<Command, Result>
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
+        : IRequestHandler<Command, Result<Guid>>
     {
-        public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
+        public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
         {
-            var validationResult = await validator.ValidateAsync(request, cancellationToken);
-
-            if (!validationResult.IsValid)
-                return Result.Failure(new Error("CreateAccessKey.Validation", validationResult.ToString()));
-
-            var category = new AccessKey
+            var accessKey = new AccessKey
             {
                 Id = Guid.NewGuid(),
-                Key = request.Key,
                 CanBeReused = request.CanBeReused,
-                Expiration = request.Expiration.ToUniversalTime()
+                Expiration = request.Expiration
             };
 
-            context.Add(category);
+            context.Add(accessKey);
 
             await context.SaveChangesAsync(cancellationToken);
 
             await cache.RemoveAsync(Keys.AccessKeys(), token: cancellationToken);
 
-            return Result.Success();
+            return accessKey.Id;
         }
     }
 
@@ -46,26 +39,14 @@ public static class CreateAccessKey
         {
             app.MapPost("keys", async (CreateAccessKeyRequest request, ISender sender) =>
                 {
-                    var command = new Command(request.Key, request.CanBeReused, request.Expiration);
+                    var command = new Command(request.CanBeReused, request.Expiration);
 
                     var result = await sender.Send(command);
 
-                    return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
+                    return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);
                 })
                 .RequireAuthorization(Consts.AdminOnly)
                 .WithTags(nameof(AccessKeys));
-        }
-    }
-
-    public class Validator : AbstractValidator<Command>
-    {
-        public Validator()
-        {
-            RuleFor(c => c.Key)
-                .NotEmpty()
-                .WithMessage("Key is required.")
-                .MaximumLength(100)
-                .WithMessage("Key must be 100 characters or less.");
         }
     }
 }
