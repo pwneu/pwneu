@@ -1,8 +1,12 @@
 namespace Pwneu.Api.Shared.Common;
 
+/// <summary>
+/// Keys used for caching to avoid using wrong keys.
+/// </summary>
 public static class Keys
 {
     public static string Categories() => "category";
+    public static string AccessKeys() => "accessKeys";
     public static string Category(Guid id) => $"category:{id}";
     public static string Challenge(Guid id) => $"challenge:{id}";
     public static string Artifact(Guid id) => $"artifact:{id}";
