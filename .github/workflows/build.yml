@@ -22,10 +22,10 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Restore
-      run: dotnet restore ./api/Pwneu.sln
+      run: dotnet restore ./Pwneu.sln
     
     - name: Build
-      run: dotnet build ./api/Pwneu.sln --configuration Release --no-restore
+      run: dotnet build ./Pwneu.sln --configuration Release --no-restore
 
     - name: Test
-      run: dotnet test ./api/Pwneu.sln --configuration Release --no-restore --no-build
+      run: dotnet test ./Pwneu.sln --configuration Release --no-restore --no-build
