@@ -13,7 +13,3 @@ public record UserDetailsResponse(
     int IncorrectAttempts);
 
 public record UserStatsResponse(string Id, IEnumerable<CategoryEvalResponse> Evaluations);
-
-public record CreateUserRequest(string UserName, string Email, string Password, string FullName);
-
-public record LoginRequest(string UserName, string Password);

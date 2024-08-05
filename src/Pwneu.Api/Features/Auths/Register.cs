@@ -48,7 +48,7 @@ public static class Register
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("register", async (CreateUserRequest request, ISender sender) =>
+            app.MapPost("register", async (RegisterRequest request, ISender sender) =>
                 {
                     var command = new Command(request.UserName, request.Email, request.Password, request.FullName);
                     var result = await sender.Send(command);
