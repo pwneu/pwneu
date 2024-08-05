@@ -9,7 +9,7 @@ services:
       - pwneu.cache
       - pwneu.dashboard
     build:
-      context: api
+      context: .
       dockerfile: src/Pwneu.Api/Dockerfile
     ports:
       - "7638:7638"
@@ -24,6 +24,7 @@ services:
       - JWT_SIGNING_KEY=${JWT_SIGNING_KEY}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - ConnectionStrings__Postgres=${POSTGRES_CONNECTION}
+      - AppOptions__RequireRegistrationKey=${REQUIRE_REGISTRATION_KEY}
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://pwneu.dashboard:18889
     volumes:
       - ./.containers/certs:/home/app/.aspnet/https:ro
