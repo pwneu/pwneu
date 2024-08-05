@@ -9,7 +9,7 @@ services:
       - pwneu.cache
       - pwneu.dashboard
     build:
-      context: api
+      context: .
       dockerfile: src/Pwneu.Api/Dockerfile
     ports:
       - "7638:7638"
