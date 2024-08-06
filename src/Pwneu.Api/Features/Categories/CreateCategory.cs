@@ -4,6 +4,7 @@ using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Categories;
 
@@ -15,7 +16,7 @@ public static class CreateCategory
 {
     public record Command(string Name, string Description) : IRequest<Result<Guid>>;
 
-    internal sealed class Handler(ApplicationDbContext context, IValidator<Command> validator)
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, IValidator<Command> validator)
         : IRequestHandler<Command, Result<Guid>>
     {
         public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
@@ -35,6 +36,8 @@ public static class CreateCategory
             context.Add(category);
 
             await context.SaveChangesAsync(cancellationToken);
+
+            await cache.RemoveAsync(Keys.Categories(), token: cancellationToken);
 
             return category.Id;
         }

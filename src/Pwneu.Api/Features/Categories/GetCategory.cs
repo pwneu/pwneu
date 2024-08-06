@@ -27,8 +27,7 @@ public static class GetCategory
                     .Categories
                     .Where(ctg => ctg.Id == request.Id)
                     .Select(ctg => new CategoryResponse(ctg.Id, ctg.Name, ctg.Description,
-                        ctg.Challenges.Select(c => new ChallengeResponse(c.Id, c.Name)).ToList()
-                    ))
+                        ctg.Challenges.Select(c => new ChallengeResponse(c.Id, c.Name)).ToList()))
                     .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
             return category ?? Result.Failure<CategoryResponse>(NotFound);

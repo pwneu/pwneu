@@ -41,6 +41,9 @@ public static class DeleteChallenge
             await cache.RemoveAsync(Keys.Challenge(challenge.Id), token: cancellationToken);
             await cache.RemoveAsync(Keys.Flags(challenge.Id), token: cancellationToken);
 
+            await cache.RemoveAsync(Keys.Categories(), token: cancellationToken);
+            await cache.RemoveAsync(Keys.Category(challenge.CategoryId), token: cancellationToken);
+
             return Result.Success();
         }
     }
