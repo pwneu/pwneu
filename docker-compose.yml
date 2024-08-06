@@ -21,6 +21,8 @@ services:
       - ASPNETCORE_HTTPS_PORTS=8081
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://pwneu.dashboard:18889
       - ConnectionStrings__Postgres=${POSTGRES_CONNECTION}
+      - MessageBroker__Username=${RABBITMQ_DEFAULT_USER}
+      - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
       - AppOptions__RequireRegistrationKey=${REQUIRE_REGISTRATION_KEY}
       - AppOptions__InitialAdminPassword=${ADMIN_PASSWORD}
       - JwtOptions__Issuer=${JWT_ISSUER}
@@ -47,6 +49,10 @@ services:
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_HTTPS_PORTS=8081
+      - MessageBroker__Username=${RABBITMQ_DEFAULT_USER}
+      - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
+      - SmtpOptions__SenderAddress=${SMTP_SENDER_ADDRESS}
+      - SmtpOptions__SenderPassword=${SMTP_SENDER_PASSWORD}
     volumes:
       - ./.containers/certs:/home/app/.aspnet/https:ro
     networks:
@@ -94,6 +100,8 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+    networks:
+      - pwneu
 
 networks:
   pwneu:

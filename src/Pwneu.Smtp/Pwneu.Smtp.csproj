@@ -11,4 +11,12 @@
         <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
     </PropertyGroup>
 
+    <ItemGroup>
+        <PackageReference Include="MassTransit.RabbitMQ" Version="8.2.3"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Pwneu.Shared\Pwneu.Shared.csproj"/>
+    </ItemGroup>
+
 </Project>

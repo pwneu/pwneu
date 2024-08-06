@@ -4,6 +4,8 @@ public record RegisterRequest(string UserName, string Email, string Password, st
 
 public record LoginRequest(string UserName, string Password);
 
+public record LoggedInEvent(string FullName, string Email);
+
 public record RefreshRequest(string RefreshToken, string AccessToken);
 
 public record TokenResponse(string AccessToken, string RefreshToken);

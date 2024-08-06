@@ -1,5 +1,6 @@
 using System.Text;
 using FluentValidation;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -54,7 +55,6 @@ builder.Services.AddOpenTelemetry()
             .AddOtlpExporter();
     });
 
-// TODO -- Use Serilog for logging
 builder.Logging.AddOpenTelemetry(logging => logging.AddOtlpExporter());
 
 // Swagger UI
@@ -103,6 +103,22 @@ builder.Services.AddFusionCache()
         ReferenceLoopHandling = ReferenceLoopHandling.Ignore
     }))
     .WithDistributedCache(new RedisCache(new RedisCacheOptions { Configuration = redis }));
+
+// RabbitMQ
+builder.Services.AddMassTransit(busConfigurator =>
+{
+    busConfigurator.SetKebabCaseEndpointNameFormatter();
+    busConfigurator.UsingRabbitMq((context, configurator) =>
+    {
+        configurator.Host(new Uri(builder.Configuration["MessageBroker:Host"]!), h =>
+        {
+            h.Username(builder.Configuration["MessageBroker:Username"]!);
+            h.Password(builder.Configuration["MessageBroker:Password"]!);
+        });
+
+        configurator.ConfigureEndpoints(context);
+    });
+});
 
 // Assembly scanning of Mediator and Fluent Validations
 var assembly = typeof(Program).Assembly;
