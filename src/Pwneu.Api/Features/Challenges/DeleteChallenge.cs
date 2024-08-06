@@ -1,7 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Data;
+using Pwneu.Shared.Common;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Challenges;
@@ -40,6 +40,9 @@ public static class DeleteChallenge
 
             await cache.RemoveAsync(Keys.Challenge(challenge.Id), token: cancellationToken);
             await cache.RemoveAsync(Keys.Flags(challenge.Id), token: cancellationToken);
+
+            await cache.RemoveAsync(Keys.Categories(), token: cancellationToken);
+            await cache.RemoveAsync(Keys.Category(challenge.CategoryId), token: cancellationToken);
 
             return Result.Success();
         }

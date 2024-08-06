@@ -3,28 +3,41 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using FluentValidation;
+using MassTransit;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Pwneu.Api.Shared.Common;
-using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Entities;
+using Pwneu.Api.Shared.Options;
+using Pwneu.Shared.Common;
+using Pwneu.Shared.Contracts;
 
 namespace Pwneu.Api.Features.Auths;
 
 public static class Login
 {
-    public record Command(string UserName, string Password) : IRequest<Result<TokenResponse>>;
+    public record Command(
+        string UserName,
+        string Password,
+        string? IpAddress = null,
+        string? UserAgent = null,
+        string? Referer = null)
+        : IRequest<Result<TokenResponse>>;
 
     private static readonly Error Invalid = new("Login.Invalid", "Incorrect username or password");
 
     internal sealed class Handler(
         UserManager<User> userManager,
         SignInManager<User> signInManager,
+        IOptions<JwtOptions> jwtOptions,
+        IPublishEndpoint publishEndpoint,
         IValidator<Command> validator)
         : IRequestHandler<Command, Result<TokenResponse>>
     {
+        private readonly JwtOptions _jwtOptions = jwtOptions.Value;
+
         public async Task<Result<TokenResponse>> Handle(Command request, CancellationToken cancellationToken)
         {
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
@@ -65,11 +78,15 @@ public static class Login
             };
             claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Envs.JwtSigningKey()));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
 
-            var accessToken = new JwtSecurityToken(Envs.JwtIssuer(), Envs.JwtAudience(), claims, null,
+            var accessToken = new JwtSecurityToken(_jwtOptions.Issuer, _jwtOptions.Audience, claims, null,
                 DateTime.UtcNow.AddHours(1), credentials);
+
+            await publishEndpoint.Publish(
+                new LoggedInEvent(user.FullName, user.Email, request.IpAddress, request.UserAgent, request.Referer),
+                cancellationToken);
 
             return new TokenResponse(new JwtSecurityTokenHandler().WriteToken(accessToken), refreshToken);
         }
@@ -79,9 +96,14 @@ public static class Login
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("login", async (LoginRequest request, ISender sender) =>
+            app.MapPost("login", async (LoginRequest request, HttpContext httpContext, ISender sender) =>
                 {
-                    var command = new Command(request.UserName, request.Password);
+                    // var ipAddress = httpContext.Request.Headers["X-Forwarded-For"].ToString();
+                    var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString();
+                    var userAgent = httpContext.Request.Headers.UserAgent.ToString();
+                    var referer = httpContext.Request.Headers.Referer.ToString();
+
+                    var command = new Command(request.UserName, request.Password, ipAddress, userAgent, referer);
                     var result = await sender.Send(command);
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);

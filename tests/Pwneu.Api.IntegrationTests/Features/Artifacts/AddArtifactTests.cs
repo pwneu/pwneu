@@ -1,8 +1,8 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Pwneu.Api.Features.Artifacts;
-using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Entities;
+using Pwneu.Shared.Common;
 
 namespace Pwneu.Api.IntegrationTests.Features.Artifacts;
 

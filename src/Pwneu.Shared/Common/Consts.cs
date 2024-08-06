@@ -1,4 +1,4 @@
-namespace Pwneu.Api.Shared.Common;
+namespace Pwneu.Shared.Common;
 
 public static class Consts
 {
@@ -9,4 +9,6 @@ public static class Consts
     public const string MemberOnly = "MemberOnly";
     public const string ManagerAdminOnly = "ManagerAdminOnly";
     public const string AdminOnly = "AdminOnly";
+
+    public const int GmailSmtpPort = 587;
 }

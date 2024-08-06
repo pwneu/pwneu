@@ -1,5 +1,6 @@
 using System.Text;
 using FluentValidation;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -11,16 +12,30 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
 using Pwneu.Api.Shared.Extensions;
+using Pwneu.Api.Shared.Options;
 using Pwneu.Api.Shared.Services;
+using Pwneu.Shared.Common;
+using Pwneu.Shared.Extensions;
 using Swashbuckle.AspNetCore.Filters;
 using ZiggyCreatures.Caching.Fusion;
 using ZiggyCreatures.Caching.Fusion.Serialization.NewtonsoftJson;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services
+    .AddOptions<AppOptions>()
+    .BindConfiguration($"{nameof(AppOptions)}")
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services
+    .AddOptions<JwtOptions>()
+    .BindConfiguration($"{nameof(JwtOptions)}")
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 
 // OpenTelemetry (for metrics, traces, and logs)
 builder.Services.AddOpenTelemetry()
@@ -40,7 +55,6 @@ builder.Services.AddOpenTelemetry()
             .AddOtlpExporter();
     });
 
-// TODO -- Use Serilog for logging
 builder.Logging.AddOpenTelemetry(logging => logging.AddOtlpExporter());
 
 // Swagger UI
@@ -90,13 +104,29 @@ builder.Services.AddFusionCache()
     }))
     .WithDistributedCache(new RedisCache(new RedisCacheOptions { Configuration = redis }));
 
+// RabbitMQ
+builder.Services.AddMassTransit(busConfigurator =>
+{
+    busConfigurator.SetKebabCaseEndpointNameFormatter();
+    busConfigurator.UsingRabbitMq((context, configurator) =>
+    {
+        configurator.Host(new Uri(builder.Configuration["MessageBroker:Host"]!), h =>
+        {
+            h.Username(builder.Configuration["MessageBroker:Username"]!);
+            h.Password(builder.Configuration["MessageBroker:Password"]!);
+        });
+
+        configurator.ConfigureEndpoints(context);
+    });
+});
+
 // Assembly scanning of Mediator and Fluent Validations
 var assembly = typeof(Program).Assembly;
 builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(assembly));
 builder.Services.AddValidatorsFromAssembly(assembly);
 
 // Add endpoints from the Features folder (Vertical Slice)
-builder.Services.AddEndpoints();
+builder.Services.AddEndpoints(assembly);
 
 // Authentication and Authorization (JSON Web Token)
 builder.Services.AddAuthentication(options =>
@@ -117,9 +147,10 @@ builder.Services.AddAuthentication(options =>
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             ClockSkew = TimeSpan.FromSeconds(0),
-            ValidIssuer = Envs.JwtIssuer(),
-            ValidAudience = Envs.JwtAudience(),
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Envs.JwtSigningKey())),
+            ValidIssuer = builder.Configuration["JwtOptions:Issuer"],
+            ValidAudience = builder.Configuration["JwtOptions:Audience"],
+            IssuerSigningKey =
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtOptions:SigningKey"]!)),
         };
     });
 
@@ -129,12 +160,6 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy(Consts.MemberOnly, policy => { policy.RequireRole(Consts.Member); });
 
 builder.Services.AddScoped<IAccessControl, AccessControl>();
-
-builder.Services
-    .AddOptions<AppOptions>()
-    .BindConfiguration($"{nameof(AppOptions)}")
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
 
 var app = builder.Build();
 

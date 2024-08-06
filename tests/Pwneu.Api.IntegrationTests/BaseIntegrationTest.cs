@@ -2,11 +2,15 @@ using Bogus;
 using FluentAssertions;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Pwneu.Api.Shared.Common;
+using Microsoft.Extensions.Options;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
 using Pwneu.Api.Shared.Extensions;
+using Pwneu.Api.Shared.Options;
+using Pwneu.Shared.Common;
+using Pwneu.Shared.Extensions;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.IntegrationTests;
@@ -46,8 +50,10 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
         await _scope.ServiceProvider.SeedRolesAsync();
         await _scope.ServiceProvider.SeedAdminAsync();
 
+        var appOptions = _scope.ServiceProvider.GetRequiredService<IOptions<AppOptions>>().Value;
+
         var user = new User { UserName = "test" };
-        var createUser = await UserManager.CreateAsync(user, Envs.AdminPassword());
+        var createUser = await UserManager.CreateAsync(user, appOptions.InitialAdminPassword);
 
         var addRole = await UserManager.AddToRoleAsync(user, Consts.Member);
 

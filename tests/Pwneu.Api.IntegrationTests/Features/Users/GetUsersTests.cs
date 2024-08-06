@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Pwneu.Api.Features.Users;
-using Pwneu.Api.Shared.Common;
-using Pwneu.Api.Shared.Contracts;
+using Pwneu.Shared.Common;
+using Pwneu.Shared.Contracts;
 
 namespace Pwneu.Api.IntegrationTests.Features.Users;
 

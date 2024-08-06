@@ -1,9 +1,9 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Pwneu.Api.Shared.Common;
-using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Services;
+using Pwneu.Shared.Common;
+using Pwneu.Shared.Contracts;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Users;

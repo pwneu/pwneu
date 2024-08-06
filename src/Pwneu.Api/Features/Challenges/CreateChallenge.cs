@@ -1,9 +1,11 @@
 using FluentValidation;
 using MediatR;
-using Pwneu.Api.Shared.Common;
-using Pwneu.Api.Shared.Contracts;
+using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
+using Pwneu.Shared.Common;
+using Pwneu.Shared.Contracts;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Challenges;
 
@@ -23,7 +25,10 @@ public static class CreateChallenge
         int MaxAttempts,
         IEnumerable<string> Flags) : IRequest<Result<Guid>>;
 
-    internal sealed class Handler(ApplicationDbContext context, IValidator<Command> validator)
+    private static readonly Error CategoryNotFound = new("CreateCategory.CategoryNotFound",
+        "The category with the specified ID was not found");
+
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, IValidator<Command> validator)
         : IRequestHandler<Command, Result<Guid>>
     {
         public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
@@ -32,6 +37,14 @@ public static class CreateChallenge
 
             if (!validationResult.IsValid)
                 return Result.Failure<Guid>(new Error("CreateChallenge.Validation", validationResult.ToString()));
+
+            var category = await context
+                .Categories
+                .Where(ctg => ctg.Id == request.CategoryId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (category is null)
+                return Result.Failure<Guid>(CategoryNotFound);
 
             var challenge = new Challenge
             {
@@ -49,6 +62,9 @@ public static class CreateChallenge
             context.Add(challenge);
 
             await context.SaveChangesAsync(cancellationToken);
+
+            await cache.RemoveAsync(Keys.Categories(), token: cancellationToken);
+            await cache.RemoveAsync(Keys.Category(request.CategoryId), token: cancellationToken);
 
             return challenge.Id;
         }

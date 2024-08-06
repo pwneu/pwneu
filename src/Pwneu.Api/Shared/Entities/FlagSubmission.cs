@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Pwneu.Api.Shared.Contracts;
+using Pwneu.Shared.Contracts;
 
 namespace Pwneu.Api.Shared.Entities;
 

@@ -1,7 +1,7 @@
 using MediatR;
-using Pwneu.Api.Shared.Common;
-using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Data;
+using Pwneu.Shared.Common;
+using Pwneu.Shared.Contracts;
 
 namespace Pwneu.Api.Features.Solves;
 
@@ -43,7 +43,7 @@ public static class GetChallengeSolves
                         return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
                     })
                 .RequireAuthorization()
-                .WithTags(nameof(Challenges));
+                .WithTags(nameof(Solves));
         }
     }
 }

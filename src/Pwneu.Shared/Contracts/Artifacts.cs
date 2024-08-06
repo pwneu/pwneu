@@ -1,4 +1,4 @@
-namespace Pwneu.Api.Shared.Contracts;
+namespace Pwneu.Shared.Contracts;
 
 public record ArtifactDataResponse(string FileName, string ContentType, byte[] Data);
 

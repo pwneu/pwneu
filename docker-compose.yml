@@ -12,20 +12,48 @@ services:
       context: .
       dockerfile: src/Pwneu.Api/Dockerfile
     ports:
-      - "7638:7638"
-      - "7639:7639"
+      - "7638:8080"
+      - "7639:8081"
     environment:
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
-      - ASPNETCORE_HTTP_PORTS=7638
-      - ASPNETCORE_HTTPS_PORTS=7639
-      - JWT_ISSUER=${JWT_ISSUER}
-      - JWT_AUDIENCE=${JWT_AUDIENCE}
-      - JWT_SIGNING_KEY=${JWT_SIGNING_KEY}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
-      - ConnectionStrings__Postgres=${POSTGRES_CONNECTION}
-      - AppOptions__RequireRegistrationKey=${REQUIRE_REGISTRATION_KEY}
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=8081
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://pwneu.dashboard:18889
+      - ConnectionStrings__Postgres=${POSTGRES_CONNECTION}
+      - MessageBroker__Username=${RABBITMQ_DEFAULT_USER}
+      - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
+      - AppOptions__RequireRegistrationKey=${REQUIRE_REGISTRATION_KEY}
+      - AppOptions__InitialAdminPassword=${ADMIN_PASSWORD}
+      - JwtOptions__Issuer=${JWT_ISSUER}
+      - JwtOptions__Audience=${JWT_AUDIENCE}
+      - JwtOptions__SigningKey=${JWT_SIGNING_KEY}
+    volumes:
+      - ./.containers/certs:/home/app/.aspnet/https:ro
+    networks:
+      - pwneu
+
+  pwneu.smtp:
+    image: ${DOCKER_REGISTRY-}pwneu.smtp
+    container_name: pwneu.smtp
+    depends_on:
+      - pwneu.api
+    build:
+      context: .
+      dockerfile: src/Pwneu.Smtp/Dockerfile
+    ports:
+      - "63010:8080"
+      - "63011:8081"
+    environment:
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=8081
+      - MessageBroker__Username=${RABBITMQ_DEFAULT_USER}
+      - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
+      - SmtpOptions__SenderAddress=${SMTP_SENDER_ADDRESS}
+      - SmtpOptions__SenderPassword=${SMTP_SENDER_PASSWORD}
+      - SmtpOptions__IsEnabled=${SMTP_IS_ENABLED}
     volumes:
       - ./.containers/certs:/home/app/.aspnet/https:ro
     networks:
@@ -58,6 +86,21 @@ services:
     container_name: pwneu.cache
     ports:
       - "6379:6379"
+    networks:
+      - pwneu
+
+  pwneu.mq:
+    image: rabbitmq:management
+    container_name: pwneu.mq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - ./.containers/queue/data/:/var/lib/rabbitmq
+      - ./.containers/queue/log/:/var/log/rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
     networks:
       - pwneu
 
