@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using FluentValidation;
+using MassTransit;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +18,13 @@ namespace Pwneu.Api.Features.Auths;
 
 public static class Login
 {
-    public record Command(string UserName, string Password) : IRequest<Result<TokenResponse>>;
+    public record Command(
+        string UserName,
+        string Password,
+        string? IpAddress = null,
+        string? UserAgent = null,
+        string? Referer = null)
+        : IRequest<Result<TokenResponse>>;
 
     private static readonly Error Invalid = new("Login.Invalid", "Incorrect username or password");
 
@@ -25,6 +32,7 @@ public static class Login
         UserManager<User> userManager,
         SignInManager<User> signInManager,
         IOptions<JwtOptions> jwtOptions,
+        IPublishEndpoint publishEndpoint,
         IValidator<Command> validator)
         : IRequestHandler<Command, Result<TokenResponse>>
     {
@@ -76,6 +84,10 @@ public static class Login
             var accessToken = new JwtSecurityToken(_jwtOptions.Issuer, _jwtOptions.Audience, claims, null,
                 DateTime.UtcNow.AddHours(1), credentials);
 
+            await publishEndpoint.Publish(
+                new LoggedInEvent(user.FullName, user.Email, request.IpAddress, request.UserAgent, request.Referer),
+                cancellationToken);
+
             return new TokenResponse(new JwtSecurityTokenHandler().WriteToken(accessToken), refreshToken);
         }
     }
@@ -84,9 +96,14 @@ public static class Login
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("login", async (LoginRequest request, ISender sender) =>
+            app.MapPost("login", async (LoginRequest request, HttpContext httpContext, ISender sender) =>
                 {
-                    var command = new Command(request.UserName, request.Password);
+                    // var ipAddress = httpContext.Request.Headers["X-Forwarded-For"].ToString();
+                    var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString();
+                    var userAgent = httpContext.Request.Headers.UserAgent.ToString();
+                    var referer = httpContext.Request.Headers.Referer.ToString();
+
+                    var command = new Command(request.UserName, request.Password, ipAddress, userAgent, referer);
                     var result = await sender.Send(command);
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);

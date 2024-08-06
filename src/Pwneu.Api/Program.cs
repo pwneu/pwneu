@@ -126,7 +126,7 @@ builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(assemb
 builder.Services.AddValidatorsFromAssembly(assembly);
 
 // Add endpoints from the Features folder (Vertical Slice)
-builder.Services.AddEndpoints();
+builder.Services.AddEndpoints(assembly);
 
 // Authentication and Authorization (JSON Web Token)
 builder.Services.AddAuthentication(options =>

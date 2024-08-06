@@ -8,10 +8,15 @@ builder.Services.AddOptions<SmtpOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+var assembly = typeof(Program).Assembly;
+
 // RabbitMQ
 builder.Services.AddMassTransit(busConfigurator =>
 {
     busConfigurator.SetKebabCaseEndpointNameFormatter();
+
+    busConfigurator.AddConsumers(assembly);
+
     busConfigurator.UsingRabbitMq((context, configurator) =>
     {
         configurator.Host(new Uri(builder.Configuration["MessageBroker:Host"]!), h =>
@@ -24,8 +29,17 @@ builder.Services.AddMassTransit(busConfigurator =>
     });
 });
 
+// Assembly scanning of Mediator
+builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(assembly));
+
 var app = builder.Build();
 
-app.MapGet("/", () => "Hello Pwneu!");
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
 
 app.Run();
