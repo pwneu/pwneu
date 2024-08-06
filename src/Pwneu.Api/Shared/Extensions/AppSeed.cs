@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
-using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Entities;
 using Pwneu.Api.Shared.Options;
+using Pwneu.Shared.Common;
 
 namespace Pwneu.Api.Shared.Extensions;
 

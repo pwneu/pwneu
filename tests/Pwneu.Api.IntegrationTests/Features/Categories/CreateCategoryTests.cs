@@ -1,6 +1,6 @@
 using FluentAssertions;
 using Pwneu.Api.Features.Categories;
-using Pwneu.Api.Shared.Common;
+using Pwneu.Shared.Common;
 
 namespace Pwneu.Api.IntegrationTests.Features.Categories;
 

@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using Microsoft.Extensions.Caching.Distributed;
 
-namespace Pwneu.Api.Shared.Extensions;
+namespace Pwneu.Shared.Extensions;
 
 public static class CacheAside
 {
@@ -28,7 +28,6 @@ public static class CacheAside
             if (value is not null) return value;
         }
 
-        // TODO: Lock on a specific cache key
         var hasLock = await Semaphore.WaitAsync(5000, cancellationToken);
 
         if (!hasLock) return default;

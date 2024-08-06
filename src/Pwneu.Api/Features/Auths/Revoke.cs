@@ -1,9 +1,9 @@
 using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Entities;
-using Pwneu.Api.Shared.Extensions;
+using Pwneu.Shared.Common;
+using Pwneu.Shared.Extensions;
 
 namespace Pwneu.Api.Features.Auths;
 

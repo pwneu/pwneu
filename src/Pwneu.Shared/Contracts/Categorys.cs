@@ -1,4 +1,4 @@
-namespace Pwneu.Api.Shared.Contracts;
+namespace Pwneu.Shared.Contracts;
 
 public record CategoryResponse(
     Guid Id,

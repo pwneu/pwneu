@@ -8,10 +8,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Pwneu.Api.Shared.Common;
-using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Entities;
 using Pwneu.Api.Shared.Options;
+using Pwneu.Shared.Common;
+using Pwneu.Shared.Contracts;
 
 namespace Pwneu.Api.Features.Auths;
 

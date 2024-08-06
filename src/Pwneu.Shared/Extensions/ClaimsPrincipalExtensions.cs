@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Microsoft.IdentityModel.JsonWebTokens;
 
-namespace Pwneu.Api.Shared.Extensions;
+namespace Pwneu.Shared.Extensions;
 
 public static class ClaimsPrincipalExtensions
 {

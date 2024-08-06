@@ -1,4 +1,4 @@
-﻿namespace Pwneu.Api.Shared.Common;
+﻿namespace Pwneu.Shared.Common;
 
 public record Error(string Code, string Message)
 {

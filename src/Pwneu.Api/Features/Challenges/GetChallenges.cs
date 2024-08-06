@@ -1,10 +1,10 @@
 using System.Linq.Expressions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Pwneu.Api.Shared.Common;
-using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
+using Pwneu.Shared.Common;
+using Pwneu.Shared.Contracts;
 
 namespace Pwneu.Api.Features.Challenges;
 

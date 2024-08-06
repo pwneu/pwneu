@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Data;
+using Pwneu.Shared.Common;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Flags;

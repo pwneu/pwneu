@@ -82,5 +82,18 @@ services:
     networks:
       - pwneu
 
+  pwneu.mq:
+    image: rabbitmq:management
+    container_name: pwneu.mq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - ./.containers/queue/data/:/var/lib/rabbitmq
+      - ./.containers/queue/log/:/var/log/rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+
 networks:
   pwneu:

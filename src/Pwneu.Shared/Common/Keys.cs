@@ -1,4 +1,4 @@
-namespace Pwneu.Api.Shared.Common;
+namespace Pwneu.Shared.Common;
 
 /// <summary>
 /// Keys used for caching to avoid using wrong keys.

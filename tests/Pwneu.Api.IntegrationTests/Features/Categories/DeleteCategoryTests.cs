@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Pwneu.Api.Features.Categories;
-using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Entities;
+using Pwneu.Shared.Contracts;
 
 namespace Pwneu.Api.IntegrationTests.Features.Categories;
 

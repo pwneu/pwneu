@@ -1,8 +1,8 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
+using Pwneu.Shared.Common;
 
 namespace Pwneu.Api.Features.Artifacts;
 

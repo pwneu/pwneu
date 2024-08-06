@@ -1,8 +1,11 @@
 using System.Reflection;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Pwneu.Api.Shared.Common;
+using Pwneu.Shared.Common;
 
-namespace Pwneu.Api.Shared.Extensions;
+namespace Pwneu.Shared.Extensions;
 
 public static class EndpointExtensions
 {

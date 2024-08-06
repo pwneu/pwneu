@@ -1,8 +1,8 @@
 using FluentAssertions;
 using Pwneu.Api.Features.Challenges;
-using Pwneu.Api.Shared.Common;
-using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Entities;
+using Pwneu.Shared.Common;
+using Pwneu.Shared.Contracts;
 
 namespace Pwneu.Api.IntegrationTests.Features.Challenges;
 

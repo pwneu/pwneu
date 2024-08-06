@@ -1,7 +1,7 @@
 using MediatR;
-using Pwneu.Api.Shared.Common;
-using Pwneu.Api.Shared.Contracts;
-using Pwneu.Api.Shared.Extensions;
+using Pwneu.Shared.Common;
+using Pwneu.Shared.Contracts;
+using Pwneu.Shared.Extensions;
 
 namespace Pwneu.Api.Features.Auths;
 

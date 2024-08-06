@@ -6,11 +6,11 @@ using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Pwneu.Api.Shared.Common;
-using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Entities;
-using Pwneu.Api.Shared.Extensions;
 using Pwneu.Api.Shared.Options;
+using Pwneu.Shared.Common;
+using Pwneu.Shared.Contracts;
+using Pwneu.Shared.Extensions;
 
 namespace Pwneu.Api.Features.Auths;
 
