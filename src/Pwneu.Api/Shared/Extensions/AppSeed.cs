@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Entities;
+using Pwneu.Api.Shared.Options;
 
 namespace Pwneu.Api.Shared.Extensions;
 
@@ -32,12 +34,13 @@ public static class AppSeed
         using var scope = serviceProvider.CreateScope();
 
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var appOptions = scope.ServiceProvider.GetRequiredService<IOptions<AppOptions>>().Value;
 
-        var password = Envs.AdminPassword();
+        var password = appOptions.InitialAdminPassword;
 
         var admin = await userManager.FindByNameAsync(Consts.Admin);
 
-        // TODO -- Decide if only use the password in the env once or change the password everytime the application starts
+        // Only use the password in the options once or change the password everytime the app starts
         if (admin is not null)
             return;
 

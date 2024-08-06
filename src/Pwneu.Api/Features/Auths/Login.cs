@@ -6,10 +6,12 @@ using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Entities;
+using Pwneu.Api.Shared.Options;
 
 namespace Pwneu.Api.Features.Auths;
 
@@ -22,9 +24,12 @@ public static class Login
     internal sealed class Handler(
         UserManager<User> userManager,
         SignInManager<User> signInManager,
+        IOptions<JwtOptions> jwtOptions,
         IValidator<Command> validator)
         : IRequestHandler<Command, Result<TokenResponse>>
     {
+        private readonly JwtOptions _jwtOptions = jwtOptions.Value;
+
         public async Task<Result<TokenResponse>> Handle(Command request, CancellationToken cancellationToken)
         {
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
@@ -65,10 +70,10 @@ public static class Login
             };
             claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Envs.JwtSigningKey()));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
 
-            var accessToken = new JwtSecurityToken(Envs.JwtIssuer(), Envs.JwtAudience(), claims, null,
+            var accessToken = new JwtSecurityToken(_jwtOptions.Issuer, _jwtOptions.Audience, claims, null,
                 DateTime.UtcNow.AddHours(1), credentials);
 
             return new TokenResponse(new JwtSecurityTokenHandler().WriteToken(accessToken), refreshToken);

@@ -4,11 +4,13 @@ using System.Text;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Entities;
 using Pwneu.Api.Shared.Extensions;
+using Pwneu.Api.Shared.Options;
 
 namespace Pwneu.Api.Features.Auths;
 
@@ -20,9 +22,12 @@ public static class Refresh
 
     internal sealed class Handler(
         UserManager<User> userManager,
+        IOptions<JwtOptions> jwtOptions,
         IValidator<Command> validator)
         : IRequestHandler<Command, Result<TokenResponse>>
     {
+        private readonly JwtOptions _jwtOptions = jwtOptions.Value;
+
         public async Task<Result<TokenResponse>> Handle(Command request, CancellationToken cancellationToken)
         {
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
@@ -32,9 +37,9 @@ public static class Refresh
 
             var validation = new TokenValidationParameters
             {
-                ValidIssuer = Envs.JwtIssuer(),
-                ValidAudience = Envs.JwtAudience(),
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Envs.JwtSigningKey())),
+                ValidIssuer = _jwtOptions.Issuer,
+                ValidAudience = _jwtOptions.Audience,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey)),
                 ValidateLifetime = false
             };
 
@@ -59,10 +64,10 @@ public static class Refresh
             };
             claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Envs.JwtSigningKey()));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var accessToken = new JwtSecurityToken(Envs.JwtIssuer(), Envs.JwtAudience(), claims, null,
+            var accessToken = new JwtSecurityToken(_jwtOptions.Issuer, _jwtOptions.Audience, claims, null,
                 DateTime.UtcNow.AddHours(1), credentials);
 
             return new TokenResponse(new JwtSecurityTokenHandler().WriteToken(accessToken), request.RefreshToken);

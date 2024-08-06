@@ -15,12 +15,25 @@ using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
 using Pwneu.Api.Shared.Extensions;
+using Pwneu.Api.Shared.Options;
 using Pwneu.Api.Shared.Services;
 using Swashbuckle.AspNetCore.Filters;
 using ZiggyCreatures.Caching.Fusion;
 using ZiggyCreatures.Caching.Fusion.Serialization.NewtonsoftJson;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services
+    .AddOptions<AppOptions>()
+    .BindConfiguration($"{nameof(AppOptions)}")
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services
+    .AddOptions<JwtOptions>()
+    .BindConfiguration($"{nameof(JwtOptions)}")
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 
 // OpenTelemetry (for metrics, traces, and logs)
 builder.Services.AddOpenTelemetry()
@@ -117,9 +130,10 @@ builder.Services.AddAuthentication(options =>
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             ClockSkew = TimeSpan.FromSeconds(0),
-            ValidIssuer = Envs.JwtIssuer(),
-            ValidAudience = Envs.JwtAudience(),
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Envs.JwtSigningKey())),
+            ValidIssuer = builder.Configuration["JwtOptions:Issuer"],
+            ValidAudience = builder.Configuration["JwtOptions:Audience"],
+            IssuerSigningKey =
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtOptions:SigningKey"]!)),
         };
     });
 
@@ -129,12 +143,6 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy(Consts.MemberOnly, policy => { policy.RequireRole(Consts.Member); });
 
 builder.Services.AddScoped<IAccessControl, AccessControl>();
-
-builder.Services
-    .AddOptions<AppOptions>()
-    .BindConfiguration($"{nameof(AppOptions)}")
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
 
 var app = builder.Build();
 

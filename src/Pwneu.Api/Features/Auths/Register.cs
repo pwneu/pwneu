@@ -7,6 +7,7 @@ using Pwneu.Api.Shared.Common;
 using Pwneu.Api.Shared.Contracts;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
+using Pwneu.Api.Shared.Options;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Auths;

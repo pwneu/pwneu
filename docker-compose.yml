@@ -19,13 +19,13 @@ services:
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
       - ASPNETCORE_HTTP_PORTS=7638
       - ASPNETCORE_HTTPS_PORTS=7639
-      - JWT_ISSUER=${JWT_ISSUER}
-      - JWT_AUDIENCE=${JWT_AUDIENCE}
-      - JWT_SIGNING_KEY=${JWT_SIGNING_KEY}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://pwneu.dashboard:18889
       - ConnectionStrings__Postgres=${POSTGRES_CONNECTION}
       - AppOptions__RequireRegistrationKey=${REQUIRE_REGISTRATION_KEY}
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://pwneu.dashboard:18889
+      - AppOptions__InitialAdminPassword=${ADMIN_PASSWORD}
+      - JwtOptions__Issuer=${JWT_ISSUER}
+      - JwtOptions__Audience=${JWT_AUDIENCE}
+      - JwtOptions__SigningKey=${JWT_SIGNING_KEY}
     volumes:
       - ./.containers/certs:/home/app/.aspnet/https:ro
     networks:
