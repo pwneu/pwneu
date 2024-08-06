@@ -4,7 +4,8 @@
       "commandName": "DockerCompose",
       "commandVersion": "1.0",
       "serviceActions": {
-        "pwneu.api": "StartDebugging"
+        "pwneu.api": "StartDebugging",
+        "pwneu.smtp": "StartDebugging"
       }
     }
   }

@@ -12,13 +12,13 @@ services:
       context: .
       dockerfile: src/Pwneu.Api/Dockerfile
     ports:
-      - "7638:7638"
-      - "7639:7639"
+      - "7638:8080"
+      - "7639:8081"
     environment:
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
-      - ASPNETCORE_HTTP_PORTS=7638
-      - ASPNETCORE_HTTPS_PORTS=7639
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=8081
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://pwneu.dashboard:18889
       - ConnectionStrings__Postgres=${POSTGRES_CONNECTION}
       - AppOptions__RequireRegistrationKey=${REQUIRE_REGISTRATION_KEY}
@@ -26,6 +26,27 @@ services:
       - JwtOptions__Issuer=${JWT_ISSUER}
       - JwtOptions__Audience=${JWT_AUDIENCE}
       - JwtOptions__SigningKey=${JWT_SIGNING_KEY}
+    volumes:
+      - ./.containers/certs:/home/app/.aspnet/https:ro
+    networks:
+      - pwneu
+
+  pwneu.smtp:
+    image: ${DOCKER_REGISTRY-}pwneu.smtp
+    container_name: pwneu.smtp
+    depends_on:
+      - pwneu.api
+    build:
+      context: .
+      dockerfile: src/Pwneu.Smtp/Dockerfile
+    ports:
+      - "63010:8080"
+      - "63011:8081"
+    environment:
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=8081
     volumes:
       - ./.containers/certs:/home/app/.aspnet/https:ro
     networks:
