@@ -59,7 +59,7 @@ public static class NotifyLogin
         }
     }
 
-    public class Processor(ISender sender, ILogger<Endpoint> logger) : IConsumer<LoggedInEvent>
+    public class Listener(ISender sender, ILogger<Endpoint> logger) : IConsumer<LoggedInEvent>
     {
         public async Task Consume(ConsumeContext<LoggedInEvent> context)
         {
