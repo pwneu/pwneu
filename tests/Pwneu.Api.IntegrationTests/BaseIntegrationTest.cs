@@ -2,7 +2,6 @@ using Bogus;
 using FluentAssertions;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Pwneu.Api.Shared.Data;
@@ -10,7 +9,6 @@ using Pwneu.Api.Shared.Entities;
 using Pwneu.Api.Shared.Extensions;
 using Pwneu.Api.Shared.Options;
 using Pwneu.Shared.Common;
-using Pwneu.Shared.Extensions;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.IntegrationTests;

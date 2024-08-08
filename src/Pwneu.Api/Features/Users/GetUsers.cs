@@ -1,12 +1,10 @@
 using System.Linq.Expressions;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
 using Pwneu.Api.Shared.Services;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
-using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Users;
 
@@ -24,7 +22,7 @@ public static class GetUsers
         int? PageSize = null)
         : IRequest<Result<PagedList<UserResponse>>>;
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, IAccessControl accessControl)
+    internal sealed class Handler(ApplicationDbContext context, IAccessControl accessControl)
         : IRequestHandler<Query, Result<PagedList<UserResponse>>>
     {
         public async Task<Result<PagedList<UserResponse>>> Handle(Query request, CancellationToken cancellationToken)
