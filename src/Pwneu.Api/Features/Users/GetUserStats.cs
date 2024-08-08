@@ -25,15 +25,25 @@ public static class GetUserStats
                 return Result.Failure<UserStatsResponse>(NotFound);
 
             var userStats = await cache.GetOrSetAsync(Keys.UserStats(request.Id), async _ =>
-                new UserStatsResponse(request.Id, await context
-                    .Categories
-                    .Select(c => new CategoryEvalResponse(c.Id, c.Name, c.Challenges.Count, c.Challenges
-                            .SelectMany(ch => ch.Solves)
-                            .Count(s => s.UserId == request.Id),
-                        c.Challenges
-                            .SelectMany(ch => ch.FlagSubmissions)
-                            .Count(fs => fs.UserId == request.Id && fs.FlagStatus == FlagStatus.Incorrect)))
-                    .ToListAsync(cancellationToken)), token: cancellationToken);
+                new UserStatsResponse
+                {
+                    Id = request.Id,
+                    Evaluations = await context
+                        .Categories
+                        .Select(c => new CategoryEvalResponse
+                        {
+                            Id = c.Id,
+                            Name = c.Name,
+                            TotalChallenges = c.Challenges.Count,
+                            TotalSolves = c.Challenges
+                                .SelectMany(ch => ch.Solves)
+                                .Count(s => s.UserId == request.Id),
+                            IncorrectAttempts = c.Challenges
+                                .SelectMany(ch => ch.FlagSubmissions)
+                                .Count(fs => fs.UserId == request.Id && fs.FlagStatus == FlagStatus.Incorrect)
+                        })
+                        .ToListAsync(cancellationToken)
+                }, token: cancellationToken);
 
             return userStats;
 
@@ -53,23 +63,33 @@ public static class GetUserStats
                 foreach (var categoryId in categoryIds)
                 {
                     var categoryEval = await cache.GetOrSetAsync($"category:{categoryId}:eval:{request.Id}", async _ =>
-                        await context
-                            .Categories
-                            .Where(c => c.Id == categoryId)
-                            .Select(c => new CategoryEvalResponse(c.Id, c.Name, c.Challenges.Count,
-                                c.Challenges
-                                    .SelectMany(ch => ch.Solves)
-                                    .Count(s => s.UserId == request.Id),
-                                c.Challenges
-                                    .SelectMany(ch => ch.FlagSubmissions)
-                                    .Count(fs => fs.UserId == request.Id && fs.FlagStatus == FlagStatus.Incorrect)))
-                            .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
+                            await context
+                                .Categories
+                                .Where(c => c.Id == categoryId)
+                                .Select(c => new CategoryEvalResponse
+                                {
+                                    Id = c.Id,
+                                    Name = c.Name,
+                                    TotalChallenges = c.Challenges.Count,
+                                    TotalSolves = c.Challenges
+                                        .SelectMany(ch => ch.Solves)
+                                        .Count(s => s.UserId == request.Id),
+                                    IncorrectAttempts = c.Challenges
+                                        .SelectMany(ch => ch.FlagSubmissions)
+                                        .Count(fs => fs.UserId == request.Id && fs.FlagStatus == FlagStatus.Incorrect)
+                                })
+                                .FirstOrDefaultAsync(cancellationToken),
+                        token: cancellationToken);
 
                     if (categoryEval is not null)
                         evaluations.Add(categoryEval);
                 }
 
-                return new UserStatsResponse(request.Id, evaluations);
+                return new UserStatsResponse
+                {
+                    Id = request.Id,
+                    Evaluations = evaluations
+                };
             }
         }
     }

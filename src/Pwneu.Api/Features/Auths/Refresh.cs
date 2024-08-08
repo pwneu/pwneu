@@ -70,7 +70,11 @@ public static class Refresh
             var accessToken = new JwtSecurityToken(_jwtOptions.Issuer, _jwtOptions.Audience, claims, null,
                 DateTime.UtcNow.AddHours(1), credentials);
 
-            return new TokenResponse(new JwtSecurityTokenHandler().WriteToken(accessToken), request.RefreshToken);
+            return new TokenResponse
+            {
+                AccessToken = new JwtSecurityTokenHandler().WriteToken(accessToken),
+                RefreshToken = request.RefreshToken
+            };
         }
     }
 

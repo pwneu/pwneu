@@ -42,7 +42,12 @@ public static class GetUserSolves
                 .Solves
                 .Where(s => s.UserId == request.Id.ToString())
                 .OrderByDescending(s => s.SolvedAt)
-                .Select(s => new UserSolveResponse(s.ChallengeId, s.Challenge.Name, s.SolvedAt));
+                .Select(s => new UserSolveResponse
+                {
+                    ChallengeId = s.ChallengeId,
+                    ChallengeName = s.Challenge.Name,
+                    SolvedAt = s.SolvedAt
+                });
 
             var userSolves = await PagedList<UserSolveResponse>.CreateAsync(userSolvesRequest, request.Page ?? 1,
                 request.PageSize ?? 10);

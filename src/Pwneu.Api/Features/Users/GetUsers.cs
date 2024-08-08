@@ -32,7 +32,9 @@ public static class GetUsers
             var usersQuery = context.Users.Where(u => !managerIds.Contains(u.Id));
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
-                usersQuery = usersQuery.Where(u => u.UserName != default && u.UserName.Contains(request.SearchTerm));
+                usersQuery = usersQuery.Where(u =>
+                    u.UserName != default &&
+                    u.UserName.Contains(request.SearchTerm));
 
             Expression<Func<User, object>> keySelector = request.SortBy?.ToLower() switch
             {
@@ -44,9 +46,15 @@ public static class GetUsers
                 ? usersQuery.OrderByDescending(keySelector)
                 : usersQuery.OrderBy(keySelector);
 
-            var userResponsesQuery = usersQuery.Select(u => new UserResponse(u.Id, u.UserName));
+            var userResponsesQuery = usersQuery.Select(u => new UserResponse
+            {
+                Id = u.Id,
+                UserName = u.UserName
+            });
 
-            var users = await PagedList<UserResponse>.CreateAsync(userResponsesQuery, request.Page ?? 1,
+            var users = await PagedList<UserResponse>.CreateAsync(
+                userResponsesQuery,
+                request.Page ?? 1,
                 request.PageSize ?? 10);
 
             return users;

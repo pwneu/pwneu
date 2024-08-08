@@ -23,7 +23,13 @@ public static class GetAccessKeys
                     .ToListAsync(cancellationToken), token: cancellationToken);
 
             return accessKeys
-                .Select(a => new AccessKeyResponse(a.Id, a.CanBeReused, a.Expiration))
+                .Select(a =>
+                    new AccessKeyResponse
+                    {
+                        Id = a.Id,
+                        Expiration = a.Expiration,
+                        CanBeReused = a.CanBeReused
+                    })
                 .ToList();
         }
     }

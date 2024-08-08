@@ -20,8 +20,17 @@ public static class GetAllCategories
             var categories = await cache.GetOrSetAsync(Keys.Categories(), async _ =>
                 await context
                     .Categories
-                    .Select(c => new CategoryResponse(c.Id, c.Name, c.Description,
-                        c.Challenges.Select(ch => new ChallengeResponse(ch.Id, ch.Name))))
+                    .Select(c => new CategoryResponse
+                    {
+                        Id = c.Id,
+                        Name = c.Name,
+                        Description = c.Description,
+                        Challenges = c.Challenges.Select(ch => new ChallengeResponse
+                        {
+                            Id = ch.Id,
+                            Name = ch.Name
+                        }).ToList()
+                    })
                     .ToListAsync(cancellationToken), token: cancellationToken);
 
             return categories;

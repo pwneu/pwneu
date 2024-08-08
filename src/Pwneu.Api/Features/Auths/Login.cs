@@ -84,11 +84,20 @@ public static class Login
             var accessToken = new JwtSecurityToken(_jwtOptions.Issuer, _jwtOptions.Audience, claims, null,
                 DateTime.UtcNow.AddHours(1), credentials);
 
-            await publishEndpoint.Publish(
-                new LoggedInEvent(user.FullName, user.Email, request.IpAddress, request.UserAgent, request.Referer),
-                cancellationToken);
+            await publishEndpoint.Publish(new LoggedInEvent
+            {
+                FullName = user.FullName,
+                Email = user.Email,
+                IpAddress = request.IpAddress,
+                UserAgent = request.UserAgent,
+                Referer = request.Referer
+            }, cancellationToken);
 
-            return new TokenResponse(new JwtSecurityTokenHandler().WriteToken(accessToken), refreshToken);
+            return new TokenResponse
+            {
+                AccessToken = new JwtSecurityTokenHandler().WriteToken(accessToken),
+                RefreshToken = refreshToken
+            };
         }
     }
 

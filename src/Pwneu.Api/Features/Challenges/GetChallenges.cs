@@ -47,13 +47,29 @@ public static class GetChallenges
                 : challengesQuery.OrderBy(keySelector);
 
             var challengeResponsesQuery = challengesQuery
-                .Select(c => new ChallengeDetailsResponse(c.Id, c.Name, c.Description, c.Points, c.DeadlineEnabled,
-                    c.Deadline, c.MaxAttempts, c.Solves.Count,
-                    c.Artifacts.Select(a => new ArtifactResponse(a.Id, a.FileName))));
+                .Select(c => new ChallengeDetailsResponse
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Description = c.Description,
+                    Points = c.Points,
+                    DeadlineEnabled = c.DeadlineEnabled,
+                    Deadline = c.Deadline,
+                    MaxAttempts = c.MaxAttempts,
+                    SolveCount = c.Solves.Count,
+                    Artifacts = c.Artifacts
+                        .Select(a => new ArtifactResponse
+                        {
+                            Id = a.Id,
+                            FileName = a.FileName
+                        })
+                        .ToList()
+                });
 
-            var challenges =
-                await PagedList<ChallengeDetailsResponse>.CreateAsync(challengeResponsesQuery, request.Page ?? 1,
-                    request.PageSize ?? 10);
+            var challenges = await PagedList<ChallengeDetailsResponse>.CreateAsync(
+                challengeResponsesQuery,
+                request.Page ?? 1,
+                request.PageSize ?? 10);
 
             return challenges;
         }
@@ -63,15 +79,14 @@ public static class GetChallenges
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("challenges",
-                    async (string? searchTerm, string? sortColumn, string? sortOrder, int? page, int? pageSize,
-                        ISender sender) =>
-                    {
-                        var query = new Query(searchTerm, sortColumn, sortOrder, page, pageSize);
-                        var result = await sender.Send(query);
+            app.MapGet("challenges", async (string? searchTerm, string? sortColumn, string? sortOrder, int? page,
+                    int? pageSize, ISender sender) =>
+                {
+                    var query = new Query(searchTerm, sortColumn, sortOrder, page, pageSize);
+                    var result = await sender.Send(query);
 
-                        return result.IsFailure ? Results.StatusCode(500) : Results.Ok(result.Value);
-                    })
+                    return result.IsFailure ? Results.StatusCode(500) : Results.Ok(result.Value);
+                })
                 .RequireAuthorization()
                 .WithTags(nameof(Challenges));
         }

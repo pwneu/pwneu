@@ -33,10 +33,17 @@ public static class GetUser
                 await context
                     .Users
                     .Where(u => u.Id == request.Id)
-                    .Select(u => new UserDetailsResponse(u.Id, u.UserName, u.Email, u.FullName, u.CreatedAt,
-                        u.Solves.Sum(s => s.Challenge.Points),
-                        u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Correct),
-                        u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Incorrect)))
+                    .Select(u => new UserDetailsResponse
+                    {
+                        Id = u.Id,
+                        UserName = u.UserName,
+                        Email = u.Email,
+                        FullName = u.FullName,
+                        CreatedAt = u.CreatedAt,
+                        TotalPoints = u.Solves.Sum(s => s.Challenge.Points),
+                        CorrectAttempts = u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Correct),
+                        IncorrectAttempts = u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Incorrect)
+                    })
                     .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
             return user ?? Result.Failure<UserDetailsResponse>(NotFound);

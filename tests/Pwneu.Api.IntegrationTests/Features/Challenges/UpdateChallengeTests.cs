@@ -112,16 +112,18 @@ public class UpdateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
         });
         await DbContext.SaveChangesAsync();
 
-        var challenge = new ChallengeDetailsResponse(
-            Id: challengeId,
-            Name: F.Lorem.Word(),
-            Description: F.Lorem.Sentence(),
-            Points: F.Random.Int(1, 100),
-            DeadlineEnabled: F.Random.Bool(),
-            Deadline: DateTime.UtcNow,
-            MaxAttempts: F.Random.Int(1, 10),
-            SolveCount: 0,
-            Artifacts: []);
+        var challenge = new ChallengeDetailsResponse
+        {
+            Id = challengeId,
+            Name = F.Lorem.Word(),
+            Description = F.Lorem.Sentence(),
+            Points = F.Random.Int(1, 100),
+            DeadlineEnabled = F.Random.Bool(),
+            Deadline = DateTime.UtcNow,
+            MaxAttempts = F.Random.Int(1, 10),
+            SolveCount = 0,
+            Artifacts = []
+        };
 
         // Act
         var faker = new Faker();
@@ -139,10 +141,24 @@ public class UpdateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
             .Challenges
             .Where(c => c.Id == challenge.Id)
             .Include(c => c.Artifacts)
-            .Select(c => new ChallengeDetailsResponse(c.Id, c.Name, c.Description, c.Points, c.DeadlineEnabled,
-                c.Deadline, c.MaxAttempts, 0, c.Artifacts
-                    .Select(a => new ArtifactResponse(a.Id, a.FileName))
-                    .ToList()))
+            .Select(c => new ChallengeDetailsResponse
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Description = c.Description,
+                Points = c.Points,
+                DeadlineEnabled = c.DeadlineEnabled,
+                Deadline = c.Deadline,
+                MaxAttempts = c.MaxAttempts,
+                SolveCount = 0,
+                Artifacts = c.Artifacts
+                    .Select(a => new ArtifactResponse
+                    {
+                        Id = a.Id,
+                        FileName = a.FileName
+                    })
+                    .ToList()
+            })
             .FirstOrDefaultAsync();
 
         // Assert

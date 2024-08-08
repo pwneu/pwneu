@@ -19,7 +19,11 @@ public static class GetLoggedUser
 
             return Task.FromResult(string.IsNullOrEmpty(userId)
                 ? Result.Failure<UserResponse>(new Error("GetLoggedUser.NoId", "No Id found"))
-                : new UserResponse(userId, userName));
+                : new UserResponse
+                {
+                    Id = userId,
+                    UserName = userName
+                });
         }
     }
 

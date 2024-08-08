@@ -27,9 +27,18 @@ public class GetChallengeTests(IntegrationTestsWebAppFactory factory) : BaseInte
             true, DateTime.UtcNow.AddDays(7), 5, ["flag1", "flag2"]);
         var challengeId = (await Sender.Send(createChallenge)).Value;
 
-        var challenge = new ChallengeDetailsResponse(challengeId, createChallenge.Name, createChallenge.Description,
-            createChallenge.Points, createChallenge.DeadlineEnabled, createChallenge.Deadline,
-            createChallenge.MaxAttempts, 0, []);
+        var challenge = new ChallengeDetailsResponse
+        {
+            Id = challengeId,
+            Name = createChallenge.Name,
+            Description = createChallenge.Description,
+            Points = createChallenge.Points,
+            DeadlineEnabled = createChallenge.DeadlineEnabled,
+            Deadline = createChallenge.Deadline,
+            MaxAttempts = createChallenge.MaxAttempts,
+            SolveCount = 0,
+            Artifacts = []
+        };
 
         // Act
         var getChallenge = new GetChallenge.Query(challengeId);

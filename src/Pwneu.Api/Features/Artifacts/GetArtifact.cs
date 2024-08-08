@@ -26,7 +26,12 @@ public static class GetArtifact
                 await context
                     .Artifacts
                     .Where(a => a.Id == request.Id)
-                    .Select(a => new ArtifactDataResponse(a.FileName, a.ContentType, a.Data))
+                    .Select(a => new ArtifactDataResponse
+                    {
+                        FileName = a.FileName,
+                        ContentType = a.ContentType,
+                        Data = a.Data
+                    })
                     .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
             return artifact ?? Result.Failure<ArtifactDataResponse>(NotFound);

@@ -20,9 +20,15 @@ public static class GetChallengeSolves
                 .Solves
                 .Where(s => s.ChallengeId == request.Id)
                 .OrderByDescending(s => s.SolvedAt)
-                .Select(s => new ChallengeSolveResponse(s.UserId, s.User.UserName, s.SolvedAt));
+                .Select(s => new ChallengeSolveResponse
+                {
+                    UserId = s.UserId,
+                    UserName = s.User.UserName,
+                    SolvedAt = s.SolvedAt
+                });
 
-            var challengeSolves = await PagedList<ChallengeSolveResponse>.CreateAsync(challengeSolvesRequest,
+            var challengeSolves = await PagedList<ChallengeSolveResponse>.CreateAsync(
+                challengeSolvesRequest,
                 request.Page ?? 1,
                 request.PageSize ?? 10);
 
@@ -34,14 +40,13 @@ public static class GetChallengeSolves
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("challenges/{id:Guid}/solves",
-                    async (Guid id, int? page, int? pageSize, ISender sender) =>
-                    {
-                        var query = new Query(id, page, pageSize);
-                        var result = await sender.Send(query);
+            app.MapGet("challenges/{id:Guid}/solves", async (Guid id, int? page, int? pageSize, ISender sender) =>
+                {
+                    var query = new Query(id, page, pageSize);
+                    var result = await sender.Send(query);
 
-                        return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
-                    })
+                    return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
+                })
                 .RequireAuthorization()
                 .WithTags(nameof(Solves));
         }

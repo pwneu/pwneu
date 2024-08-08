@@ -75,7 +75,13 @@ public class UpdateCategoryTests(IntegrationTestsWebAppFactory factory) : BaseIn
         });
         await DbContext.SaveChangesAsync();
 
-        var category = new CategoryResponse(categoryId, F.Lorem.Word(), F.Lorem.Sentence(), []);
+        var category = new CategoryResponse
+        {
+            Id = categoryId,
+            Name = F.Lorem.Word(),
+            Description = F.Lorem.Sentence(),
+            Challenges = new List<ChallengeResponse>()
+        };
 
         // Act
         var faker = new Faker();
@@ -87,9 +93,19 @@ public class UpdateCategoryTests(IntegrationTestsWebAppFactory factory) : BaseIn
         var updatedCategory = await DbContext
             .Categories
             .Where(ctg => ctg.Id == categoryId)
-            .Select(ctg => new CategoryResponse(ctg.Id, ctg.Name, ctg.Description, ctg.Challenges
-                .Select(c => new ChallengeResponse(c.Id, c.Name))
-                .ToList()))
+            .Select(ctg => new CategoryResponse
+            {
+                Id = ctg.Id,
+                Name = ctg.Name,
+                Description = ctg.Description,
+                Challenges = ctg.Challenges
+                    .Select(c => new ChallengeResponse
+                    {
+                        Id = c.Id,
+                        Name = c.Name
+                    })
+                    .ToList()
+            })
             .FirstOrDefaultAsync();
 
         // Assert

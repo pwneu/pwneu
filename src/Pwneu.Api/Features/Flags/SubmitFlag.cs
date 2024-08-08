@@ -47,10 +47,17 @@ public static class SubmitFlag
                 await context
                     .Users
                     .Where(u => u.Id == request.UserId)
-                    .Select(u => new UserDetailsResponse(u.Id, u.UserName, u.Email, u.FullName, u.CreatedAt,
-                        u.Solves.Sum(s => s.Challenge.Points),
-                        u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Correct),
-                        u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Incorrect)))
+                    .Select(u => new UserDetailsResponse
+                    {
+                        Id = u.Id,
+                        UserName = u.UserName,
+                        Email = u.Email,
+                        FullName = u.FullName,
+                        CreatedAt = u.CreatedAt,
+                        TotalPoints = u.Solves.Sum(s => s.Challenge.Points),
+                        CorrectAttempts = u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Correct),
+                        IncorrectAttempts = u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Incorrect)
+                    })
                     .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
             // Check if the user exists.
@@ -65,11 +72,24 @@ public static class SubmitFlag
                     .Challenges
                     .Where(c => c.Id == request.ChallengeId)
                     .Include(c => c.Artifacts)
-                    .Select(c => new ChallengeDetailsResponse(c.Id, c.Name, c.Description, c.Points,
-                        c.DeadlineEnabled, c.Deadline, c.MaxAttempts, c.Solves.Count, c.Artifacts
-                            .Select(a => new ArtifactResponse(a.Id, a.FileName))
+                    .Select(c => new ChallengeDetailsResponse
+                    {
+                        Id = c.Id,
+                        Name = c.Name,
+                        Description = c.Description,
+                        Points = c.Points,
+                        DeadlineEnabled = c.DeadlineEnabled,
+                        Deadline = c.Deadline,
+                        MaxAttempts = c.MaxAttempts,
+                        SolveCount = c.Solves.Count,
+                        Artifacts = c.Artifacts
+                            .Select(a => new ArtifactResponse
+                            {
+                                Id = a.Id,
+                                FileName = a.FileName,
+                            })
                             .ToList()
-                    ))
+                    })
                     .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
             // Check if the challenge exists.

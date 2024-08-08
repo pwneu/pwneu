@@ -26,8 +26,18 @@ public static class GetCategory
                 await context
                     .Categories
                     .Where(ctg => ctg.Id == request.Id)
-                    .Select(ctg => new CategoryResponse(ctg.Id, ctg.Name, ctg.Description,
-                        ctg.Challenges.Select(c => new ChallengeResponse(c.Id, c.Name)).ToList()))
+                    .Select(ctg => new CategoryResponse
+                        {
+                            Id = ctg.Id,
+                            Name = ctg.Name,
+                            Description = ctg.Description,
+                            Challenges = ctg.Challenges.Select(c => new ChallengeResponse
+                            {
+                                Id = c.Id,
+                                Name = c.Name
+                            }).ToList()
+                        }
+                    )
                     .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
             return category ?? Result.Failure<CategoryResponse>(NotFound);

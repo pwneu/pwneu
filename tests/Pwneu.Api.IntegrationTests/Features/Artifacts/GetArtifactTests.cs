@@ -51,10 +51,12 @@ public class GetArtifactTests(IntegrationTestsWebAppFactory factory) : BaseInteg
 
         await DbContext.SaveChangesAsync();
 
-        var artifactData = new ArtifactDataResponse(
-            FileName: artifact.FileName,
-            ContentType: artifact.ContentType,
-            Data: artifact.Data);
+        var artifactData = new ArtifactDataResponse
+        {
+            FileName = artifact.FileName,
+            ContentType = artifact.ContentType,
+            Data = artifact.Data
+        };
 
         // Act
         var getArtifact = await Sender.Send(new GetArtifact.Query(artifact.Id));
