@@ -10,5 +10,4 @@ public class User : IdentityUser
     [MaxLength(1000)] public string? RefreshToken { get; set; }
     public DateTime RefreshTokenExpiry { get; set; }
     public ICollection<FlagSubmission> FlagSubmissions { get; set; } = [];
-    public ICollection<Solve> Solves { get; set; } = [];
 }

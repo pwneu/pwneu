@@ -36,8 +36,8 @@ public static class GetUserStats
                             Name = c.Name,
                             TotalChallenges = c.Challenges.Count,
                             TotalSolves = c.Challenges
-                                .SelectMany(ch => ch.Solves)
-                                .Count(s => s.UserId == request.Id),
+                                .SelectMany(ch => ch.FlagSubmissions)
+                                .Count(fs => fs.UserId == request.Id && fs.FlagStatus == FlagStatus.Correct),
                             IncorrectAttempts = c.Challenges
                                 .SelectMany(ch => ch.FlagSubmissions)
                                 .Count(fs => fs.UserId == request.Id && fs.FlagStatus == FlagStatus.Incorrect)
@@ -72,14 +72,15 @@ public static class GetUserStats
                                     Name = c.Name,
                                     TotalChallenges = c.Challenges.Count,
                                     TotalSolves = c.Challenges
-                                        .SelectMany(ch => ch.Solves)
-                                        .Count(s => s.UserId == request.Id),
+                                        .SelectMany(ch => ch.FlagSubmissions)
+                                        .Count(fs => fs.UserId == request.Id && fs.FlagStatus == FlagStatus.Correct),
                                     IncorrectAttempts = c.Challenges
                                         .SelectMany(ch => ch.FlagSubmissions)
                                         .Count(fs => fs.UserId == request.Id && fs.FlagStatus == FlagStatus.Incorrect)
                                 })
                                 .FirstOrDefaultAsync(cancellationToken),
                         token: cancellationToken);
+
 
                     if (categoryEval is not null)
                         evaluations.Add(categoryEval);

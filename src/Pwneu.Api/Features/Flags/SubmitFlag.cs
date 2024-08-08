@@ -54,12 +54,13 @@ public static class SubmitFlag
                         Email = u.Email,
                         FullName = u.FullName,
                         CreatedAt = u.CreatedAt,
-                        TotalPoints = u.Solves.Sum(s => s.Challenge.Points),
+                        TotalPoints = u.FlagSubmissions
+                            .Where(fs => fs.FlagStatus == FlagStatus.Correct)
+                            .Sum(fs => fs.Challenge.Points),
                         CorrectAttempts = u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Correct),
                         IncorrectAttempts = u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Incorrect)
                     })
                     .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
-
             // Check if the user exists.
             if (user is null) return Result.Failure<FlagStatus>(UserNotFound);
 
@@ -81,7 +82,7 @@ public static class SubmitFlag
                         DeadlineEnabled = c.DeadlineEnabled,
                         Deadline = c.Deadline,
                         MaxAttempts = c.MaxAttempts,
-                        SolveCount = c.Solves.Count,
+                        SolveCount = c.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Correct),
                         Artifacts = c.Artifacts
                             .Select(a => new ArtifactResponse
                             {
@@ -130,16 +131,6 @@ public static class SubmitFlag
             if (challengeFlags.Any(f => f.Equals(request.Value))) // Check if the submission is correct.
             {
                 flagStatus = FlagStatus.Correct;
-                var solve = new Solve
-                {
-                    UserId = user.Id,
-                    ChallengeId = challenge.Id,
-                    SolvedAt = DateTime.UtcNow
-                };
-
-                // Save the submission to the Solves table.
-                context.Solves.Add(solve);
-                await context.SaveChangesAsync(cancellationToken);
 
                 // Since the user has solved the challenge, update the cache of checking if already solved to true.
                 await cache.SetAsync(hasSolvedKey, true, token: cancellationToken);
@@ -148,7 +139,6 @@ public static class SubmitFlag
                     challenge with { SolveCount = challenge.SolveCount + 1 }, token: cancellationToken);
             }
 
-            // If no conditions have been reached, the flag status must be incorrect at this point.
             var flagSubmission = new FlagSubmission
             {
                 Id = Guid.NewGuid(),
@@ -184,10 +174,12 @@ public static class SubmitFlag
             async Task<bool> HasAlreadySolvedAsync()
             {
                 return await cache.GetOrSetAsync(hasSolvedKey, async _ =>
-                    await context
-                        .Solves
-                        .AnyAsync(s => s.UserId == user.Id &&
-                                       s.ChallengeId == challenge.Id, cancellationToken), token: cancellationToken);
+                        await context
+                            .FlagSubmissions
+                            .AnyAsync(fs => fs.UserId == user.Id &&
+                                            fs.ChallengeId == challenge.Id &&
+                                            fs.FlagStatus == FlagStatus.Correct, cancellationToken),
+                    token: cancellationToken);
             }
 
             async Task<bool> IsSubmittingTooOftenAsync()

@@ -28,6 +28,7 @@ public static class GetChallenge
                     .Challenges
                     .Where(c => c.Id == request.Id)
                     .Include(c => c.Artifacts)
+                    .Include(c => c.FlagSubmissions)
                     .Select(c => new ChallengeDetailsResponse
                     {
                         Id = c.Id,
@@ -37,7 +38,7 @@ public static class GetChallenge
                         DeadlineEnabled = c.DeadlineEnabled,
                         Deadline = c.Deadline,
                         MaxAttempts = c.MaxAttempts,
-                        SolveCount = c.Solves.Count,
+                        SolveCount = c.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Correct),
                         Artifacts = c.Artifacts
                             .Select(a => new ArtifactResponse
                             {

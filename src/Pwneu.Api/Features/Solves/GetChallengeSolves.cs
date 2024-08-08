@@ -17,14 +17,14 @@ public static class GetChallengeSolves
             CancellationToken cancellationToken)
         {
             var challengeSolvesRequest = context
-                .Solves
-                .Where(s => s.ChallengeId == request.Id)
-                .OrderByDescending(s => s.SolvedAt)
-                .Select(s => new ChallengeSolveResponse
+                .FlagSubmissions
+                .Where(fs => fs.ChallengeId == request.Id && fs.FlagStatus == FlagStatus.Correct)
+                .OrderByDescending(fs => fs.SubmittedAt)
+                .Select(fs => new ChallengeSolveResponse
                 {
-                    UserId = s.UserId,
-                    UserName = s.User.UserName,
-                    SolvedAt = s.SolvedAt
+                    UserId = fs.UserId,
+                    UserName = fs.User.UserName,
+                    SolvedAt = fs.SubmittedAt
                 });
 
             var challengeSolves = await PagedList<ChallengeSolveResponse>.CreateAsync(
