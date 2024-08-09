@@ -40,7 +40,7 @@ public static class GetUserStats
                                 .Count(s => s.UserId == request.Id && s.IsCorrect == true),
                             IncorrectAttempts = c.Challenges
                                 .SelectMany(ch => ch.Submissions)
-                                .Count(s => s.UserId == request.Id && s.IsCorrect == true)
+                                .Count(s => s.UserId == request.Id && s.IsCorrect == false)
                         })
                         .ToListAsync(cancellationToken)
                 }, token: cancellationToken);
@@ -76,7 +76,7 @@ public static class GetUserStats
                                         .Count(s => s.UserId == request.Id && s.IsCorrect == true),
                                     IncorrectAttempts = c.Challenges
                                         .SelectMany(ch => ch.Submissions)
-                                        .Count(s => s.UserId == request.Id && s.IsCorrect == true)
+                                        .Count(s => s.UserId == request.Id && s.IsCorrect == false)
                                 })
                                 .FirstOrDefaultAsync(cancellationToken),
                         token: cancellationToken);
