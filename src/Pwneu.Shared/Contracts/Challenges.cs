@@ -19,6 +19,13 @@ public record ChallengeDetailsResponse
     public IEnumerable<ArtifactResponse> Artifacts { get; set; } = [];
 }
 
+public record ChallengeAsUserResponse
+{
+    public ChallengeDetailsResponse Challenge { get; set; } = default!;
+    public bool HasSolved { get; set; }
+    public int AttemptsLeft { get; set; }
+}
+
 public record CreateChallengeRequest
 {
     public string Name { get; set; } = default!;
