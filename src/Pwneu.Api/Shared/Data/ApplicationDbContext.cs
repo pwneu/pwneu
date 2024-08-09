@@ -29,16 +29,16 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
         builder
             .Entity<Submission>()
-            .HasOne(fs => fs.Challenge)
+            .HasOne(s => s.Challenge)
             .WithMany(c => c.Submissions)
-            .HasForeignKey(fs => fs.ChallengeId)
+            .HasForeignKey(s => s.ChallengeId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder
             .Entity<Submission>()
-            .HasOne(fs => fs.User)
+            .HasOne(s => s.User)
             .WithMany(u => u.Submissions)
-            .HasForeignKey(fs => fs.UserId)
+            .HasForeignKey(s => s.UserId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 

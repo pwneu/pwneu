@@ -19,12 +19,12 @@ public static class GetChallengeSolves
             var challengeSolvesRequest = context
                 .Submissions
                 .Where(s => s.ChallengeId == request.Id && s.IsCorrect == true)
-                .OrderByDescending(fs => fs.SubmittedAt)
-                .Select(fs => new ChallengeSolveResponse
+                .OrderByDescending(s => s.SubmittedAt)
+                .Select(s => new ChallengeSolveResponse
                 {
-                    UserId = fs.UserId,
-                    UserName = fs.User.UserName,
-                    SolvedAt = fs.SubmittedAt
+                    UserId = s.UserId,
+                    UserName = s.User.UserName,
+                    SolvedAt = s.SubmittedAt
                 });
 
             var challengeSolves = await PagedList<ChallengeSolveResponse>.CreateAsync(

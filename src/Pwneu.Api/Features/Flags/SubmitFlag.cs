@@ -115,10 +115,10 @@ public static class SubmitFlag
                 Keys.HasSolved(request.UserId, request.ChallengeId),
                 async _ => await context
                     .Submissions
-                    .AnyAsync(fs =>
-                        fs.UserId == request.UserId &&
-                        fs.ChallengeId == request.ChallengeId &&
-                        fs.IsCorrect == true, cancellationToken), token: cancellationToken);
+                    .AnyAsync(s =>
+                        s.UserId == request.UserId &&
+                        s.ChallengeId == request.ChallengeId &&
+                        s.IsCorrect == true, cancellationToken), token: cancellationToken);
 
             if (hasSolved)
                 return FlagStatus.AlreadySolved;
@@ -137,9 +137,9 @@ public static class SubmitFlag
                     Keys.AttemptsLeft(request.UserId, request.ChallengeId),
                     async _ => await context
                         .Submissions
-                        .Where(fs =>
-                            fs.UserId == request.UserId &&
-                            fs.ChallengeId == challenge.Id)
+                        .Where(s =>
+                            s.UserId == request.UserId &&
+                            s.ChallengeId == challenge.Id)
                         .CountAsync(cancellationToken), token: cancellationToken);
 
                 attemptsLeft = challenge.MaxAttempts - attemptCount;
