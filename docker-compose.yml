@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   pwneu.api:
     image: ${DOCKER_REGISTRY-}pwneu.api
@@ -8,6 +6,7 @@ services:
       - pwneu.db
       - pwneu.cache
       - pwneu.dashboard
+      - pwneu.mq
     build:
       context: .
       dockerfile: src/Pwneu.Api/Dockerfile
