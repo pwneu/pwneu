@@ -39,8 +39,8 @@ public static class GetUserSolves
                 return Result.Failure<PagedList<UserSolveResponse>>(NotFound);
 
             var userSolvesRequest = context
-                .FlagSubmissions
-                .Where(fs => fs.UserId == request.Id.ToString() && fs.FlagStatus == FlagStatus.Correct)
+                .Submissions
+                .Where(s => s.UserId == request.Id.ToString() && s.IsCorrect == true)
                 .OrderByDescending(fs => fs.SubmittedAt)
                 .Select(fs => new UserSolveResponse
                 {

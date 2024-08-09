@@ -9,5 +9,5 @@ public class User : IdentityUser
     public DateTime CreatedAt { get; init; }
     [MaxLength(1000)] public string? RefreshToken { get; set; }
     public DateTime RefreshTokenExpiry { get; set; }
-    public ICollection<FlagSubmission> FlagSubmissions { get; set; } = [];
+    public ICollection<Submission> Submissions { get; set; } = [];
 }

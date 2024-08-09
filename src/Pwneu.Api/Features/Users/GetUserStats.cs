@@ -36,11 +36,11 @@ public static class GetUserStats
                             Name = c.Name,
                             TotalChallenges = c.Challenges.Count,
                             TotalSolves = c.Challenges
-                                .SelectMany(ch => ch.FlagSubmissions)
-                                .Count(fs => fs.UserId == request.Id && fs.FlagStatus == FlagStatus.Correct),
+                                .SelectMany(ch => ch.Submissions)
+                                .Count(s => s.UserId == request.Id && s.IsCorrect == true),
                             IncorrectAttempts = c.Challenges
-                                .SelectMany(ch => ch.FlagSubmissions)
-                                .Count(fs => fs.UserId == request.Id && fs.FlagStatus == FlagStatus.Incorrect)
+                                .SelectMany(ch => ch.Submissions)
+                                .Count(s => s.UserId == request.Id && s.IsCorrect == true)
                         })
                         .ToListAsync(cancellationToken)
                 }, token: cancellationToken);
@@ -72,15 +72,14 @@ public static class GetUserStats
                                     Name = c.Name,
                                     TotalChallenges = c.Challenges.Count,
                                     TotalSolves = c.Challenges
-                                        .SelectMany(ch => ch.FlagSubmissions)
-                                        .Count(fs => fs.UserId == request.Id && fs.FlagStatus == FlagStatus.Correct),
+                                        .SelectMany(ch => ch.Submissions)
+                                        .Count(s => s.UserId == request.Id && s.IsCorrect == true),
                                     IncorrectAttempts = c.Challenges
-                                        .SelectMany(ch => ch.FlagSubmissions)
-                                        .Count(fs => fs.UserId == request.Id && fs.FlagStatus == FlagStatus.Incorrect)
+                                        .SelectMany(ch => ch.Submissions)
+                                        .Count(s => s.UserId == request.Id && s.IsCorrect == true)
                                 })
                                 .FirstOrDefaultAsync(cancellationToken),
                         token: cancellationToken);
-
 
                     if (categoryEval is not null)
                         evaluations.Add(categoryEval);

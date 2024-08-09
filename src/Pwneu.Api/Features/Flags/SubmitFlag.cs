@@ -18,7 +18,7 @@ namespace Pwneu.Api.Features.Flags;
 /// </summary>
 public static class SubmitFlag
 {
-    public record Command(string UserId, Guid ChallengeId, string Value) : IRequest<Result<FlagStatus>>;
+    public record Command(string UserId, Guid ChallengeId, string Flag) : IRequest<Result<FlagStatus>>;
 
     private static readonly Error UserNotFound = new("SubmitFlag.UserNotFound",
         "The user with the specified ID was not found");
@@ -54,11 +54,11 @@ public static class SubmitFlag
                         Email = u.Email,
                         FullName = u.FullName,
                         CreatedAt = u.CreatedAt,
-                        TotalPoints = u.FlagSubmissions
-                            .Where(fs => fs.FlagStatus == FlagStatus.Correct)
-                            .Sum(fs => fs.Challenge.Points),
-                        CorrectAttempts = u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Correct),
-                        IncorrectAttempts = u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Incorrect)
+                        TotalPoints = u.Submissions
+                            .Where(s => s.IsCorrect == true)
+                            .Sum(s => s.Challenge.Points),
+                        CorrectAttempts = u.Submissions.Count(s => s.IsCorrect == true),
+                        IncorrectAttempts = u.Submissions.Count(s => s.IsCorrect == true)
                     })
                     .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
             // Check if the user exists.
@@ -82,7 +82,7 @@ public static class SubmitFlag
                         DeadlineEnabled = c.DeadlineEnabled,
                         Deadline = c.Deadline,
                         MaxAttempts = c.MaxAttempts,
-                        SolveCount = c.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Correct),
+                        SolveCount = c.Submissions.Count(s => s.IsCorrect == true),
                         Artifacts = c.Artifacts
                             .Select(a => new ArtifactResponse
                             {
@@ -128,7 +128,7 @@ public static class SubmitFlag
                 return FlagStatus.DeadlineReached;
             if (await IsMaxAttemptReachedAsync())
                 return FlagStatus.MaxAttemptReached;
-            if (challengeFlags.Any(f => f.Equals(request.Value))) // Check if the submission is correct.
+            if (challengeFlags.Any(f => f.Equals(request.Flag))) // Check if the submission is correct.
             {
                 flagStatus = FlagStatus.Correct;
 
@@ -139,18 +139,18 @@ public static class SubmitFlag
                     challenge with { SolveCount = challenge.SolveCount + 1 }, token: cancellationToken);
             }
 
-            var flagSubmission = new FlagSubmission
+            var submission = new Submission
             {
                 Id = Guid.NewGuid(),
                 UserId = user.Id,
                 ChallengeId = challenge.Id,
-                Value = request.Value,
+                Flag = request.Flag,
                 SubmittedAt = DateTime.UtcNow,
-                FlagStatus = flagStatus,
+                IsCorrect = flagStatus == FlagStatus.Correct,
             };
 
             // Save the submission to the database.
-            context.FlagSubmissions.Add(flagSubmission);
+            context.Submissions.Add(submission);
             await context.SaveChangesAsync(cancellationToken);
 
             // Increase attempt count from the cache.
@@ -159,7 +159,7 @@ public static class SubmitFlag
             // Add the current submission to recent submissions and update the cache.
             // Recent submissions in the cache
             // which isn't ten seconds ago will be cleaned up in the method below.
-            recentSubmissions.Add(flagSubmission.SubmittedAt);
+            recentSubmissions.Add(submission.SubmittedAt);
             await cache.SetAsync(recentSubmissionsKey, recentSubmissions, token: cancellationToken);
 
             // Since a user has submitted a flag, update the cache on getting user details.
@@ -175,10 +175,10 @@ public static class SubmitFlag
             {
                 return await cache.GetOrSetAsync(hasSolvedKey, async _ =>
                         await context
-                            .FlagSubmissions
+                            .Submissions
                             .AnyAsync(fs => fs.UserId == user.Id &&
                                             fs.ChallengeId == challenge.Id &&
-                                            fs.FlagStatus == FlagStatus.Correct, cancellationToken),
+                                            fs.IsCorrect == true, cancellationToken),
                     token: cancellationToken);
             }
 
@@ -188,7 +188,7 @@ public static class SubmitFlag
                 // Get all the submissions of the user where the submission date is 10 seconds ago.
                 recentSubmissions = await cache.GetOrSetAsync(recentSubmissionsKey, async _ =>
                     await context
-                        .FlagSubmissions
+                        .Submissions
                         .Where(fs => fs.UserId == user.Id &&
                                      fs.ChallengeId == challenge.Id &&
                                      fs.SubmittedAt >= tenSecondsAgo)
@@ -209,7 +209,7 @@ public static class SubmitFlag
                 // Update the attempt count first
                 attemptCount = await cache.GetOrSetAsync(attemptCountKey, async _ =>
                     await context
-                        .FlagSubmissions
+                        .Submissions
                         .Where(fs => fs.UserId == user.Id &&
                                      fs.ChallengeId == challenge.Id)
                         .CountAsync(cancellationToken), token: cancellationToken);
@@ -225,12 +225,12 @@ public static class SubmitFlag
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             app.MapPost("challenges/{challengeId:Guid}/submit",
-                    async (Guid challengeId, string value, ClaimsPrincipal claims, ISender sender) =>
+                    async (Guid challengeId, string flag, ClaimsPrincipal claims, ISender sender) =>
                     {
                         var userId = claims.GetLoggedInUserId<string>();
                         if (userId is null) return Results.BadRequest();
 
-                        var command = new Command(userId, challengeId, value);
+                        var command = new Command(userId, challengeId, flag);
                         var result = await sender.Send(command);
 
                         return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value.ToString());
@@ -252,7 +252,7 @@ public static class SubmitFlag
                 .NotEmpty()
                 .WithMessage("Challenge ID is required.");
 
-            RuleFor(c => c.Value)
+            RuleFor(c => c.Flag)
                 .NotEmpty()
                 .WithMessage("Flag value is required.")
                 .MaximumLength(100)

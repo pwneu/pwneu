@@ -40,11 +40,11 @@ public static class GetUser
                         Email = u.Email,
                         FullName = u.FullName,
                         CreatedAt = u.CreatedAt,
-                        TotalPoints = u.FlagSubmissions
-                            .Where(fs => fs.FlagStatus == FlagStatus.Correct)
-                            .Sum(fs => fs.Challenge.Points),
-                        CorrectAttempts = u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Correct),
-                        IncorrectAttempts = u.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Incorrect)
+                        TotalPoints = u.Submissions
+                            .Where(s => s.IsCorrect == true)
+                            .Sum(s => s.Challenge.Points),
+                        CorrectAttempts = u.Submissions.Count(s => s.IsCorrect == true),
+                        IncorrectAttempts = u.Submissions.Count(s => s.IsCorrect == true)
                     })
                     .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 

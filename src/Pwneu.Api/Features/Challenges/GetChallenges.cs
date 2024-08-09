@@ -56,7 +56,7 @@ public static class GetChallenges
                     DeadlineEnabled = c.DeadlineEnabled,
                     Deadline = c.Deadline,
                     MaxAttempts = c.MaxAttempts,
-                    SolveCount = c.FlagSubmissions.Count(fs => fs.FlagStatus == FlagStatus.Correct),
+                    SolveCount = c.Submissions.Count(s => s.IsCorrect == true),
                     Artifacts = c.Artifacts
                         .Select(a => new ArtifactResponse
                         {

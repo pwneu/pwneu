@@ -17,8 +17,8 @@ public static class GetChallengeSolves
             CancellationToken cancellationToken)
         {
             var challengeSolvesRequest = context
-                .FlagSubmissions
-                .Where(fs => fs.ChallengeId == request.Id && fs.FlagStatus == FlagStatus.Correct)
+                .Submissions
+                .Where(s => s.ChallengeId == request.Id && s.IsCorrect == true)
                 .OrderByDescending(fs => fs.SubmittedAt)
                 .Select(fs => new ChallengeSolveResponse
                 {

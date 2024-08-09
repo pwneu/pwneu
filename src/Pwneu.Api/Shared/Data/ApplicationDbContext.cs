@@ -28,28 +28,23 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .IsRequired();
 
         builder
-            .Entity<FlagSubmission>()
-            .Property(fs => fs.FlagStatus)
-            .HasConversion<string>();
-
-        builder
-            .Entity<FlagSubmission>()
+            .Entity<Submission>()
             .HasOne(fs => fs.Challenge)
-            .WithMany(c => c.FlagSubmissions)
+            .WithMany(c => c.Submissions)
             .HasForeignKey(fs => fs.ChallengeId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder
-            .Entity<FlagSubmission>()
+            .Entity<Submission>()
             .HasOne(fs => fs.User)
-            .WithMany(u => u.FlagSubmissions)
+            .WithMany(u => u.Submissions)
             .HasForeignKey(fs => fs.UserId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 
     public virtual DbSet<Challenge> Challenges { get; init; } = null!;
     public virtual DbSet<Artifact> Artifacts { get; init; } = null!;
-    public virtual DbSet<FlagSubmission> FlagSubmissions { get; init; } = null!;
+    public virtual DbSet<Submission> Submissions { get; init; } = null!;
     public virtual DbSet<Category> Categories { get; init; } = null!;
     public virtual DbSet<AccessKey> AccessKeys { get; init; } = null!;
 }
