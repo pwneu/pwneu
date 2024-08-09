@@ -23,7 +23,13 @@ public class GetCategoryTests(IntegrationTestsWebAppFactory factory) : BaseInteg
         DbContext.Add(category);
         await DbContext.SaveChangesAsync();
 
-        var categoryResponse = new CategoryResponse(categoryId, category.Name, category.Description, []);
+        var categoryResponse = new CategoryResponse
+        {
+            Id = categoryId,
+            Name = category.Name,
+            Description = category.Description,
+            Challenges = new List<ChallengeResponse>()
+        };
 
         // Act
         var getCategory = new GetCategory.Query(categoryId);

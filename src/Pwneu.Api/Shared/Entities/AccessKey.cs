@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace Pwneu.Api.Shared.Entities;
 
 public class AccessKey

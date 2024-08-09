@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   pwneu.api:
     image: ${DOCKER_REGISTRY-}pwneu.api
@@ -8,12 +6,13 @@ services:
       - pwneu.db
       - pwneu.cache
       - pwneu.dashboard
+      - pwneu.mq
     build:
       context: .
       dockerfile: src/Pwneu.Api/Dockerfile
     ports:
-      - "7638:8080"
-      - "7639:8081"
+      - "8080:8080"
+      - "8081:8081"
     environment:
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
@@ -33,40 +32,6 @@ services:
     networks:
       - pwneu
 
-  pwneu.smtp:
-    image: ${DOCKER_REGISTRY-}pwneu.smtp
-    container_name: pwneu.smtp
-    depends_on:
-      - pwneu.api
-    build:
-      context: .
-      dockerfile: src/Pwneu.Smtp/Dockerfile
-    ports:
-      - "63010:8080"
-      - "63011:8081"
-    environment:
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
-      - ASPNETCORE_HTTP_PORTS=8080
-      - ASPNETCORE_HTTPS_PORTS=8081
-      - MessageBroker__Username=${RABBITMQ_DEFAULT_USER}
-      - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
-      - SmtpOptions__SenderAddress=${SMTP_SENDER_ADDRESS}
-      - SmtpOptions__SenderPassword=${SMTP_SENDER_PASSWORD}
-      - SmtpOptions__IsEnabled=${SMTP_IS_ENABLED}
-    volumes:
-      - ./.containers/certs:/home/app/.aspnet/https:ro
-    networks:
-      - pwneu
-
-  pwneu.dashboard:
-    image: mcr.microsoft.com/dotnet/nightly/aspire-dashboard:latest
-    container_name: pwneu.dashboard
-    ports:
-      - "18888:18888"
-    networks:
-      - pwneu
-
   pwneu.db:
     image: postgres:latest
     container_name: pwneu.db
@@ -78,6 +43,37 @@ services:
       - ./.containers/db:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    networks:
+      - pwneu
+
+  #  pwneu.smtp:
+  #    image: ${DOCKER_REGISTRY-}pwneu.smtp
+  #    container_name: pwneu.smtp
+  #    depends_on:
+  #      - pwneu.api
+  #    build:
+  #      context: .
+  #      dockerfile: src/Pwneu.Smtp/Dockerfile
+  #    environment:
+  #      - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
+  #      - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
+  #      - ASPNETCORE_HTTP_PORTS=8080
+  #      - ASPNETCORE_HTTPS_PORTS=8081
+  #      - MessageBroker__Username=${RABBITMQ_DEFAULT_USER}
+  #      - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
+  #      - SmtpOptions__SenderAddress=${SMTP_SENDER_ADDRESS}
+  #      - SmtpOptions__SenderPassword=${SMTP_SENDER_PASSWORD}
+  #      - SmtpOptions__IsEnabled=${SMTP_IS_ENABLED}
+  #    volumes:
+  #      - ./.containers/certs:/home/app/.aspnet/https:ro
+  #    networks:
+  #      - pwneu
+
+  pwneu.dashboard:
+    image: mcr.microsoft.com/dotnet/nightly/aspire-dashboard:latest
+    container_name: pwneu.dashboard
+    ports:
+      - "18888:18888"
     networks:
       - pwneu
 

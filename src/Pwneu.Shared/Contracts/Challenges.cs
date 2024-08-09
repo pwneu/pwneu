@@ -1,32 +1,49 @@
 namespace Pwneu.Shared.Contracts;
 
-public record ChallengeResponse(Guid Id, string Name);
+public record ChallengeResponse
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = default!;
+}
 
-public record ChallengeDetailsResponse(
-    Guid Id,
-    string Name,
-    string Description,
-    int Points,
-    bool DeadlineEnabled,
-    DateTime Deadline,
-    int MaxAttempts,
-    int SolveCount,
-    IEnumerable<ArtifactResponse> Artifacts);
+public record ChallengeDetailsResponse
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = default!;
+    public string Description { get; set; } = default!;
+    public int Points { get; set; }
+    public bool DeadlineEnabled { get; set; }
+    public DateTime Deadline { get; set; }
+    public int MaxAttempts { get; set; }
+    public int SolveCount { get; set; }
+    public IEnumerable<ArtifactResponse> Artifacts { get; set; } = [];
+}
 
-public record CreateChallengeRequest(
-    string Name,
-    string Description,
-    int Points,
-    bool DeadlineEnabled,
-    DateTime Deadline,
-    int MaxAttempts,
-    IEnumerable<string> Flags);
+public record ChallengeAsUserResponse
+{
+    public ChallengeDetailsResponse Challenge { get; set; } = default!;
+    public bool HasSolved { get; set; }
+    public int AttemptsLeft { get; set; }
+}
 
-public record UpdateChallengeRequest(
-    string Name,
-    string Description,
-    int Points,
-    bool DeadlineEnabled,
-    DateTime Deadline,
-    int MaxAttempts,
-    IEnumerable<string> Flags);
+public record CreateChallengeRequest
+{
+    public string Name { get; set; } = default!;
+    public string Description { get; set; } = default!;
+    public int Points { get; set; }
+    public bool DeadlineEnabled { get; set; }
+    public DateTime Deadline { get; set; }
+    public int MaxAttempts { get; set; }
+    public IEnumerable<string> Flags { get; set; } = [];
+}
+
+public record UpdateChallengeRequest
+{
+    public string Name { get; set; } = default!;
+    public string Description { get; set; } = default!;
+    public int Points { get; set; }
+    public bool DeadlineEnabled { get; set; }
+    public DateTime Deadline { get; set; }
+    public int MaxAttempts { get; set; }
+    public IEnumerable<string> Flags { get; set; } = [];
+}

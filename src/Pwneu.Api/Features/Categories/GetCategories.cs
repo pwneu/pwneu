@@ -43,8 +43,18 @@ public static class GetCategories
                 ? categoriesQuery.OrderByDescending(keySelector)
                 : categoriesQuery.OrderBy(keySelector);
 
-            var categoryResponsesQuery = categoriesQuery.Select(ctg => new CategoryResponse(ctg.Id, ctg.Name,
-                ctg.Description, ctg.Challenges.Select(c => new ChallengeResponse(c.Id, c.Name))));
+            var categoryResponsesQuery = categoriesQuery
+                .Select(ctg => new CategoryResponse
+                {
+                    Id = ctg.Id,
+                    Name = ctg.Name,
+                    Description = ctg.Description,
+                    Challenges = ctg.Challenges.Select(c => new ChallengeResponse
+                    {
+                        Id = c.Id,
+                        Name = c.Name
+                    }).ToList()
+                });
 
             var categories =
                 await PagedList<CategoryResponse>.CreateAsync(categoryResponsesQuery, request.Page ?? 1,

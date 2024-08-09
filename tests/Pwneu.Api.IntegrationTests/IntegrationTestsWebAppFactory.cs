@@ -1,3 +1,4 @@
+using MassTransit;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -46,6 +47,9 @@ public class IntegrationTestsWebAppFactory : WebApplicationFactory<Program>, IAs
                 }))
                 .WithDistributedCache(new RedisCache(new RedisCacheOptions
                     { Configuration = _redisContainer.GetConnectionString() }));
+
+            services.RemoveMassTransitHostedService();
+            services.AddMassTransitTestHarness();
         });
     }
 

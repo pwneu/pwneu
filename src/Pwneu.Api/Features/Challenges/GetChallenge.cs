@@ -28,11 +28,25 @@ public static class GetChallenge
                     .Challenges
                     .Where(c => c.Id == request.Id)
                     .Include(c => c.Artifacts)
-                    .Select(c => new ChallengeDetailsResponse(c.Id, c.Name, c.Description, c.Points,
-                        c.DeadlineEnabled, c.Deadline, c.MaxAttempts, c.Solves.Count, c.Artifacts
-                            .Select(a => new ArtifactResponse(a.Id, a.FileName))
+                    .Include(c => c.Submissions)
+                    .Select(c => new ChallengeDetailsResponse
+                    {
+                        Id = c.Id,
+                        Name = c.Name,
+                        Description = c.Description,
+                        Points = c.Points,
+                        DeadlineEnabled = c.DeadlineEnabled,
+                        Deadline = c.Deadline,
+                        MaxAttempts = c.MaxAttempts,
+                        SolveCount = c.Submissions.Count(s => s.IsCorrect == true),
+                        Artifacts = c.Artifacts
+                            .Select(a => new ArtifactResponse
+                            {
+                                Id = a.Id,
+                                FileName = a.FileName,
+                            })
                             .ToList()
-                    ))
+                    })
                     .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
             return challenge ?? Result.Failure<ChallengeDetailsResponse>(NotFound);

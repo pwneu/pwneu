@@ -39,10 +39,15 @@ public static class GetUserSolves
                 return Result.Failure<PagedList<UserSolveResponse>>(NotFound);
 
             var userSolvesRequest = context
-                .Solves
-                .Where(s => s.UserId == request.Id.ToString())
-                .OrderByDescending(s => s.SolvedAt)
-                .Select(s => new UserSolveResponse(s.ChallengeId, s.Challenge.Name, s.SolvedAt));
+                .Submissions
+                .Where(s => s.UserId == request.Id.ToString() && s.IsCorrect == true)
+                .OrderByDescending(s => s.SubmittedAt)
+                .Select(s => new UserSolveResponse
+                {
+                    ChallengeId = s.ChallengeId,
+                    ChallengeName = s.Challenge.Name,
+                    SolvedAt = s.SubmittedAt
+                });
 
             var userSolves = await PagedList<UserSolveResponse>.CreateAsync(userSolvesRequest, request.Page ?? 1,
                 request.PageSize ?? 10);

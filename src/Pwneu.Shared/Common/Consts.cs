@@ -10,5 +10,9 @@ public static class Consts
     public const string ManagerAdminOnly = "ManagerAdminOnly";
     public const string AdminOnly = "AdminOnly";
 
+    public const string MessageBrokerHost = "MessageBroker:Host";
+    public const string MessageBrokerUsername = "MessageBroker:Username";
+    public const string MessageBrokerPassword = "MessageBroker:Password";
+
     public const int GmailSmtpPort = 587;
 }

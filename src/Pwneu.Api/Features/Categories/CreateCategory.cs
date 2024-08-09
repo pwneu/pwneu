@@ -1,5 +1,6 @@
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
 using Pwneu.Shared.Common;
@@ -38,6 +39,16 @@ public static class CreateCategory
             await context.SaveChangesAsync(cancellationToken);
 
             await cache.RemoveAsync(Keys.Categories(), token: cancellationToken);
+
+            var userIds = await context
+                .Users
+                .Select(u => u.Id)
+                .ToListAsync(cancellationToken: cancellationToken);
+
+            foreach (var userId in userIds)
+            {
+                await cache.RemoveAsync(Keys.UserStats(userId), token: cancellationToken);
+            }
 
             return category.Id;
         }

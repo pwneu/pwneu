@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pwneu.Api.Shared.Data;
@@ -12,9 +13,11 @@ using Pwneu.Api.Shared.Data;
 namespace Pwneu.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240808181243_RemoveSolvesTable")]
+    partial class RemoveSolvesTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -265,7 +268,7 @@ namespace Pwneu.Api.Migrations
                     b.ToTable("Challenges");
                 });
 
-            modelBuilder.Entity("Pwneu.Api.Shared.Entities.Submission", b =>
+            modelBuilder.Entity("Pwneu.Api.Shared.Entities.FlagSubmission", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -274,13 +277,9 @@ namespace Pwneu.Api.Migrations
                     b.Property<Guid>("ChallengeId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Flag")
+                    b.Property<string>("FlagStatus")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<bool>("IsCorrect")
-                        .HasColumnType("boolean");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("SubmittedAt")
                         .HasColumnType("timestamp with time zone");
@@ -290,13 +289,18 @@ namespace Pwneu.Api.Migrations
                         .HasMaxLength(36)
                         .HasColumnType("character varying(36)");
 
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ChallengeId");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Submissions");
+                    b.ToTable("FlagSubmissions");
                 });
 
             modelBuilder.Entity("Pwneu.Api.Shared.Entities.User", b =>
@@ -451,16 +455,16 @@ namespace Pwneu.Api.Migrations
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("Pwneu.Api.Shared.Entities.Submission", b =>
+            modelBuilder.Entity("Pwneu.Api.Shared.Entities.FlagSubmission", b =>
                 {
                     b.HasOne("Pwneu.Api.Shared.Entities.Challenge", "Challenge")
-                        .WithMany("Submissions")
+                        .WithMany("FlagSubmissions")
                         .HasForeignKey("ChallengeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Pwneu.Api.Shared.Entities.User", "User")
-                        .WithMany("Submissions")
+                        .WithMany("FlagSubmissions")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -479,12 +483,12 @@ namespace Pwneu.Api.Migrations
                 {
                     b.Navigation("Artifacts");
 
-                    b.Navigation("Submissions");
+                    b.Navigation("FlagSubmissions");
                 });
 
             modelBuilder.Entity("Pwneu.Api.Shared.Entities.User", b =>
                 {
-                    b.Navigation("Submissions");
+                    b.Navigation("FlagSubmissions");
                 });
 #pragma warning restore 612, 618
         }

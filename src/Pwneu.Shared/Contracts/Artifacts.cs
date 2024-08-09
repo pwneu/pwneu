@@ -1,5 +1,14 @@
 namespace Pwneu.Shared.Contracts;
 
-public record ArtifactDataResponse(string FileName, string ContentType, byte[] Data);
+public record ArtifactDataResponse
+{
+    public string FileName { get; init; } = default!;
+    public string ContentType { get; init; } = default!;
+    public byte[] Data { get; init; } = default!;
+}
 
-public record ArtifactResponse(Guid Id, string FileName);
+public record ArtifactResponse
+{
+    public Guid Id { get; set; }
+    public string FileName { get; set; } = default!;
+}

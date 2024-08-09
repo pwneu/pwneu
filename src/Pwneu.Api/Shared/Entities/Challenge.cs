@@ -15,6 +15,5 @@ public class Challenge
     public List<string> Flags { get; set; } = [];
     public Category Category { get; init; } = null!;
     public ICollection<Artifact> Artifacts { get; init; } = [];
-    public ICollection<FlagSubmission> FlagSubmissions { get; init; } = [];
-    public ICollection<Solve> Solves { get; init; } = [];
+    public ICollection<Submission> Submissions { get; init; } = [];
 }

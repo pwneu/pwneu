@@ -1,12 +1,10 @@
 using System.Linq.Expressions;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
 using Pwneu.Api.Shared.Services;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
-using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Api.Features.Users;
 
@@ -24,7 +22,7 @@ public static class GetUsers
         int? PageSize = null)
         : IRequest<Result<PagedList<UserResponse>>>;
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, IAccessControl accessControl)
+    internal sealed class Handler(ApplicationDbContext context, IAccessControl accessControl)
         : IRequestHandler<Query, Result<PagedList<UserResponse>>>
     {
         public async Task<Result<PagedList<UserResponse>>> Handle(Query request, CancellationToken cancellationToken)
@@ -34,7 +32,9 @@ public static class GetUsers
             var usersQuery = context.Users.Where(u => !managerIds.Contains(u.Id));
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
-                usersQuery = usersQuery.Where(u => u.UserName != default && u.UserName.Contains(request.SearchTerm));
+                usersQuery = usersQuery.Where(u =>
+                    u.UserName != default &&
+                    u.UserName.Contains(request.SearchTerm));
 
             Expression<Func<User, object>> keySelector = request.SortBy?.ToLower() switch
             {
@@ -46,9 +46,15 @@ public static class GetUsers
                 ? usersQuery.OrderByDescending(keySelector)
                 : usersQuery.OrderBy(keySelector);
 
-            var userResponsesQuery = usersQuery.Select(u => new UserResponse(u.Id, u.UserName));
+            var userResponsesQuery = usersQuery.Select(u => new UserResponse
+            {
+                Id = u.Id,
+                UserName = u.UserName
+            });
 
-            var users = await PagedList<UserResponse>.CreateAsync(userResponsesQuery, request.Page ?? 1,
+            var users = await PagedList<UserResponse>.CreateAsync(
+                userResponsesQuery,
+                request.Page ?? 1,
                 request.PageSize ?? 10);
 
             return users;

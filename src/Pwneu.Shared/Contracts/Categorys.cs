@@ -1,18 +1,30 @@
 namespace Pwneu.Shared.Contracts;
 
-public record CategoryResponse(
-    Guid Id,
-    string Name,
-    string Description,
-    IEnumerable<ChallengeResponse> Challenges);
+public record CategoryResponse
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = default!;
+    public string Description { get; set; } = default!;
+    public IEnumerable<ChallengeResponse> Challenges { get; set; } = [];
+}
 
-public record CategoryEvalResponse(
-    Guid Id,
-    string Name,
-    int TotalChallenges,
-    int TotalSolves,
-    int IncorrectAttempts);
+public record CategoryEvalResponse
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = default!;
+    public int TotalChallenges { get; set; }
+    public int TotalSolves { get; set; }
+    public int IncorrectAttempts { get; set; }
+}
 
-public record CreateCategoryRequest(string Name, string Description);
+public record CreateCategoryRequest
+{
+    public string Name { get; set; } = default!;
+    public string Description { get; set; } = default!;
+}
 
-public record UpdateCategoryRequest(string Name, string Description);
+public record UpdateCategoryRequest
+{
+    public string Name { get; set; } = default!;
+    public string Description { get; set; } = default!;
+}
