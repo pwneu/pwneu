@@ -34,6 +34,7 @@ public static class DeleteCategory
 
             await context.SaveChangesAsync(cancellationToken);
 
+            await cache.RemoveAsync(Keys.Categories(), token: cancellationToken);
             await cache.RemoveAsync(Keys.Category(category.Id), token: cancellationToken);
 
             foreach (var challenge in category.Challenges)
