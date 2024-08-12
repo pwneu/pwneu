@@ -33,8 +33,44 @@ services:
     networks:
       - pwneu
 
+  pwneu.identity:
+    container_name: pwneu.identity
+    depends_on:
+      - pwneu.identity.db
+      - pwneu.cache
+      - pwneu.dashboard
+      - pwneu.mq
+    build:
+      context: .
+      dockerfile: src/Pwneu.Identity/Dockerfile
+    ports:
+      - "37200:8080"
+      - "37201:8081"
+    environment:
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=8081
+    volumes:
+      - ./.containers/certs:/home/app/.aspnet/https:ro
+    networks:
+      - pwneu
+
+  pwneu.identity.db:
+    image: postgres:latest
+    container_name: pwneu.identity.db
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - ./.containers/identity.db:/var/lib/postgresql/data
+    ports:
+      - "37202:5432"
+    networks:
+      - pwneu
+
   pwneu.api:
-    image: ${DOCKER_REGISTRY-}pwneu.api
     container_name: pwneu.api
     depends_on:
       - pwneu.db
@@ -45,8 +81,8 @@ services:
       context: .
       dockerfile: src/Pwneu.Api/Dockerfile
     ports:
-      - "37200:8080"
-      - "37201:8081"
+      - "37300:8080"
+      - "37301:8081"
     environment:
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
@@ -79,29 +115,6 @@ services:
       - "5432:5432"
     networks:
       - pwneu
-
-  #  pwneu.smtp:
-  #    image: ${DOCKER_REGISTRY-}pwneu.smtp
-  #    container_name: pwneu.smtp
-  #    depends_on:
-  #      - pwneu.api
-  #    build:
-  #      context: .
-  #      dockerfile: src/Pwneu.Smtp/Dockerfile
-  #    environment:
-  #      - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
-  #      - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
-  #      - ASPNETCORE_HTTP_PORTS=8080
-  #      - ASPNETCORE_HTTPS_PORTS=8081
-  #      - MessageBroker__Username=${RABBITMQ_DEFAULT_USER}
-  #      - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
-  #      - SmtpOptions__SenderAddress=${SMTP_SENDER_ADDRESS}
-  #      - SmtpOptions__SenderPassword=${SMTP_SENDER_PASSWORD}
-  #      - SmtpOptions__IsEnabled=${SMTP_IS_ENABLED}
-  #    volumes:
-  #      - ./.containers/certs:/home/app/.aspnet/https:ro
-  #    networks:
-  #      - pwneu
 
   pwneu.dashboard:
     image: mcr.microsoft.com/dotnet/nightly/aspire-dashboard:latest
