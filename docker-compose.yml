@@ -1,4 +1,38 @@
 services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    depends_on:
+      - pwneu.api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./.containers/certs:/etc/nginx/certs:ro
+    networks:
+      - pwneu
+
+  pwneu.gateway:
+    container_name: pwneu.gateway
+    depends_on:
+      - pwneu.api
+    build:
+      context: .
+      dockerfile: src/Pwneu.Gateway/Dockerfile
+    ports:
+      - "37100:8080"
+      - "37101:8081"
+    environment:
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=8081
+    volumes:
+      - ./.containers/certs:/home/app/.aspnet/https:ro
+    networks:
+      - pwneu
+
   pwneu.api:
     image: ${DOCKER_REGISTRY-}pwneu.api
     container_name: pwneu.api
@@ -11,8 +45,8 @@ services:
       context: .
       dockerfile: src/Pwneu.Api/Dockerfile
     ports:
-      - "8080:8080"
-      - "8081:8081"
+      - "37200:8080"
+      - "37201:8081"
     environment:
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}

@@ -4,7 +4,6 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <UserSecretsId>7bc7ba00-db10-433f-912a-aba4d763c3f5</UserSecretsId>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <DockerfileContext>..\..</DockerfileContext>
         <DockerComposeProjectPath>..\..\docker-compose.dcproj</DockerComposeProjectPath>
@@ -12,18 +11,19 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="MassTransit.RabbitMQ" Version="8.2.3"/>
-        <PackageReference Include="MediatR" Version="12.3.0"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\Pwneu.Shared\Pwneu.Shared.csproj"/>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.5"/>
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0"/>
+        <PackageReference Include="Yarp.ReverseProxy" Version="2.1.0"/>
     </ItemGroup>
 
     <ItemGroup>
         <Content Include="..\..\.dockerignore">
             <Link>.dockerignore</Link>
         </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Pwneu.Shared\Pwneu.Shared.csproj" />
     </ItemGroup>
 
 </Project>
