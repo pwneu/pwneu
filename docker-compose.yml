@@ -69,9 +69,9 @@ services:
     image: postgres:latest
     container_name: pwneu.identity.db
     environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${IDENTITY_DB}
+      - POSTGRES_USER=${IDENTITY_USER}
+      - POSTGRES_PASSWORD=${IDENTITY_PASSWORD}
     volumes:
       - ./.containers/identity.db:/var/lib/postgresql/data
     ports:
@@ -98,7 +98,7 @@ services:
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_HTTPS_PORTS=8081
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://pwneu.dashboard:18889
-      - ConnectionStrings__Postgres=${POSTGRES_CONNECTION}
+      - ConnectionStrings__Postgres=${PLAY_CONNECTION}
       - MessageBroker__Username=${RABBITMQ_DEFAULT_USER}
       - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
       - AppOptions__RequireRegistrationKey=${REQUIRE_REGISTRATION_KEY}
@@ -115,9 +115,9 @@ services:
     image: postgres:latest
     container_name: pwneu.play.db
     environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${PLAY_DB}
+      - POSTGRES_USER=${PLAY_USER}
+      - POSTGRES_PASSWORD=${PLAY_PASSWORD}
     volumes:
       - ./.containers/play.db:/var/lib/postgresql/data
     ports:
