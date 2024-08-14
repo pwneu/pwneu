@@ -58,24 +58,27 @@ public static class NotifyLogin
             }
         }
     }
+}
 
-    public class Listener(ISender sender, ILogger<Endpoint> logger) : IConsumer<LoggedInEvent>
+public class LoggedInEventConsumer(ISender sender, ILogger<LoggedInEventConsumer> logger)
+    : IConsumer<LoggedInEvent>
+{
+    public async Task Consume(ConsumeContext<LoggedInEvent> context)
     {
-        public async Task Consume(ConsumeContext<LoggedInEvent> context)
+        logger.LogInformation("Received message");
+
+        var message = context.Message;
+        var command = new NotifyLogin.Command(message.FullName, message.Email, message.IpAddress, message.UserAgent,
+            message.Referer);
+        var result = await sender.Send(command);
+
+        if (result.IsSuccess)
         {
-            var message = context.Message;
-            var command = new Command(message.FullName, message.Email, message.IpAddress, message.UserAgent,
-                message.Referer);
-            var result = await sender.Send(command);
-
-            if (result.IsSuccess)
-            {
-                logger.LogInformation("Sent login notification to {email}", context.Message.Email);
-                return;
-            }
-
-            logger.LogError(
-                "Failed to send login notification to {email}: {error}", message.Email, result.Error.Message);
+            logger.LogInformation("Sent login notification to {email}", context.Message.Email);
+            return;
         }
+
+        logger.LogError(
+            "Failed to send login notification to {email}: {error}", message.Email, result.Error.Message);
     }
 }

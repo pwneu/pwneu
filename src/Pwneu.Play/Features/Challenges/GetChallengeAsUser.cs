@@ -2,6 +2,7 @@ using System.Security.Claims;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
+using Pwneu.Play.Shared.Services;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 using Pwneu.Shared.Extensions;
@@ -12,19 +13,23 @@ namespace Pwneu.Play.Features.Challenges;
 /// <summary>
 /// Retrieves a challenge by ID.
 /// </summary>
-public static class GetChallengeAsMember
+public static class GetChallengeAsUser
 {
     public record Query(string UserId, Guid ChallengeId) : IRequest<Result<ChallengeAsUserResponse>>;
 
     private static readonly Error NotFound = new("GetChallengeAsUser.Null",
         "The challenge with the specified ID was not found");
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, IMemberAccess memberAccess)
         : IRequestHandler<Query, Result<ChallengeAsUserResponse>>
     {
         public async Task<Result<ChallengeAsUserResponse>> Handle(Query request,
             CancellationToken cancellationToken)
         {
+            // Check if user exists.
+            if (!await memberAccess.MemberExistsAsync(request.UserId, cancellationToken))
+                return Result.Failure<ChallengeAsUserResponse>(NotFound);
+
             var challenge = await cache.GetOrSetAsync(Keys.Challenge(request.ChallengeId), async _ =>
                 await context
                     .Challenges

@@ -2,12 +2,12 @@ namespace Pwneu.Shared.Contracts;
 
 public record UserNotFoundResponse;
 
-public record MemberRequest
+public record GetMemberRequest
 {
     public string Id { get; set; } = default!;
 }
 
-public record MemberStatsResponse
+public record UserStatsResponse
 {
     public string Id { get; set; } = default!;
     public IEnumerable<CategoryEvalResponse> Evaluations { get; set; } = [];

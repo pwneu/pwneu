@@ -6,24 +6,25 @@ namespace Pwneu.Play.Shared.Services;
 public interface IMemberAccess
 {
     Task<bool> MemberExistsAsync(string id, CancellationToken cancellationToken = default);
-    Task<string?> GetMemberNameAsync(string id, CancellationToken cancellationToken = default);
+    Task<UserResponse?> GetMemberAsync(string id, CancellationToken cancellationToken = default);
 }
 
-public class MemberAccess(IRequestClient<MemberRequest> client) : IMemberAccess
+public class MemberAccess(IRequestClient<GetMemberRequest> client) : IMemberAccess
 {
     public async Task<bool> MemberExistsAsync(string id, CancellationToken cancellationToken = default)
     {
-        var response = await client.GetResponse<UserResponse, UserNotFoundResponse>(
-            new MemberRequest { Id = id }, cancellationToken);
-
-        return !response.Is(out Response<UserNotFoundResponse> _);
+        return await GetMemberAsync(id, cancellationToken) is not null;
     }
 
-    public async Task<string?> GetMemberNameAsync(string id, CancellationToken cancellationToken = default)
+    public async Task<UserResponse?> GetMemberAsync(string id, CancellationToken cancellationToken = default)
     {
         var response = await client.GetResponse<UserResponse, UserNotFoundResponse>(
-            new MemberRequest { Id = id }, cancellationToken);
+            new GetMemberRequest { Id = id }, cancellationToken);
 
-        return response.Is(out Response<UserResponse>? userResponse) ? userResponse.Message.UserName : null;
+        if (response.Is(out Response<UserResponse>? userResponse))
+            return userResponse.Message;
+
+        response.Is(out Response<UserNotFoundResponse> _);
+        return null;
     }
 }

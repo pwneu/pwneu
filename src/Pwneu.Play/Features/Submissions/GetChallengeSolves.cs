@@ -1,16 +1,17 @@
 using MediatR;
 using Pwneu.Play.Shared.Data;
+using Pwneu.Play.Shared.Services;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 
-namespace Pwneu.Play.Features.Solves;
+namespace Pwneu.Play.Features.Submissions;
 
 public static class GetChallengeSolves
 {
     public record Query(Guid Id, int? Page = null, int? PageSize = null)
         : IRequest<Result<PagedList<ChallengeSolveResponse>>>;
 
-    internal sealed class Handler(ApplicationDbContext context)
+    internal sealed class Handler(ApplicationDbContext context, IMemberAccess memberAccess)
         : IRequestHandler<Query, Result<PagedList<ChallengeSolveResponse>>>
     {
         public async Task<Result<PagedList<ChallengeSolveResponse>>> Handle(Query request,
@@ -31,6 +32,12 @@ public static class GetChallengeSolves
                 request.Page ?? 1,
                 request.PageSize ?? 10);
 
+            await Task.WhenAll(challengeSolves.Items.Select(async challengeSolve =>
+            {
+                challengeSolve.UserName = (await memberAccess.GetMemberAsync(
+                    challengeSolve.UserId, cancellationToken))?.UserName;
+            }));
+
             return challengeSolves;
         }
     }
@@ -47,7 +54,7 @@ public static class GetChallengeSolves
                     return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
                 })
                 .RequireAuthorization()
-                .WithTags(nameof(Solves));
+                .WithTags(nameof(Submissions));
         }
     }
 }
