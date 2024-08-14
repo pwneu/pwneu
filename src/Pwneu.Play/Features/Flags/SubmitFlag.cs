@@ -42,7 +42,7 @@ public static class SubmitFlag
 
             // Get the challenge in the cache or the database.
             // We're using the cache of ChallengeDetailsResponse 
-            // because the user has already loaded the challenge details in the cache
+            // because the user might have already loaded the challenge details in the cache
             // before submitting a flag.
             var challenge = await cache.GetOrSetAsync(Keys.Challenge(request.ChallengeId), async _ =>
                 await context
@@ -64,8 +64,13 @@ public static class SubmitFlag
                             {
                                 Id = a.Id,
                                 FileName = a.FileName,
-                            })
-                            .ToList()
+                            }).ToList(),
+                        Hints = c.Hints
+                            .Select(h => new HintResponse
+                            {
+                                Id = h.Id,
+                                Deduction = h.Deduction
+                            }).ToList()
                     })
                     .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 

@@ -17,6 +17,7 @@ public record ChallengeDetailsResponse
     public int MaxAttempts { get; set; }
     public int SolveCount { get; set; }
     public IEnumerable<ArtifactResponse> Artifacts { get; set; } = [];
+    public IEnumerable<HintResponse> Hints { get; set; } = [];
 }
 
 public record ChallengeAsUserResponse

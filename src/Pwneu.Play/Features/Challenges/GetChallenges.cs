@@ -61,9 +61,14 @@ public static class GetChallenges
                         .Select(a => new ArtifactResponse
                         {
                             Id = a.Id,
-                            FileName = a.FileName
-                        })
-                        .ToList()
+                            FileName = a.FileName,
+                        }).ToList(),
+                    Hints = c.Hints
+                        .Select(h => new HintResponse
+                        {
+                            Id = h.Id,
+                            Deduction = h.Deduction
+                        }).ToList()
                 });
 
             var challenges = await PagedList<ChallengeDetailsResponse>.CreateAsync(

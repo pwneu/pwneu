@@ -105,6 +105,7 @@ public static class CreateChallenge
                 .MaximumLength(300)
                 .WithMessage("Challenge description must be 300 characters or less.");
 
+            // TODO -- Allow 0 points on challenges
             RuleFor(c => c.Points)
                 .GreaterThan(0)
                 .WithMessage("Points must be greater than 0.");

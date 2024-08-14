@@ -44,8 +44,13 @@ public static class GetChallenge
                             {
                                 Id = a.Id,
                                 FileName = a.FileName,
-                            })
-                            .ToList()
+                            }).ToList(),
+                        Hints = c.Hints
+                            .Select(h => new HintResponse
+                            {
+                                Id = h.Id,
+                                Deduction = h.Deduction
+                            }).ToList()
                     })
                     .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
