@@ -17,6 +17,15 @@ ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "./Pwneu.Smtp.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
+COPY ["scripts/wait-for-it.sh", "/usr/bin/wait-for-it.sh"]
+USER root
+RUN chmod +x /usr/bin/wait-for-it.sh
+USER app
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "Pwneu.Smtp.dll"]
+ENTRYPOINT ["/bin/sh", "-c", "\
+  wait-for-it.sh -t 0 pwneu.mq:5672 && \
+  wait-for-it.sh -t 0 pwneu.play:8081 && \
+  wait-for-it.sh -t 0 pwneu.identity:8081 && \
+  dotnet Pwneu.Smtp.dll \
+"]

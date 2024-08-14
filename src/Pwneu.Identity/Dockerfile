@@ -12,13 +12,17 @@ RUN dotnet build "./Pwneu.Identity/Pwneu.Identity.csproj" -c $BUILD_CONFIGURATIO
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Pwneu.Gateway/Pwneu.Identity.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./Pwneu.Identity/Pwneu.Identity.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
-WORKDIR /app
 COPY ["scripts/wait-for-it.sh", "/usr/bin/wait-for-it.sh"]
 USER root
 RUN chmod +x /usr/bin/wait-for-it.sh
 USER app
+WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["sh", "-c", "wait-for-it.sh -t 0 pwneu.identity.db:5432 && wait-for-it.sh -t 0 pwneu.mq:5672 && dotnet Pwneu.Identity.dll"]
+ENTRYPOINT ["sh", "-c", "\
+  wait-for-it.sh -t 0 pwneu.mq:5672 && \
+  wait-for-it.sh -t 0 pwneu.identity.db:5432 && \
+  dotnet Pwneu.Identity.dll \
+"]
