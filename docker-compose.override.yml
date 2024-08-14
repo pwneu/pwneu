@@ -2,7 +2,7 @@ services:
   pwneu.gateway:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ReverseProxy__Clusters__api-cluster__HttpClient__DangerousAcceptAnyServerCertificate=true
+      - ReverseProxy__Clusters__play-cluster__HttpClient__DangerousAcceptAnyServerCertificate=true
       - ReverseProxy__Clusters__identity-cluster__HttpClient__DangerousAcceptAnyServerCertificate=true
   
   pwneu.identity:
@@ -11,7 +11,7 @@ services:
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
 
-  pwneu.api:
+  pwneu.play:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
     volumes:

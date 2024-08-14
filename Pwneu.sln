@@ -7,11 +7,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{DBF2348C-56C
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{D463125D-0C2D-43FC-A06F-4DA2EF8ECCE3}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pwneu.Api", "src\Pwneu.Api\Pwneu.Api.csproj", "{0DC8E2CB-DFEC-4D2F-B3D0-FE0E03DA0090}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pwneu.Play", "src\Pwneu.Play\Pwneu.Play.csproj", "{0DC8E2CB-DFEC-4D2F-B3D0-FE0E03DA0090}"
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{865DBEBF-A82A-4F18-9CEE-80B4549888C2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pwneu.Api.IntegrationTests", "tests\Pwneu.Api.IntegrationTests\Pwneu.Api.IntegrationTests.csproj", "{A1597FB9-12B9-4FDD-B8A3-0574319F1BC8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pwneu.Play.IntegrationTests", "tests\Pwneu.Play.IntegrationTests\Pwneu.Play.IntegrationTests.csproj", "{A1597FB9-12B9-4FDD-B8A3-0574319F1BC8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pwneu.Smtp", "src\Pwneu.Smtp\Pwneu.Smtp.csproj", "{259FDB93-319C-468E-BB3A-06AD7AA16C72}"
 EndProject

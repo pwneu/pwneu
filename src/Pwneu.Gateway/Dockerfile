@@ -17,4 +17,4 @@ RUN dotnet publish "./Pwneu.Gateway/Pwneu.Gateway.csproj" -c $BUILD_CONFIGURATIO
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["sh", "-c", "wait-for-it.sh -t 0 pwneu.api:8081 && wait-for-it.sh -t 0 pwneu.mq:5672 && dotnet Pwneu.Gateway.dll"]
+ENTRYPOINT ["sh", "-c", "wait-for-it.sh -t 0 pwneu.play:8081 && wait-for-it.sh -t 0 pwneu.mq:5672 && dotnet Pwneu.Gateway.dll"]

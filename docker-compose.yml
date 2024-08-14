@@ -3,7 +3,7 @@ services:
     image: nginx:latest
     container_name: nginx
     depends_on:
-      - pwneu.api
+      - pwneu.play
     ports:
       - "80:80"
       - "443:443"
@@ -16,7 +16,7 @@ services:
   pwneu.gateway:
     container_name: pwneu.gateway
     depends_on:
-      - pwneu.api
+      - pwneu.play
       - pwneu.identity
     build:
       context: .
@@ -79,16 +79,16 @@ services:
     networks:
       - pwneu
 
-  pwneu.api:
-    container_name: pwneu.api
+  pwneu.play:
+    container_name: pwneu.play
     depends_on:
-      - pwneu.db
+      - pwneu.play.db
       - pwneu.cache
       - pwneu.dashboard
       - pwneu.mq
     build:
       context: .
-      dockerfile: src/Pwneu.Api/Dockerfile
+      dockerfile: src/Pwneu.Play/Dockerfile
     ports:
       - "37300:8080"
       - "37301:8081"
@@ -111,15 +111,15 @@ services:
     networks:
       - pwneu
 
-  pwneu.db:
+  pwneu.play.db:
     image: postgres:latest
-    container_name: pwneu.db
+    container_name: pwneu.play.db
     environment:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
-      - ./.containers/db:/var/lib/postgresql/data
+      - ./.containers/play.db:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     networks:

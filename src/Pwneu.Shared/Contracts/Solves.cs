@@ -10,6 +10,5 @@ public record UserSolveResponse
 public record ChallengeSolveResponse
 {
     public string UserId { get; set; } = default!;
-    public string? UserName { get; set; }
     public DateTime SolvedAt { get; set; }
 }
