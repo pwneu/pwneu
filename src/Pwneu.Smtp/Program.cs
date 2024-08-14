@@ -1,4 +1,5 @@
 using MassTransit;
+using Pwneu.Shared.Common;
 using Pwneu.Smtp.Shared.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,10 +20,10 @@ builder.Services.AddMassTransit(busConfigurator =>
 
     busConfigurator.UsingRabbitMq((context, configurator) =>
     {
-        configurator.Host(new Uri(builder.Configuration["MessageBroker:Host"]!), h =>
+        configurator.Host(new Uri(builder.Configuration[Consts.MessageBrokerHost]!), h =>
         {
-            h.Username(builder.Configuration["MessageBroker:Username"]!);
-            h.Password(builder.Configuration["MessageBroker:Password"]!);
+            h.Username(builder.Configuration[Consts.MessageBrokerUsername]!);
+            h.Password(builder.Configuration[Consts.MessageBrokerPassword]!);
         });
 
         configurator.ConfigureEndpoints(context);

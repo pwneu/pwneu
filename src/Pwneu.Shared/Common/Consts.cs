@@ -14,5 +14,12 @@ public static class Consts
     public const string MessageBrokerUsername = "MessageBroker:Username";
     public const string MessageBrokerPassword = "MessageBroker:Password";
 
+    public const string JwtOptionsIssuer = "JwtOptions:Issuer";
+    public const string JwtOptionsAudience = "JwtOptions:Audience";
+    public const string JwtOptionsSigningKey = "JwtOptions:SigningKey";
+
+    public const string Postgres = "Postgres";
+    public const string Redis = "Redis";
+
     public const int GmailSmtpPort = 587;
 }

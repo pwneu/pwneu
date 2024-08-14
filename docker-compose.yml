@@ -1,25 +1,58 @@
 services:
-  pwneu.api:
-    image: ${DOCKER_REGISTRY-}pwneu.api
-    container_name: pwneu.api
+  nginx:
+    image: nginx:latest
+    container_name: nginx
     depends_on:
-      - pwneu.db
-      - pwneu.cache
-      - pwneu.dashboard
-      - pwneu.mq
+      - pwneu.play
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./.containers/certs:/etc/nginx/certs:ro
+    networks:
+      - pwneu
+
+  pwneu.gateway:
+    container_name: pwneu.gateway
+    depends_on:
+      - pwneu.play
+      - pwneu.identity
     build:
       context: .
-      dockerfile: src/Pwneu.Api/Dockerfile
+      dockerfile: src/Pwneu.Gateway/Dockerfile
     ports:
-      - "8080:8080"
-      - "8081:8081"
+      - "37100:8080"
+      - "37101:8081"
     environment:
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_HTTPS_PORTS=8081
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://pwneu.dashboard:18889
-      - ConnectionStrings__Postgres=${POSTGRES_CONNECTION}
+    volumes:
+      - ./.containers/certs:/home/app/.aspnet/https:ro
+    networks:
+      - pwneu
+
+  pwneu.identity:
+    container_name: pwneu.identity
+    depends_on:
+      - pwneu.identity.db
+      - pwneu.cache
+      - pwneu.dashboard
+      - pwneu.mq
+    build:
+      context: .
+      dockerfile: src/Pwneu.Identity/Dockerfile
+    ports:
+      - "37200:8080"
+      - "37201:8081"
+    environment:
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=8081
+      - ConnectionStrings__Postgres=${IDENTITY_CONNECTION}
       - MessageBroker__Username=${RABBITMQ_DEFAULT_USER}
       - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
       - AppOptions__RequireRegistrationKey=${REQUIRE_REGISTRATION_KEY}
@@ -32,42 +65,89 @@ services:
     networks:
       - pwneu
 
-  pwneu.db:
+  pwneu.identity.db:
     image: postgres:latest
-    container_name: pwneu.db
+    container_name: pwneu.identity.db
     environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${IDENTITY_DB}
+      - POSTGRES_USER=${IDENTITY_USER}
+      - POSTGRES_PASSWORD=${IDENTITY_PASSWORD}
     volumes:
-      - ./.containers/db:/var/lib/postgresql/data
+      - ./.containers/identity.db:/var/lib/postgresql/data
+    ports:
+      - "37202:5432"
+    networks:
+      - pwneu
+
+  pwneu.play:
+    container_name: pwneu.play
+    depends_on:
+      - pwneu.play.db
+      - pwneu.cache
+      - pwneu.dashboard
+      - pwneu.mq
+    build:
+      context: .
+      dockerfile: src/Pwneu.Play/Dockerfile
+    ports:
+      - "37300:8080"
+      - "37301:8081"
+    environment:
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=8081
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://pwneu.dashboard:18889
+      - ConnectionStrings__Postgres=${PLAY_CONNECTION}
+      - MessageBroker__Username=${RABBITMQ_DEFAULT_USER}
+      - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
+      - AppOptions__RequireRegistrationKey=${REQUIRE_REGISTRATION_KEY}
+      - AppOptions__InitialAdminPassword=${ADMIN_PASSWORD}
+      - JwtOptions__Issuer=${JWT_ISSUER}
+      - JwtOptions__Audience=${JWT_AUDIENCE}
+      - JwtOptions__SigningKey=${JWT_SIGNING_KEY}
+    volumes:
+      - ./.containers/certs:/home/app/.aspnet/https:ro
+    networks:
+      - pwneu
+
+  pwneu.play.db:
+    image: postgres:latest
+    container_name: pwneu.play.db
+    environment:
+      - POSTGRES_DB=${PLAY_DB}
+      - POSTGRES_USER=${PLAY_USER}
+      - POSTGRES_PASSWORD=${PLAY_PASSWORD}
+    volumes:
+      - ./.containers/play.db:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     networks:
       - pwneu
 
-  #  pwneu.smtp:
-  #    image: ${DOCKER_REGISTRY-}pwneu.smtp
-  #    container_name: pwneu.smtp
-  #    depends_on:
-  #      - pwneu.api
-  #    build:
-  #      context: .
-  #      dockerfile: src/Pwneu.Smtp/Dockerfile
-  #    environment:
-  #      - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
-  #      - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
-  #      - ASPNETCORE_HTTP_PORTS=8080
-  #      - ASPNETCORE_HTTPS_PORTS=8081
-  #      - MessageBroker__Username=${RABBITMQ_DEFAULT_USER}
-  #      - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
-  #      - SmtpOptions__SenderAddress=${SMTP_SENDER_ADDRESS}
-  #      - SmtpOptions__SenderPassword=${SMTP_SENDER_PASSWORD}
-  #      - SmtpOptions__IsEnabled=${SMTP_IS_ENABLED}
-  #    volumes:
-  #      - ./.containers/certs:/home/app/.aspnet/https:ro
-  #    networks:
-  #      - pwneu
+  pwneu.smtp:
+    image: ${DOCKER_REGISTRY-}pwneu.smtp
+    container_name: pwneu.smtp
+    depends_on:
+      - pwneu.identity
+      - pwneu.play
+    build:
+      context: .
+      dockerfile: src/Pwneu.Smtp/Dockerfile
+    environment:
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=8081
+      - MessageBroker__Username=${RABBITMQ_DEFAULT_USER}
+      - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
+      - SmtpOptions__SenderAddress=${SMTP_SENDER_ADDRESS}
+      - SmtpOptions__SenderPassword=${SMTP_SENDER_PASSWORD}
+      - SmtpOptions__IsEnabled=${SMTP_IS_ENABLED}
+    volumes:
+      - ./.containers/certs:/home/app/.aspnet/https:ro
+    networks:
+      - pwneu
 
   pwneu.dashboard:
     image: mcr.microsoft.com/dotnet/nightly/aspire-dashboard:latest
