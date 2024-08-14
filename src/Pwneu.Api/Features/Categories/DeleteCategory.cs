@@ -12,10 +12,10 @@ namespace Pwneu.Api.Features.Categories;
 /// </summary>
 public static class DeleteCategory
 {
+    public record Command(Guid Id) : IRequest<Result>;
+
     private static readonly Error NotFound = new("DeleteCategory.NotFound",
         "The category with the specified ID was not found");
-
-    public record Command(Guid Id) : IRequest<Result>;
 
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache) : IRequestHandler<Command, Result>
     {
@@ -44,16 +44,6 @@ public static class DeleteCategory
 
                 await cache.RemoveAsync(Keys.Challenge(challenge.Id), token: cancellationToken);
                 await cache.RemoveAsync(Keys.Flags(challenge.Id), token: cancellationToken);
-            }
-
-            var userIds = await context
-                .Users
-                .Select(u => u.Id)
-                .ToListAsync(cancellationToken: cancellationToken);
-
-            foreach (var userId in userIds)
-            {
-                await cache.RemoveAsync(Keys.UserStats(userId), token: cancellationToken);
             }
 
             return Result.Success();

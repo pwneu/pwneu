@@ -1,11 +1,9 @@
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Entities;
 
 namespace Pwneu.Api.Shared.Data;
 
-public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-    : IdentityDbContext<User>(options)
+public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
 {
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -33,18 +31,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .WithMany(c => c.Submissions)
             .HasForeignKey(s => s.ChallengeId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        builder
-            .Entity<Submission>()
-            .HasOne(s => s.User)
-            .WithMany(u => u.Submissions)
-            .HasForeignKey(s => s.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
     }
 
+    public virtual DbSet<Category> Categories { get; init; } = null!;
     public virtual DbSet<Challenge> Challenges { get; init; } = null!;
     public virtual DbSet<Artifact> Artifacts { get; init; } = null!;
     public virtual DbSet<Submission> Submissions { get; init; } = null!;
-    public virtual DbSet<Category> Categories { get; init; } = null!;
-    public virtual DbSet<AccessKey> AccessKeys { get; init; } = null!;
 }

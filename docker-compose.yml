@@ -17,6 +17,7 @@ services:
     container_name: pwneu.gateway
     depends_on:
       - pwneu.api
+      - pwneu.identity
     build:
       context: .
       dockerfile: src/Pwneu.Gateway/Dockerfile
@@ -51,6 +52,14 @@ services:
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_HTTPS_PORTS=8081
+      - ConnectionStrings__Postgres=${IDENTITY_CONNECTION}
+      - MessageBroker__Username=${RABBITMQ_DEFAULT_USER}
+      - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
+      - AppOptions__RequireRegistrationKey=${REQUIRE_REGISTRATION_KEY}
+      - AppOptions__InitialAdminPassword=${ADMIN_PASSWORD}
+      - JwtOptions__Issuer=${JWT_ISSUER}
+      - JwtOptions__Audience=${JWT_AUDIENCE}
+      - JwtOptions__SigningKey=${JWT_SIGNING_KEY}
     volumes:
       - ./.containers/certs:/home/app/.aspnet/https:ro
     networks:

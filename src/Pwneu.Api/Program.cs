@@ -2,7 +2,6 @@ using System.Text;
 using FluentValidation;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.IdentityModel.Tokens;
@@ -13,9 +12,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Pwneu.Api.Shared.Data;
-using Pwneu.Api.Shared.Entities;
 using Pwneu.Api.Shared.Extensions;
-using Pwneu.Api.Shared.Options;
 using Pwneu.Api.Shared.Services;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Extensions;
@@ -24,18 +21,6 @@ using ZiggyCreatures.Caching.Fusion;
 using ZiggyCreatures.Caching.Fusion.Serialization.NewtonsoftJson;
 
 var builder = WebApplication.CreateBuilder(args);
-
-builder.Services
-    .AddOptions<AppOptions>()
-    .BindConfiguration($"{nameof(AppOptions)}")
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
-
-builder.Services
-    .AddOptions<JwtOptions>()
-    .BindConfiguration($"{nameof(JwtOptions)}")
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
 
 // OpenTelemetry (for metrics, traces, and logs)
 builder.Services.AddOpenTelemetry()
@@ -73,26 +58,14 @@ builder.Services.AddSwaggerGen(options =>
 // CORS (Cross-Origin Resource Sharing)
 builder.Services.AddCors();
 
-// ASP.NET Identity
-builder.Services.AddIdentity<User, IdentityRole>(options =>
-    {
-        options.Password.RequireDigit = true;
-        options.Password.RequireLowercase = true;
-        options.Password.RequireUppercase = true;
-        options.Password.RequireNonAlphanumeric = true;
-        options.Password.RequiredLength = 12;
-    })
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
-
 // Postgres Database 
-var postgres = builder.Configuration.GetConnectionString("Postgres") ??
+var postgres = builder.Configuration.GetConnectionString(Consts.Postgres) ??
                throw new InvalidOperationException("No Postgres connection found");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => { options.UseNpgsql(postgres); });
 
 // Redis Caching
-var redis = builder.Configuration.GetConnectionString("Redis") ??
+var redis = builder.Configuration.GetConnectionString(Consts.Redis) ??
             throw new InvalidOperationException("No Redis connection found");
 
 builder.Services.AddFusionCache()
@@ -147,10 +120,10 @@ builder.Services.AddAuthentication(options =>
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             ClockSkew = TimeSpan.FromSeconds(0),
-            ValidIssuer = builder.Configuration["JwtOptions:Issuer"],
-            ValidAudience = builder.Configuration["JwtOptions:Audience"],
+            ValidIssuer = builder.Configuration[Consts.JwtOptionsIssuer],
+            ValidAudience = builder.Configuration[Consts.JwtOptionsAudience],
             IssuerSigningKey =
-                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtOptions:SigningKey"]!)),
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration[Consts.JwtOptionsSigningKey]!)),
         };
     });
 
@@ -159,7 +132,7 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy(Consts.ManagerAdminOnly, policy => { policy.RequireRole(Consts.Manager); })
     .AddPolicy(Consts.MemberOnly, policy => { policy.RequireRole(Consts.Member); });
 
-builder.Services.AddScoped<IAccessControl, AccessControl>();
+builder.Services.AddScoped<IMemberAccess, MemberAccess>();
 
 var app = builder.Build();
 
@@ -171,10 +144,6 @@ if (app.Environment.IsDevelopment())
 
 app.ApplyMigrations();
 
-await app.Services.SeedRolesAsync();
-await app.Services.SeedAdminAsync();
-
-// TODO -- Only allow frontend framework on deployment
 app.UseCors(x => x
     .AllowAnyMethod()
     .AllowAnyHeader()
@@ -186,9 +155,11 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
+if (app.Environment.IsDevelopment())
+    app.MapGet("/", () => "Hello Play!");
+
 app.MapEndpoints();
 
 app.Run();
 
-// Make Program class public to implement the fixture for the WebApplicationFactory in the integration tests.
 public partial class Program;

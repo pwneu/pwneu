@@ -11,5 +11,4 @@ public class Submission
     public DateTime SubmittedAt { get; init; }
     public bool IsCorrect { get; init; }
     public Challenge Challenge { get; init; } = null!;
-    public User User { get; init; } = null!;
 }

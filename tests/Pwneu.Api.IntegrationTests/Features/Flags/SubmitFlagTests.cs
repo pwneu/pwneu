@@ -41,7 +41,7 @@ public class SubmitFlagTests(IntegrationTestsWebAppFactory factory) : BaseIntegr
         await DbContext.SaveChangesAsync();
 
         // Act
-        var submitFlag = await Sender.Send(new SubmitFlag.Command(TestUser.Id, challengeId, value));
+        var submitFlag = await Sender.Send(new SubmitFlag.Command(Guid.NewGuid().ToString(), challengeId, value));
 
         // Assert
         submitFlag.IsSuccess.Should().BeTrue();
@@ -55,7 +55,8 @@ public class SubmitFlagTests(IntegrationTestsWebAppFactory factory) : BaseIntegr
         var challengeId = Guid.NewGuid();
 
         // Act
-        var submitFlag = await Sender.Send(new SubmitFlag.Command(TestUser.Id, challengeId, F.Lorem.Word()));
+        var submitFlag =
+            await Sender.Send(new SubmitFlag.Command(Guid.NewGuid().ToString(), challengeId, F.Lorem.Word()));
 
         // Assert
         submitFlag.IsSuccess.Should().BeFalse();

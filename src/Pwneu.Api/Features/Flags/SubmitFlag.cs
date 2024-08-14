@@ -20,9 +20,6 @@ public static class SubmitFlag
 {
     public record Command(string UserId, Guid ChallengeId, string Flag) : IRequest<Result<FlagStatus>>;
 
-    private static readonly Error UserNotFound = new("SubmitFlag.UserNotFound",
-        "The user with the specified ID was not found");
-
     private static readonly Error ChallengeNotFound = new("SubmitFlag.ChallengeNotFound",
         "The challenge with the specified ID was not found");
 
@@ -42,29 +39,6 @@ public static class SubmitFlag
 
             if (!validationResult.IsValid)
                 return Result.Failure<FlagStatus>(new Error("SubmitFlag.Validation", validationResult.ToString()));
-
-            // Get user details in the cache or the database.
-            var user = await cache.GetOrSetAsync(Keys.User(request.UserId), async _ =>
-                await context
-                    .Users
-                    .Where(u => u.Id == request.UserId)
-                    .Select(u => new UserDetailsResponse
-                    {
-                        Id = u.Id,
-                        UserName = u.UserName,
-                        Email = u.Email,
-                        FullName = u.FullName,
-                        CreatedAt = u.CreatedAt,
-                        TotalPoints = u.Submissions
-                            .Where(s => s.IsCorrect == true)
-                            .Sum(s => s.Challenge.Points),
-                        CorrectAttempts = u.Submissions.Count(s => s.IsCorrect == true),
-                        IncorrectAttempts = u.Submissions.Count(s => s.IsCorrect == true)
-                    })
-                    .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
-
-            // Check if the user exists.
-            if (user is null) return Result.Failure<FlagStatus>(UserNotFound);
 
             // Get the challenge in the cache or the database.
             // We're using the cache of ChallengeDetailsResponse 
@@ -194,13 +168,6 @@ public static class SubmitFlag
                     new FusionCacheEntryOptions { Duration = TimeSpan.FromSeconds(20) },
                     cancellationToken);
             }
-
-            // Since a user has submitted a flag, update the cache on getting user details.
-            await cache.SetAsync(Keys.User(request.UserId),
-                flagStatus == FlagStatus.Correct
-                    ? user with { CorrectAttempts = user.CorrectAttempts + 1 }
-                    : user with { IncorrectAttempts = user.IncorrectAttempts + 1 },
-                token: cancellationToken);
 
             // Create a queue on for storing the submission on the database.
             await publishEndpoint.Publish(new SubmittedEvent

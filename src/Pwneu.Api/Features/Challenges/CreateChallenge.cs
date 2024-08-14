@@ -66,16 +66,6 @@ public static class CreateChallenge
             await cache.RemoveAsync(Keys.Categories(), token: cancellationToken);
             await cache.RemoveAsync(Keys.Category(request.CategoryId), token: cancellationToken);
 
-            var userIds = await context
-                .Users
-                .Select(u => u.Id)
-                .ToListAsync(cancellationToken: cancellationToken);
-
-            foreach (var userId in userIds)
-            {
-                await cache.RemoveAsync(Keys.UserStats(userId), token: cancellationToken);
-            }
-
             return challenge.Id;
         }
     }

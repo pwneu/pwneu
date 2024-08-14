@@ -1,7 +1,9 @@
 using MassTransit;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Shared.Data;
 using Pwneu.Api.Shared.Entities;
+using Pwneu.Api.Shared.Services;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 
@@ -16,12 +18,41 @@ public static class SaveSubmission
         DateTime SubmittedAt,
         bool IsCorrect) : IRequest<Result<Guid>>;
 
-    internal sealed class Handler(ApplicationDbContext context)
+    private static readonly Error UserNotFound = new("SaveSubmission.UserNotFound",
+        "The user with the specified ID was not found");
+
+    private static readonly Error AlreadySolved = new("SaveSubmission.AlreadySolved",
+        "The user already solved the challenge");
+
+    internal sealed class Handler(
+        ApplicationDbContext context,
+        IMemberAccess memberAccess)
         : IRequestHandler<Command, Result<Guid>>
     {
         public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
         {
-            var category = new Submission
+            // Check if user exists.
+            if (!await memberAccess.MemberExistsAsync(request.UserId, cancellationToken))
+                return Result.Failure<Guid>(UserNotFound);
+
+            if (request.IsCorrect)
+            {
+                var alreadySolved = await context
+                    .Submissions
+                    .AnyAsync(s =>
+                        s.UserId == request.UserId &&
+                        s.ChallengeId == request.ChallengeId &&
+                        s.IsCorrect, cancellationToken);
+
+                // Prevent double correct submissions.
+                // We're checking this because just in case the message queue
+                // was late enough that the "already solved" cache is gone.
+                if (alreadySolved)
+                    return Result.Failure<Guid>(AlreadySolved);
+            }
+
+            // Create a new submission and store it to the database.
+            var submission = new Submission
             {
                 Id = Guid.NewGuid(),
                 UserId = request.UserId,
@@ -31,11 +62,11 @@ public static class SaveSubmission
                 IsCorrect = request.IsCorrect,
             };
 
-            context.Add(category);
+            context.Add(submission);
 
             await context.SaveChangesAsync(cancellationToken);
 
-            return category.Id;
+            return submission.Id;
         }
     }
 
