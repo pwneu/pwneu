@@ -8,6 +8,8 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.Categories;
 
+// TODO -- Invalidate challenge cache when updating or don't allow changing category name.
+
 /// <summary>
 /// Updates a challenge under a specified ID.
 /// Only users with manager or admin roles can access this endpoint.

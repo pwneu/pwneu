@@ -6,6 +6,8 @@ using Pwneu.Shared.Contracts;
 
 namespace Pwneu.Play.Features.Submissions;
 
+// TODO -- Create new endpoint to get all user solves id.
+
 public static class GetUserSolves
 {
     public record Query(string Id, int? Page = null, int? PageSize = null)

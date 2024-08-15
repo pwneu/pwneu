@@ -46,6 +46,8 @@ public static class DeleteCategory
                 await cache.RemoveAsync(Keys.Flags(challenge.Id), token: cancellationToken);
             }
 
+            // TODO -- Update cache on user evaluations
+
             return Result.Success();
         }
     }

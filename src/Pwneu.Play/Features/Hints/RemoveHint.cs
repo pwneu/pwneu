@@ -32,6 +32,8 @@ public static class RemoveHint
             await cache.RemoveAsync(Keys.Hints(hint.ChallengeId), token: cancellationToken);
             await cache.RemoveAsync(Keys.Hint(hint.Id), token: cancellationToken);
 
+            // TODO -- Update user category cache evaluation 
+
             return Result.Success();
         }
     }

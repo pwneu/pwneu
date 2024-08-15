@@ -39,6 +39,8 @@ public static class CreateCategory
 
             await cache.RemoveAsync(Keys.Categories(), token: cancellationToken);
 
+            // TODO -- Update cache on user evaluations
+
             return category.Id;
         }
     }

@@ -6,6 +6,8 @@ using Pwneu.Shared.Common;
 
 namespace Pwneu.Play.Features.Artifacts;
 
+// TODO -- Support deleting artifact
+
 public static class AddArtifact
 {
     public record Command(

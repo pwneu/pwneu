@@ -2,6 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Pwneu.Play.Shared.Entities;
 
+// TODO -- Allow nullable category
+// TODO -- Add "Competition" entity
+
 public class Challenge
 {
     public Guid Id { get; init; }

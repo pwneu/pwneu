@@ -51,6 +51,8 @@ public class UseHint
 
             await context.SaveChangesAsync(cancellationToken);
 
+            // TODO -- Update cache on user evaluation on the hint's category
+
             return hint;
         }
     }

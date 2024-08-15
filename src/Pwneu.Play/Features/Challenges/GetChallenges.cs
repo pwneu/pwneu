@@ -42,6 +42,9 @@ public static class GetChallenges
                 _ => challenge => challenge.Name
             };
 
+            // TODO -- Support excluding solved challenges
+            // TODO -- Minimize return properties
+
             challengesQuery = request.SortOrder?.ToLower() == "desc"
                 ? challengesQuery.OrderByDescending(keySelector)
                 : challengesQuery.OrderBy(keySelector);

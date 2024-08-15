@@ -38,6 +38,7 @@ public static class DeleteChallenge
             foreach (var artifact in challenge.Artifacts)
                 await cache.RemoveAsync(Keys.Artifact(artifact.Id), token: cancellationToken);
 
+            // TODO -- Invalidate cache Keys.Challenge() and Keys.ChallengeDetails()
             await cache.RemoveAsync(Keys.Challenge(challenge.Id), token: cancellationToken);
             await cache.RemoveAsync(Keys.Flags(challenge.Id), token: cancellationToken);
 

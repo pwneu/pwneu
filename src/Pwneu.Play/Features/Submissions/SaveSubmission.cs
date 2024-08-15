@@ -35,6 +35,8 @@ public static class SaveSubmission
             if (!await memberAccess.MemberExistsAsync(request.UserId, cancellationToken))
                 return Result.Failure<Guid>(UserNotFound);
 
+            // TODO -- Check if challenge exists
+
             if (request.IsCorrect)
             {
                 var alreadySolved = await context
@@ -65,6 +67,8 @@ public static class SaveSubmission
             context.Add(submission);
 
             await context.SaveChangesAsync(cancellationToken);
+
+            // TODO -- Update user evaluation in category
 
             return submission.Id;
         }
