@@ -7,10 +7,10 @@ public record GetMemberRequest
     public string Id { get; set; } = default!;
 }
 
-public record UserStatsResponse
+public record UserEvalResponse
 {
     public string Id { get; set; } = default!;
-    public IEnumerable<CategoryEvalResponse> Evaluations { get; set; } = [];
+    public IEnumerable<UserCategoryEvalResponse> CategoryEvaluations { get; set; } = [];
 }
 
 public record UserResponse

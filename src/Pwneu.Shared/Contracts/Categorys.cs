@@ -8,13 +8,14 @@ public record CategoryResponse
     public IEnumerable<ChallengeResponse> Challenges { get; set; } = [];
 }
 
-public record CategoryEvalResponse
+public record UserCategoryEvalResponse
 {
-    public Guid Id { get; set; }
+    public Guid CategoryId { get; set; }
     public string Name { get; set; } = default!;
     public int TotalChallenges { get; set; }
     public int TotalSolves { get; set; }
     public int IncorrectAttempts { get; set; }
+    public int HintsUsed { get; set; }
 }
 
 public record CreateCategoryRequest
