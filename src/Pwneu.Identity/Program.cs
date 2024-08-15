@@ -149,11 +149,11 @@ if (app.Environment.IsDevelopment())
 
 app.ApplyMigrations();
 
-app.UseCors(x => x
-    .AllowAnyMethod()
-    .AllowAnyHeader()
-    .SetIsOriginAllowed(_ => true)
-    .AllowCredentials());
+app.UseCors(corsPolicy =>
+    corsPolicy
+        .AllowAnyMethod()
+        .AllowAnyHeader()
+        .AllowAnyOrigin());
 
 await app.Services.SeedRolesAsync();
 await app.Services.SeedAdminAsync();
