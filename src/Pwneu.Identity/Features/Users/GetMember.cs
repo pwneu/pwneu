@@ -7,7 +7,7 @@ using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 using ZiggyCreatures.Caching.Fusion;
 
-namespace Pwneu.Identity.Features.Members;
+namespace Pwneu.Identity.Features.Users;
 
 /// <summary>
 /// Retrieves a user by ID, excluding those with a role of manager or admin.
@@ -43,24 +43,25 @@ public class GetMember
             return user ?? Result.Failure<UserResponse>(NotFound);
         }
     }
+}
 
-    public class Listener(ISender sender, ILogger<Listener> logger) : IConsumer<MemberRequest>
+public class GetMemberConsumer(ISender sender, ILogger<GetMemberConsumer> logger)
+    : IConsumer<GetMemberRequest>
+{
+    public async Task Consume(ConsumeContext<GetMemberRequest> context)
     {
-        public async Task Consume(ConsumeContext<MemberRequest> context)
+        var message = context.Message;
+        var query = new GetMember.Query(message.Id);
+        var result = await sender.Send(query);
+
+        if (result.IsSuccess)
         {
-            var message = context.Message;
-            var query = new Query(message.Id);
-            var result = await sender.Send(query);
-
-            if (result.IsSuccess)
-            {
-                logger.LogInformation("Successfully get user: {id}", result.Value);
-                await context.RespondAsync(result.Value);
-                return;
-            }
-
-            logger.LogError("Failed to get user: {message}", result.Error.Message);
-            await context.RespondAsync(new UserNotFoundResponse());
+            logger.LogInformation("Successfully get user: {id}", result.Value);
+            await context.RespondAsync(result.Value);
+            return;
         }
+
+        logger.LogError("Failed to get user: {message}", result.Error.Message);
+        await context.RespondAsync(new UserNotFoundResponse());
     }
 }

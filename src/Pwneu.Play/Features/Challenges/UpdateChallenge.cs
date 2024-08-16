@@ -27,8 +27,10 @@ public static class UpdateChallenge
     private static readonly Error NotFound = new("UpdateChallenge.NotFound",
         "The challenge with the specified ID was not found");
 
-    internal sealed class Handler(ApplicationDbContext context, IValidator<Command> validator, IFusionCache cache)
-        : IRequestHandler<Command, Result>
+    internal sealed class Handler(
+        ApplicationDbContext context,
+        IValidator<Command> validator,
+        IFusionCache cache) : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -56,9 +58,12 @@ public static class UpdateChallenge
 
             await context.SaveChangesAsync(cancellationToken);
 
-            await cache.RemoveAsync(Keys.Challenge(challenge.Id), token: cancellationToken);
-            await cache.RemoveAsync(Keys.Flags(challenge.Id), token: cancellationToken);
+            await Task.WhenAll(
+                cache.RemoveAsync(Keys.ChallengeDetails(challenge.Id), token: cancellationToken).AsTask(),
+                cache.RemoveAsync(Keys.Flags(challenge.Id), token: cancellationToken).AsTask()
+            );
 
+            // There's no need to clear the challenge's category evaluation cache of all users.
             return Result.Success();
         }
     }

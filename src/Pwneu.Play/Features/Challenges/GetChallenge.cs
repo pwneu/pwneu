@@ -23,7 +23,7 @@ public static class GetChallenge
         public async Task<Result<ChallengeDetailsResponse>> Handle(Query request,
             CancellationToken cancellationToken)
         {
-            var challenge = await cache.GetOrSetAsync(Keys.Challenge(request.Id), async _ =>
+            var challenge = await cache.GetOrSetAsync(Keys.ChallengeDetails(request.Id), async _ =>
                 await context
                     .Challenges
                     .Where(c => c.Id == request.Id)
@@ -44,8 +44,13 @@ public static class GetChallenge
                             {
                                 Id = a.Id,
                                 FileName = a.FileName,
-                            })
-                            .ToList()
+                            }).ToList(),
+                        Hints = c.Hints
+                            .Select(h => new HintResponse
+                            {
+                                Id = h.Id,
+                                Deduction = h.Deduction
+                            }).ToList()
                     })
                     .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 

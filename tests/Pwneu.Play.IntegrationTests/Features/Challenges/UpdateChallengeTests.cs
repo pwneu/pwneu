@@ -151,13 +151,6 @@ public class UpdateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
                 Deadline = c.Deadline,
                 MaxAttempts = c.MaxAttempts,
                 SolveCount = 0,
-                Artifacts = c.Artifacts
-                    .Select(a => new ArtifactResponse
-                    {
-                        Id = a.Id,
-                        FileName = a.FileName
-                    })
-                    .ToList()
             })
             .FirstOrDefaultAsync();
 

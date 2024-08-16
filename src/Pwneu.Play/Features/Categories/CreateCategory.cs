@@ -16,8 +16,10 @@ public static class CreateCategory
 {
     public record Command(string Name, string Description) : IRequest<Result<Guid>>;
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, IValidator<Command> validator)
-        : IRequestHandler<Command, Result<Guid>>
+    internal sealed class Handler(
+        ApplicationDbContext context,
+        IFusionCache cache,
+        IValidator<Command> validator) : IRequestHandler<Command, Result<Guid>>
     {
         public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -37,7 +39,11 @@ public static class CreateCategory
 
             await context.SaveChangesAsync(cancellationToken);
 
-            await cache.RemoveAsync(Keys.Categories(), token: cancellationToken);
+            // Clear categories cache.
+            await Task.WhenAll(
+                cache.RemoveAsync(Keys.Categories(), token: cancellationToken).AsTask(),
+                cache.RemoveAsync(Keys.CategoryIds(), token: cancellationToken).AsTask()
+            );
 
             return category.Id;
         }

@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
+using Pwneu.Play.Shared.Extensions;
 using Pwneu.Shared.Common;
 using ZiggyCreatures.Caching.Fusion;
 
@@ -23,26 +24,28 @@ public static class DeleteChallenge
         {
             var challenge = await context
                 .Challenges
-                .Where(c => c.Id == request.Id)
-                .Include(c => c.Artifacts)
+                .Where(ch => ch.Id == request.Id)
+                .Include(ch => ch.Artifacts)
+                .Include(ch => ch.Hints)
+                .Include(ch => ch.Submissions)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (challenge is null) return Result.Failure(NotFound);
 
+            context.Submissions.RemoveRange(challenge.Submissions);
             context.Artifacts.RemoveRange(challenge.Artifacts);
-
+            context.Hints.RemoveRange(challenge.Hints);
             context.Challenges.Remove(challenge);
 
             await context.SaveChangesAsync(cancellationToken);
 
-            foreach (var artifact in challenge.Artifacts)
-                await cache.RemoveAsync(Keys.Artifact(artifact.Id), token: cancellationToken);
+            var invalidationTasks = new List<Task>
+            {
+                cache.InvalidateCategoryCacheAsync(challenge.CategoryId, cancellationToken: cancellationToken),
+                cache.InvalidateChallengeCacheAsync(challenge, cancellationToken)
+            };
 
-            await cache.RemoveAsync(Keys.Challenge(challenge.Id), token: cancellationToken);
-            await cache.RemoveAsync(Keys.Flags(challenge.Id), token: cancellationToken);
-
-            await cache.RemoveAsync(Keys.Categories(), token: cancellationToken);
-            await cache.RemoveAsync(Keys.Category(challenge.CategoryId), token: cancellationToken);
+            await Task.WhenAll(invalidationTasks);
 
             return Result.Success();
         }

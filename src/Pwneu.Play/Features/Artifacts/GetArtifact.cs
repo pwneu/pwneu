@@ -22,7 +22,7 @@ public static class GetArtifact
     {
         public async Task<Result<ArtifactDataResponse>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var artifact = await cache.GetOrSetAsync(Keys.Artifact(request.Id), async _ =>
+            var artifact = await cache.GetOrSetAsync(Keys.ArtifactData(request.Id), async _ =>
                 await context
                     .Artifacts
                     .Where(a => a.Id == request.Id)

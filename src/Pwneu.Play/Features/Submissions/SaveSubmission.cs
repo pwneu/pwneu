@@ -35,6 +35,8 @@ public static class SaveSubmission
             if (!await memberAccess.MemberExistsAsync(request.UserId, cancellationToken))
                 return Result.Failure<Guid>(UserNotFound);
 
+            // TODO -- Check if challenge exists
+
             if (request.IsCorrect)
             {
                 var alreadySolved = await context
@@ -66,27 +68,29 @@ public static class SaveSubmission
 
             await context.SaveChangesAsync(cancellationToken);
 
+            // TODO -- Update user evaluation in category
+
             return submission.Id;
         }
     }
+}
 
-    public class Listener(ISender sender, ILogger<Listener> logger) : IConsumer<SubmittedEvent>
+public class SubmittedEventConsumer(ISender sender, ILogger<SubmittedEventConsumer> logger) : IConsumer<SubmittedEvent>
+{
+    public async Task Consume(ConsumeContext<SubmittedEvent> context)
     {
-        public async Task Consume(ConsumeContext<SubmittedEvent> context)
+        var message = context.Message;
+        var command = new SaveSubmission.Command(message.UserId, message.ChallengeId, message.Flag, message.SubmittedAt,
+            message.IsCorrect);
+
+        var result = await sender.Send(command);
+
+        if (result.IsSuccess)
         {
-            var message = context.Message;
-            var command = new Command(message.UserId, message.ChallengeId, message.Flag, message.SubmittedAt,
-                message.IsCorrect);
-
-            var result = await sender.Send(command);
-
-            if (result.IsSuccess)
-            {
-                logger.LogInformation("Saved submission to database: {id}", result.Value);
-                return;
-            }
-
-            logger.LogError("Failed to save submission to database");
+            logger.LogInformation("Saved submission to database: {id}", result.Value);
+            return;
         }
+
+        logger.LogError("Failed to save submission to database");
     }
 }

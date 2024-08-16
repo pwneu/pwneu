@@ -28,7 +28,6 @@ public static class GetUserDetails
             if (managerIds.Contains(request.Id))
                 return Result.Failure<UserDetailsResponse>(NotFound);
 
-            // TODO -- Check for bugs in cache invalidations
             var user = await cache.GetOrSetAsync(Keys.UserDetails(request.Id), async _ =>
                 await context
                     .Users
@@ -40,7 +39,6 @@ public static class GetUserDetails
                         Email = u.Email,
                         FullName = u.FullName,
                         CreatedAt = u.CreatedAt,
-                        // TODO -- Create UserEvalResponse
                     })
                     .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
