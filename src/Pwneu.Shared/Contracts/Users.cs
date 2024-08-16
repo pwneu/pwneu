@@ -7,6 +7,12 @@ public record GetMemberRequest
     public string Id { get; set; } = default!;
 }
 
+public record UserActivityScore
+{
+    public DateTime ActivityDate { get; set; }
+    public int Score { get; set; }
+}
+
 // TODO -- Use this
 public record GetMembersRequest;
 

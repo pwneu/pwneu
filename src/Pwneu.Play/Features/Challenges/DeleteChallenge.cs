@@ -27,10 +27,12 @@ public static class DeleteChallenge
                 .Where(ch => ch.Id == request.Id)
                 .Include(ch => ch.Artifacts)
                 .Include(ch => ch.Hints)
+                .Include(ch => ch.Submissions)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (challenge is null) return Result.Failure(NotFound);
 
+            context.Submissions.RemoveRange(challenge.Submissions);
             context.Artifacts.RemoveRange(challenge.Artifacts);
             context.Hints.RemoveRange(challenge.Hints);
             context.Challenges.Remove(challenge);
