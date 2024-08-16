@@ -24,6 +24,19 @@ public static class EvaluateUser
             if (!await memberAccess.MemberExistsAsync(request.Id, cancellationToken))
                 return Result.Failure<UserEvalResponse>(NotFound);
 
+            var activeUserIds = await cache.GetOrDefaultAsync<List<string>>(
+                Keys.ActiveUserIds(),
+                token: cancellationToken) ?? [];
+
+            // TODO -- use HashSet if possible
+            if (!activeUserIds.Contains(request.Id))
+                activeUserIds.Add(request.Id);
+
+            // Store the userId to the cache for easier invalidations.
+            await cache.SetAsync(
+                Keys.ActiveUserIds(),
+                activeUserIds, token: cancellationToken);
+
             // Get all the categories first.
             var categoryIds = await cache.GetOrSetAsync(Keys.CategoryIds(), async _ =>
                 await context

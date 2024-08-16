@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
+using Pwneu.Play.Shared.Extensions;
 using Pwneu.Shared.Common;
 using ZiggyCreatures.Caching.Fusion;
 
@@ -23,9 +24,11 @@ public static class DeleteCategory
         {
             var category = await context
                 .Categories
-                .Where(ctg => ctg.Id == request.Id)
-                .Include(ctg => ctg.Challenges)
-                .ThenInclude(c => c.Artifacts)
+                .Where(c => c.Id == request.Id)
+                .Include(c => c.Challenges)
+                .ThenInclude(ch => ch.Artifacts)
+                .Include(c => c.Challenges)
+                .ThenInclude(ch => ch.Hints)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (category is null) return Result.Failure(NotFound);
@@ -34,19 +37,14 @@ public static class DeleteCategory
 
             await context.SaveChangesAsync(cancellationToken);
 
-            await cache.RemoveAsync(Keys.Categories(), token: cancellationToken);
-            await cache.RemoveAsync(Keys.Category(category.Id), token: cancellationToken);
-
-            foreach (var challenge in category.Challenges)
+            var invalidationTasks = new List<Task>
             {
-                foreach (var file in challenge.Artifacts)
-                    await cache.RemoveAsync(Keys.Artifact(file.Id), token: cancellationToken);
+                cache.InvalidateCategoryCacheAsync(category.Id, cancellationToken)
+            };
+            invalidationTasks.AddRange(category.Challenges.Select(challenge =>
+                cache.InvalidateChallengeCacheAsync(challenge, cancellationToken)));
 
-                await cache.RemoveAsync(Keys.Challenge(challenge.Id), token: cancellationToken);
-                await cache.RemoveAsync(Keys.Flags(challenge.Id), token: cancellationToken);
-            }
-
-            // TODO -- Update cache on user evaluations
+            await Task.WhenAll(invalidationTasks);
 
             return Result.Success();
         }

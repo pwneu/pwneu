@@ -44,7 +44,7 @@ public static class SubmitFlag
             // We're using the cache of ChallengeDetailsResponse 
             // because the user might have already loaded the challenge details in the cache
             // before submitting a flag.
-            var challenge = await cache.GetOrSetAsync(Keys.Challenge(request.ChallengeId), async _ =>
+            var challenge = await cache.GetOrSetAsync(Keys.ChallengeDetails(request.ChallengeId), async _ =>
                 await context
                     .Challenges
                     .Where(c => c.Id == request.ChallengeId)
@@ -154,7 +154,7 @@ public static class SubmitFlag
                     token: cancellationToken);
 
                 // Increase the count of users who have solved the challenge in the cache.
-                await cache.SetAsync(Keys.Challenge(request.ChallengeId),
+                await cache.SetAsync(Keys.ChallengeDetails(request.ChallengeId),
                     challenge with { SolveCount = challenge.SolveCount + 1 }, token: cancellationToken);
             }
             else // Condition if the submission is not correct.

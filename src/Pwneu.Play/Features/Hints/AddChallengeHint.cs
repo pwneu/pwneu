@@ -46,7 +46,7 @@ public static class AddChallengeHint
 
             await context.SaveChangesAsync(cancellationToken);
 
-            await cache.RemoveAsync(Keys.Challenge(challenge.Id), token: cancellationToken);
+            await cache.RemoveAsync(Keys.ChallengeDetails(challenge.Id), token: cancellationToken);
 
             return hint.Id;
         }

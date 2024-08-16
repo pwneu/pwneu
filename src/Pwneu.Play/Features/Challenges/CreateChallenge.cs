@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
 using Pwneu.Play.Shared.Entities;
+using Pwneu.Play.Shared.Extensions;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 using ZiggyCreatures.Caching.Fusion;
@@ -63,8 +64,7 @@ public static class CreateChallenge
 
             await context.SaveChangesAsync(cancellationToken);
 
-            await cache.RemoveAsync(Keys.Categories(), token: cancellationToken);
-            await cache.RemoveAsync(Keys.Category(request.CategoryId), token: cancellationToken);
+            await cache.InvalidateCategoryCacheAsync(request.CategoryId, cancellationToken);
 
             return challenge.Id;
         }

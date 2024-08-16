@@ -30,7 +30,7 @@ public static class GetChallengeAsUser
             if (!await memberAccess.MemberExistsAsync(request.UserId, cancellationToken))
                 return Result.Failure<ChallengeAsUserResponse>(NotFound);
 
-            var challenge = await cache.GetOrSetAsync(Keys.Challenge(request.ChallengeId), async _ =>
+            var challenge = await cache.GetOrSetAsync(Keys.ChallengeDetails(request.ChallengeId), async _ =>
                 await context
                     .Challenges
                     .Where(c => c.Id == request.ChallengeId)
