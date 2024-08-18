@@ -1,6 +1,8 @@
 using FluentAssertions;
 using Pwneu.Play.Features.Challenges;
 using Pwneu.Play.Shared.Entities;
+using Pwneu.Shared.Common;
+using Pwneu.Shared.Contracts;
 
 namespace Pwneu.Play.IntegrationTests.Features.Challenges;
 
@@ -84,9 +86,11 @@ public class DeleteChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
         });
         await DbContext.SaveChangesAsync();
 
+        await Cache.SetAsync(Keys.ChallengeDetails(challengeId), new Challenge());
+
         // Act
         await Sender.Send(new DeleteChallenge.Command(challengeId));
-        var challengeCache = Cache.GetOrDefault<Challenge>($"{nameof(Challenge)}:{challengeId}");
+        var challengeCache = Cache.GetOrDefault<ChallengeResponse>(Keys.ChallengeDetails(challengeId));
 
         // Assert
         challengeCache.Should().BeNull();
