@@ -1,8 +1,8 @@
 using Bogus;
 using FluentAssertions;
-using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Features.Challenges;
 using Pwneu.Play.Shared.Entities;
+using Pwneu.Play.Shared.Extensions;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 
@@ -115,6 +115,8 @@ public class UpdateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
         var challenge = new ChallengeDetailsResponse
         {
             Id = challengeId,
+            CategoryId = category.Id,
+            CategoryName = category.Name,
             Name = F.Lorem.Word(),
             Description = F.Lorem.Sentence(),
             Points = F.Random.Int(1, 100),
@@ -139,20 +141,7 @@ public class UpdateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
 
         var updatedChallenge = await DbContext
             .Challenges
-            .Where(c => c.Id == challenge.Id)
-            .Include(c => c.Artifacts)
-            .Select(c => new ChallengeDetailsResponse
-            {
-                Id = c.Id,
-                Name = c.Name,
-                Description = c.Description,
-                Points = c.Points,
-                DeadlineEnabled = c.DeadlineEnabled,
-                Deadline = c.Deadline,
-                MaxAttempts = c.MaxAttempts,
-                SolveCount = 0,
-            })
-            .FirstOrDefaultAsync();
+            .GetDetailsByIdAsync(challenge.Id);
 
         // Assert
         updateChallenge.IsSuccess.Should().BeTrue();

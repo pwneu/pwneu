@@ -8,6 +8,8 @@ using Pwneu.Shared.Contracts;
 
 namespace Pwneu.Play.Features.Challenges;
 
+// TODO -- Add option to exclude the user's solved challenges.
+
 /// <summary>
 /// Retrieves a paginated list of challenges.
 /// </summary>
@@ -19,12 +21,12 @@ public static class GetChallenges
         string? SortOrder = null,
         int? Page = null,
         int? PageSize = null)
-        : IRequest<Result<PagedList<ChallengeDetailsResponse>>>;
+        : IRequest<Result<PagedList<ChallengeResponse>>>;
 
     internal sealed class Handler(ApplicationDbContext context)
-        : IRequestHandler<Query, Result<PagedList<ChallengeDetailsResponse>>>
+        : IRequestHandler<Query, Result<PagedList<ChallengeResponse>>>
     {
-        public async Task<Result<PagedList<ChallengeDetailsResponse>>> Handle(Query request,
+        public async Task<Result<PagedList<ChallengeResponse>>> Handle(Query request,
             CancellationToken cancellationToken)
         {
             IQueryable<Challenge> challengesQuery = context.Challenges.Include(c => c.Artifacts);
@@ -50,31 +52,17 @@ public static class GetChallenges
                 : challengesQuery.OrderBy(keySelector);
 
             var challengeResponsesQuery = challengesQuery
-                .Select(c => new ChallengeDetailsResponse
+                .Select(ch => new ChallengeResponse
                 {
-                    Id = c.Id,
-                    Name = c.Name,
-                    Description = c.Description,
-                    Points = c.Points,
-                    DeadlineEnabled = c.DeadlineEnabled,
-                    Deadline = c.Deadline,
-                    MaxAttempts = c.MaxAttempts,
-                    SolveCount = c.Submissions.Count(s => s.IsCorrect == true),
-                    Artifacts = c.Artifacts
-                        .Select(a => new ArtifactResponse
-                        {
-                            Id = a.Id,
-                            FileName = a.FileName,
-                        }).ToList(),
-                    Hints = c.Hints
-                        .Select(h => new HintResponse
-                        {
-                            Id = h.Id,
-                            Deduction = h.Deduction
-                        }).ToList()
+                    Id = ch.Id,
+                    Name = ch.Name,
+                    Description = ch.Description,
+                    Points = ch.Points,
+                    DeadlineEnabled = ch.DeadlineEnabled,
+                    Deadline = ch.Deadline
                 });
 
-            var challenges = await PagedList<ChallengeDetailsResponse>.CreateAsync(
+            var challenges = await PagedList<ChallengeResponse>.CreateAsync(
                 challengeResponsesQuery,
                 request.Page ?? 1,
                 request.PageSize ?? 10);

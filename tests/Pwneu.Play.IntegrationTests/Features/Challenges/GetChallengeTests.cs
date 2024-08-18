@@ -30,6 +30,8 @@ public class GetChallengeTests(IntegrationTestsWebAppFactory factory) : BaseInte
         var challenge = new ChallengeDetailsResponse
         {
             Id = challengeId,
+            CategoryId = category.Id,
+            CategoryName = category.Name,
             Name = createChallenge.Name,
             Description = createChallenge.Description,
             Points = createChallenge.Points,

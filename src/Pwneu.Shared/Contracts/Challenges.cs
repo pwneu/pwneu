@@ -4,11 +4,17 @@ public record ChallengeResponse
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = default!;
+    public string Description { get; set; } = default!;
+    public int Points { get; set; }
+    public bool DeadlineEnabled { get; set; }
+    public DateTime Deadline { get; set; }
 }
 
 public record ChallengeDetailsResponse
 {
     public Guid Id { get; set; }
+    public Guid CategoryId { get; set; }
+    public string CategoryName { get; set; } = default!;
     public string Name { get; set; } = default!;
     public string Description { get; set; } = default!;
     public int Points { get; set; }

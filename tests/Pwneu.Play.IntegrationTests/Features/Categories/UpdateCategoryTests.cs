@@ -99,10 +99,14 @@ public class UpdateCategoryTests(IntegrationTestsWebAppFactory factory) : BaseIn
                 Name = ctg.Name,
                 Description = ctg.Description,
                 Challenges = ctg.Challenges
-                    .Select(c => new ChallengeResponse
+                    .Select(ch => new ChallengeResponse
                     {
-                        Id = c.Id,
-                        Name = c.Name
+                        Id = ch.Id,
+                        Name = ch.Name,
+                        Description = ch.Description,
+                        Points = ch.Points,
+                        DeadlineEnabled = ch.DeadlineEnabled,
+                        Deadline = ch.Deadline
                     })
                     .ToList()
             })

@@ -47,6 +47,6 @@ public class GetChallengesTests(IntegrationTestsWebAppFactory factory) : BaseInt
 
         // Assert
         getChallengesResult.IsSuccess.Should().BeTrue();
-        getChallengesResult.Should().BeOfType<Result<PagedList<ChallengeDetailsResponse>>>();
+        getChallengesResult.Should().BeOfType<Result<PagedList<ChallengeResponse>>>();
     }
 }

@@ -37,6 +37,8 @@ public class UseHint
                                 hu.HintId == request.HintId,
                     cancellationToken);
 
+            // TODO -- Don't allow hint when the user has already solved the challenge
+
             if (alreadyUsedHint)
                 return hint;
 

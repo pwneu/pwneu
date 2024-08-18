@@ -8,7 +8,8 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.Users;
 
-// TODO -- Invalidate user graph
+// TODO -- Cache and invalidate user graph
+// TODO -- Fix graph
 
 public static class GetUserGraph
 {

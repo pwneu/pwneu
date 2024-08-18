@@ -4,6 +4,7 @@ using MassTransit;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
+using Pwneu.Play.Shared.Extensions;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 using Pwneu.Shared.Extensions;
@@ -47,35 +48,13 @@ public static class SubmitFlag
             var challenge = await cache.GetOrSetAsync(Keys.ChallengeDetails(request.ChallengeId), async _ =>
                 await context
                     .Challenges
-                    .Where(c => c.Id == request.ChallengeId)
-                    .Include(c => c.Artifacts)
-                    .Select(c => new ChallengeDetailsResponse
-                    {
-                        Id = c.Id,
-                        Name = c.Name,
-                        Description = c.Description,
-                        Points = c.Points,
-                        DeadlineEnabled = c.DeadlineEnabled,
-                        Deadline = c.Deadline,
-                        MaxAttempts = c.MaxAttempts,
-                        SolveCount = c.Submissions.Count(s => s.IsCorrect == true),
-                        Artifacts = c.Artifacts
-                            .Select(a => new ArtifactResponse
-                            {
-                                Id = a.Id,
-                                FileName = a.FileName,
-                            }).ToList(),
-                        Hints = c.Hints
-                            .Select(h => new HintResponse
-                            {
-                                Id = h.Id,
-                                Deduction = h.Deduction
-                            }).ToList()
-                    })
-                    .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
+                    .GetDetailsByIdAsync(
+                        request.ChallengeId,
+                        cancellationToken), token: cancellationToken);
 
             // Check if the challenge exists.
-            if (challenge is null) return Result.Failure<FlagStatus>(ChallengeNotFound);
+            if (challenge is null)
+                return Result.Failure<FlagStatus>(ChallengeNotFound);
 
             // Get the challenge flags in the cache or the database.
             var challengeFlags = await cache.GetOrSetAsync(Keys.Flags(request.ChallengeId), async _ =>

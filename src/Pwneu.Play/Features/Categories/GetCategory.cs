@@ -31,10 +31,14 @@ public static class GetCategory
                             Id = ctg.Id,
                             Name = ctg.Name,
                             Description = ctg.Description,
-                            Challenges = ctg.Challenges.Select(c => new ChallengeResponse
+                            Challenges = ctg.Challenges.Select(ch => new ChallengeResponse
                             {
-                                Id = c.Id,
-                                Name = c.Name
+                                Id = ch.Id,
+                                Name = ch.Name,
+                                Description = ch.Description,
+                                Points = ch.Points,
+                                DeadlineEnabled = ch.DeadlineEnabled,
+                                Deadline = ch.Deadline,
                             }).ToList()
                         }
                     )

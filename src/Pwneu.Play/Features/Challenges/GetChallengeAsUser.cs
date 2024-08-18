@@ -2,6 +2,7 @@ using System.Security.Claims;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
+using Pwneu.Play.Shared.Extensions;
 using Pwneu.Play.Shared.Services;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
@@ -30,36 +31,13 @@ public static class GetChallengeAsUser
             if (!await memberAccess.MemberExistsAsync(request.UserId, cancellationToken))
                 return Result.Failure<ChallengeAsUserResponse>(NotFound);
 
+            // Check if the challenge exists.
             var challenge = await cache.GetOrSetAsync(Keys.ChallengeDetails(request.ChallengeId), async _ =>
                 await context
                     .Challenges
-                    .Where(c => c.Id == request.ChallengeId)
-                    .Include(c => c.Artifacts)
-                    .Include(c => c.Submissions)
-                    .Select(c => new ChallengeDetailsResponse
-                    {
-                        Id = c.Id,
-                        Name = c.Name,
-                        Description = c.Description,
-                        Points = c.Points,
-                        DeadlineEnabled = c.DeadlineEnabled,
-                        Deadline = c.Deadline,
-                        MaxAttempts = c.MaxAttempts,
-                        SolveCount = c.Submissions.Count(s => s.IsCorrect == true),
-                        Artifacts = c.Artifacts
-                            .Select(a => new ArtifactResponse
-                            {
-                                Id = a.Id,
-                                FileName = a.FileName,
-                            }).ToList(),
-                        Hints = c.Hints
-                            .Select(h => new HintResponse
-                            {
-                                Id = h.Id,
-                                Deduction = h.Deduction
-                            }).ToList()
-                    })
-                    .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
+                    .GetDetailsByIdAsync(
+                        request.ChallengeId,
+                        cancellationToken), token: cancellationToken);
 
             if (challenge is null)
                 return Result.Failure<ChallengeAsUserResponse>(NotFound);
