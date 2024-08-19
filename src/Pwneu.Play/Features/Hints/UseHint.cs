@@ -25,17 +25,16 @@ public class UseHint
         public async Task<Result<string>> Handle(Command request, CancellationToken cancellationToken)
         {
             // Get hint details first.
-            var hintDetails = await cache.GetOrSetAsync(Keys.Hint(request.HintId), async _ =>
-                await context
-                    .Hints
-                    .Where(h => h.Id == request.HintId)
-                    .Select(h => new
-                    {
-                        h.Content,
-                        h.ChallengeId,
-                        h.Challenge.CategoryId,
-                    })
-                    .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
+            var hintDetails = await context
+                .Hints
+                .Where(h => h.Id == request.HintId)
+                .Select(h => new
+                {
+                    h.Content,
+                    h.ChallengeId,
+                    h.Challenge.CategoryId,
+                })
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (hintDetails is null)
                 return Result.Failure<string>(NotFound);

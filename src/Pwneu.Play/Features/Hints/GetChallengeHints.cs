@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
-using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.Hints;
 
@@ -14,25 +13,24 @@ public static class GetChallengeHints
     private static readonly Error ChallengeNotFound = new("GetHints.ChallengeNotFound",
         "The challenge with the specified ID was not found");
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
+    internal sealed class Handler(ApplicationDbContext context)
         : IRequestHandler<Query, Result<IEnumerable<HintDetailsResponse>>>
     {
         public async Task<Result<IEnumerable<HintDetailsResponse>>> Handle(Query request,
             CancellationToken cancellationToken)
         {
-            var hints = await cache.GetOrSetAsync(Keys.Hints(request.ChallengeId), async _ =>
-                await context
-                    .Challenges
-                    .Where(c => c.Id == request.ChallengeId)
-                    .Select(c => c.Hints
-                        .Select(h => new HintDetailsResponse
-                        {
-                            Id = h.Id,
-                            Content = h.Content,
-                            Deduction = h.Deduction
-                        })
-                        .ToList())
-                    .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
+            var hints = await context
+                .Challenges
+                .Where(c => c.Id == request.ChallengeId)
+                .Select(c => c.Hints
+                    .Select(h => new HintDetailsResponse
+                    {
+                        Id = h.Id,
+                        Content = h.Content,
+                        Deduction = h.Deduction
+                    })
+                    .ToList())
+                .FirstOrDefaultAsync(cancellationToken);
 
             return hints ?? Result.Failure<IEnumerable<HintDetailsResponse>>(ChallengeNotFound);
         }

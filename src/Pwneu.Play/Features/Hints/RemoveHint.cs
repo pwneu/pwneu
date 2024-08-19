@@ -39,8 +39,6 @@ public static class RemoveHint
 
             var invalidationTasks = new List<Task>
             {
-                cache.RemoveAsync(Keys.Hints(hint.ChallengeId), token: cancellationToken).AsTask(),
-                cache.RemoveAsync(Keys.Hint(hint.Id), token: cancellationToken).AsTask(),
                 cache.InvalidateUserGraphs(cancellationToken),
                 cache.InvalidateCategoryCacheAsync(hintCategoryId, cancellationToken)
             };

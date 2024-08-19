@@ -50,20 +50,12 @@ public static class FusionCacheExtensions
             cache.RemoveAsync(
                 Keys.Flags(challenge.Id),
                 token: cancellationToken).AsTask(),
-            cache.RemoveAsync(
-                Keys.Hints(challenge.Id),
-                token: cancellationToken).AsTask()
         };
 
         tasks.AddRange(challenge
             .Artifacts
             .Select(a =>
                 cache.RemoveAsync(Keys.ArtifactData(a.Id), token: cancellationToken).AsTask()));
-
-        tasks.AddRange(challenge
-            .Hints
-            .Select(h =>
-                cache.RemoveAsync(Keys.Hint(h.Id), token: cancellationToken).AsTask()));
 
         await Task.WhenAll(tasks);
     }

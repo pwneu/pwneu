@@ -9,7 +9,7 @@ public static class Keys
     public static string Categories() => "categories";
 
     // Key for caching a list of all category Ids.
-    public static string CategoryIds() => "categoryIds"; // TODO -- Invalidate cache
+    public static string CategoryIds() => "categoryIds";
 
     // Key for caching access keys.
     public static string AccessKeys() => "accessKeys";
@@ -47,10 +47,6 @@ public static class Keys
 
     // Key for caching challenge flags.
     public static string Flags(Guid challengeId) => $"challenge:{challengeId}:flag";
-
-    // TODO -- Invalidate cache or don't cache hints
-    public static string Hint(Guid id) => $"hint:{id}";
-    public static string Hints(Guid challengeId) => $"challenge:{challengeId}:hint";
 
     // Key for caching if the user has already solved the challenge.
     public static string HasSolved(string userId, Guid challengeId) => $"hasSolved:{userId}:{challengeId}";
