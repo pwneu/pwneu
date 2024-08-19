@@ -80,7 +80,9 @@ public static class SaveSubmission
 
             context.Add(submission);
 
-            // TODO -- If count of solves is stored in a column, append the count.
+            challenge.SolveCount += 1;
+            context.Update(challenge);
+
             await context.SaveChangesAsync(cancellationToken);
 
             await cache.InvalidateCategoryCacheAsync(challenge.CategoryId, cancellationToken);

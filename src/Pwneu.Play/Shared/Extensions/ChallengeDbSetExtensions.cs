@@ -25,7 +25,7 @@ public static class ChallengeDbSetExtensions
                 DeadlineEnabled = c.DeadlineEnabled,
                 Deadline = c.Deadline,
                 MaxAttempts = c.MaxAttempts,
-                SolveCount = c.Submissions.Count(s => s.IsCorrect == true),
+                SolveCount = c.SolveCount,
                 Artifacts = c.Artifacts
                     .Select(a => new ArtifactResponse
                     {

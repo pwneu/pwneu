@@ -5,7 +5,6 @@ namespace Pwneu.Play.Shared.Entities;
 // TODO -- Allow nullable category
 // TODO -- Add "Competition" entity
 // TODO -- Save number of solves on database instead of counting number of correct submissions
-// TODO -- Add difficulty
 // TODO -- Add tags list
 
 public class Challenge
@@ -18,6 +17,7 @@ public class Challenge
     public bool DeadlineEnabled { get; set; }
     public DateTime Deadline { get; set; }
     public int MaxAttempts { get; set; }
+    public int SolveCount { get; set; }
     public List<string> Flags { get; set; } = [];
     public Category Category { get; init; } = null!;
     public List<Hint> Hints { get; init; } = [];
