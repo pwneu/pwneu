@@ -1,6 +1,5 @@
 namespace Pwneu.Shared.Contracts;
 
-// TODO -- Include solve count
 public record ChallengeResponse
 {
     public Guid Id { get; set; }
@@ -9,6 +8,7 @@ public record ChallengeResponse
     public int Points { get; set; }
     public bool DeadlineEnabled { get; set; }
     public DateTime Deadline { get; set; }
+    public int SolveCount { get; set; }
 }
 
 public record ChallengeDetailsResponse

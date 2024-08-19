@@ -32,7 +32,8 @@ public static class GetAllCategories
                             Description = ch.Description,
                             Points = ch.Points,
                             DeadlineEnabled = ch.DeadlineEnabled,
-                            Deadline = ch.Deadline
+                            Deadline = ch.Deadline,
+                            SolveCount = ch.SolveCount
                         }).ToList()
                     })
                     .ToListAsync(cancellationToken), token: cancellationToken);

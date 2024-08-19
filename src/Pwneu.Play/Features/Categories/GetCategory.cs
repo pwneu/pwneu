@@ -39,6 +39,7 @@ public static class GetCategory
                                 Points = ch.Points,
                                 DeadlineEnabled = ch.DeadlineEnabled,
                                 Deadline = ch.Deadline,
+                                SolveCount = ch.SolveCount
                             }).ToList()
                         }
                     )

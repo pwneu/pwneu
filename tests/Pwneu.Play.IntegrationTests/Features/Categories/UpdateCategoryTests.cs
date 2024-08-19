@@ -106,7 +106,8 @@ public class UpdateCategoryTests(IntegrationTestsWebAppFactory factory) : BaseIn
                         Description = ch.Description,
                         Points = ch.Points,
                         DeadlineEnabled = ch.DeadlineEnabled,
-                        Deadline = ch.Deadline
+                        Deadline = ch.Deadline,
+                        SolveCount = ch.SolveCount
                     })
                     .ToList()
             })

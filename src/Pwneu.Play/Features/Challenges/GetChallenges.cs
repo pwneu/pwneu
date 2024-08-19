@@ -45,7 +45,6 @@ public static class GetChallenges
             };
 
             // TODO -- Support excluding solved challenges
-            // TODO -- Minimize return properties
 
             challengesQuery = request.SortOrder?.ToLower() == "desc"
                 ? challengesQuery.OrderByDescending(keySelector)
@@ -59,7 +58,8 @@ public static class GetChallenges
                     Description = ch.Description,
                     Points = ch.Points,
                     DeadlineEnabled = ch.DeadlineEnabled,
-                    Deadline = ch.Deadline
+                    Deadline = ch.Deadline,
+                    SolveCount = ch.SolveCount
                 });
 
             var challenges = await PagedList<ChallengeResponse>.CreateAsync(
