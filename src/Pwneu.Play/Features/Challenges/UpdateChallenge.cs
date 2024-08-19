@@ -23,6 +23,7 @@ public static class UpdateChallenge
         bool DeadlineEnabled,
         DateTime Deadline,
         int MaxAttempts,
+        IEnumerable<string> Tags,
         IEnumerable<string> Flags) : IRequest<Result>;
 
     private static readonly Error NotFound = new("UpdateChallenge.NotFound",
@@ -56,6 +57,7 @@ public static class UpdateChallenge
             challenge.DeadlineEnabled = request.DeadlineEnabled;
             challenge.Deadline = request.Deadline;
             challenge.MaxAttempts = request.MaxAttempts;
+            challenge.Tags = request.Tags.ToList();
             challenge.Flags = request.Flags.ToList();
 
             context.Update(challenge);
@@ -86,7 +88,7 @@ public static class UpdateChallenge
             app.MapPut("challenges/{id:Guid}", async (Guid id, UpdateChallengeRequest request, ISender sender) =>
                 {
                     var command = new Command(id, request.Name, request.Description, request.Points,
-                        request.DeadlineEnabled, request.Deadline, request.MaxAttempts, request.Flags);
+                        request.DeadlineEnabled, request.Deadline, request.MaxAttempts, request.Tags, request.Flags);
 
                     var result = await sender.Send(command);
 

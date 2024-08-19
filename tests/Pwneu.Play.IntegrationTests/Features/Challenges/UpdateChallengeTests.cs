@@ -47,9 +47,9 @@ public class UpdateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
 
         var updatedChallenges = new List<UpdateChallenge.Command>
         {
-            new(challengeIds[0], string.Empty, F.Lorem.Sentence(), 50, false, DateTime.UtcNow, 5, F.Lorem.Words()),
-            new(challengeIds[1], F.Lorem.Word(), string.Empty, 50, false, DateTime.UtcNow, 5, F.Lorem.Words()),
-            new(challengeIds[2], F.Lorem.Word(), F.Lorem.Sentence(), 50, false, DateTime.UtcNow, 5, []),
+            new(challengeIds[0], string.Empty, F.Lorem.Sentence(), 50, false, DateTime.UtcNow, 5, [], F.Lorem.Words()),
+            new(challengeIds[1], F.Lorem.Word(), string.Empty, 50, false, DateTime.UtcNow, 5, [], F.Lorem.Words()),
+            new(challengeIds[2], F.Lorem.Word(), F.Lorem.Sentence(), 50, false, DateTime.UtcNow, 5, [], []),
         };
 
         // Act
@@ -77,6 +77,7 @@ public class UpdateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
             DeadlineEnabled: false,
             Deadline: DateTime.UtcNow,
             MaxAttempts: 5,
+            Tags: [],
             Flags: F.Lorem.Words()));
 
         // Assert
@@ -137,6 +138,7 @@ public class UpdateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
             DeadlineEnabled: true,
             Deadline: DateTime.UtcNow,
             MaxAttempts: faker.Random.Int(11, 20),
+            Tags: [],
             Flags: faker.Lorem.Words()));
 
         var updatedChallenge = await DbContext
@@ -187,6 +189,7 @@ public class UpdateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
             DeadlineEnabled: false,
             Deadline: DateTime.UtcNow,
             MaxAttempts: 5,
+            Tags: [],
             Flags: F.Lorem.Words()));
 
         var challengeCache = Cache.GetOrDefault<Challenge>($"{nameof(Challenge)}:{challenge.Id}");

@@ -2,8 +2,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Pwneu.Play.Shared.Entities;
 
-// TODO -- Add tags list
-
 public class Challenge
 {
     public Guid Id { get; init; }
@@ -15,6 +13,7 @@ public class Challenge
     public DateTime Deadline { get; set; }
     public int MaxAttempts { get; set; }
     public int SolveCount { get; set; }
+    public List<string> Tags { get; set; } = [];
     public List<string> Flags { get; set; } = [];
     public Category Category { get; init; } = null!;
     public List<Hint> Hints { get; init; } = [];

@@ -12,27 +12,28 @@ public static class ChallengeDbSetExtensions
         CancellationToken cancellationToken = default)
     {
         return await challenges
-            .Where(c => c.Id == challengeId)
-            .Include(c => c.Artifacts)
-            .Select(c => new ChallengeDetailsResponse
+            .Where(ch => ch.Id == challengeId)
+            .Include(ch => ch.Artifacts)
+            .Select(ch => new ChallengeDetailsResponse
             {
-                Id = c.Id,
-                CategoryId = c.CategoryId,
-                CategoryName = c.Category.Name,
-                Name = c.Name,
-                Description = c.Description,
-                Points = c.Points,
-                DeadlineEnabled = c.DeadlineEnabled,
-                Deadline = c.Deadline,
-                MaxAttempts = c.MaxAttempts,
-                SolveCount = c.SolveCount,
-                Artifacts = c.Artifacts
+                Id = ch.Id,
+                CategoryId = ch.CategoryId,
+                CategoryName = ch.Category.Name,
+                Name = ch.Name,
+                Description = ch.Description,
+                Points = ch.Points,
+                DeadlineEnabled = ch.DeadlineEnabled,
+                Deadline = ch.Deadline,
+                MaxAttempts = ch.MaxAttempts,
+                SolveCount = ch.SolveCount,
+                Tags = ch.Tags,
+                Artifacts = ch.Artifacts
                     .Select(a => new ArtifactResponse
                     {
                         Id = a.Id,
                         FileName = a.FileName,
                     }).ToList(),
-                Hints = c.Hints
+                Hints = ch.Hints
                     .Select(h => new HintResponse
                     {
                         Id = h.Id,

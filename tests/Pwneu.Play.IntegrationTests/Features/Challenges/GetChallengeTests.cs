@@ -24,7 +24,7 @@ public class GetChallengeTests(IntegrationTestsWebAppFactory factory) : BaseInte
         await DbContext.SaveChangesAsync();
 
         var createChallenge = new CreateChallenge.Command(categoryId, "Sanity Check", "The flag is in plain sight", 50,
-            true, DateTime.UtcNow.AddDays(7), 5, ["flag1", "flag2"]);
+            true, DateTime.UtcNow.AddDays(7), 5, [], ["flag1", "flag2"]);
         var challengeId = (await Sender.Send(createChallenge)).Value;
 
         var challenge = new ChallengeDetailsResponse
