@@ -33,12 +33,6 @@ public static class EvaluateUser
 
             var userCategoryEvaluations = new List<UserCategoryEvalResponse>();
 
-            // TODO -- Update cache on user submit
-            // TODO -- Update cache on hint usage
-            // TODO -- Add user score
-            // TODO -- Deduct user score on hint usage
-            // TODO -- Create line chart data for submission and hint usage history
-
             // Cache each user category evaluation.
             foreach (var categoryId in categoryIds)
             {

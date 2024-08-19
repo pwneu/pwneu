@@ -16,31 +16,53 @@ public class UseHint
     private static readonly Error NotFound = new("UseHint.NotFound",
         "The hint with the specified ID was not found");
 
+    private static readonly Error ChallengeAlreadySolved = new("UseHint.ChallengeAlreadySolved",
+        "The challenge has already solved by the user");
+
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
         : IRequestHandler<Command, Result<string>>
     {
         public async Task<Result<string>> Handle(Command request, CancellationToken cancellationToken)
         {
-            var hint = await cache.GetOrSetAsync(Keys.Hint(request.HintId), async _ =>
+            // Get hint details first.
+            var hintDetails = await cache.GetOrSetAsync(Keys.Hint(request.HintId), async _ =>
                 await context
                     .Hints
                     .Where(h => h.Id == request.HintId)
-                    .Select(h => h.Content)
+                    .Select(h => new
+                    {
+                        h.Content,
+                        h.ChallengeId,
+                        h.Challenge.CategoryId,
+                    })
                     .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
-            if (hint is null)
+            if (hintDetails is null)
                 return Result.Failure<string>(NotFound);
 
+            // Check if the user has already solved the challenge.
+            var hasSolved = await cache.GetOrSetAsync(
+                Keys.HasSolved(request.UserId, hintDetails.ChallengeId),
+                async _ => await context
+                    .Submissions
+                    .AnyAsync(s =>
+                        s.UserId == request.UserId &&
+                        s.ChallengeId == hintDetails.ChallengeId &&
+                        s.IsCorrect == true, cancellationToken), token: cancellationToken);
+
+            if (hasSolved)
+                return Result.Failure<string>(ChallengeAlreadySolved);
+
+            // If the user has already used the hint, there's no need to deduct the user's points.
             var alreadyUsedHint = await context
                 .HintUsages
                 .AnyAsync(hu => hu.UserId == request.UserId &&
                                 hu.HintId == request.HintId,
                     cancellationToken);
 
-            // TODO -- Don't allow hint when the user has already solved the challenge
-
+            // The user can get the hint over and over again.
             if (alreadyUsedHint)
-                return hint;
+                return hintDetails.Content;
 
             var hintUsage = new HintUsage
             {
@@ -53,9 +75,18 @@ public class UseHint
 
             await context.SaveChangesAsync(cancellationToken);
 
-            // TODO -- Update cache on user evaluation on the hint's category
+            var invalidationTasks = new List<Task>
+            {
+                cache.RemoveAsync(Keys.UserGraph(request.UserId), token: cancellationToken).AsTask(),
+                cache.RemoveAsync(
+                        Keys.UserCategoryEval(request.UserId, hintDetails.CategoryId),
+                        token: cancellationToken)
+                    .AsTask()
+            };
 
-            return hint;
+            await Task.WhenAll(invalidationTasks);
+
+            return hintDetails.Content;
         }
     }
 

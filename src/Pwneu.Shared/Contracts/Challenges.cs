@@ -1,5 +1,6 @@
 namespace Pwneu.Shared.Contracts;
 
+// TODO -- Include solve count
 public record ChallengeResponse
 {
     public Guid Id { get; set; }

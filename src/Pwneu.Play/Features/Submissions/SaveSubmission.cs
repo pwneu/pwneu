@@ -85,7 +85,17 @@ public static class SaveSubmission
 
             await context.SaveChangesAsync(cancellationToken);
 
-            await cache.InvalidateCategoryCacheAsync(challenge.CategoryId, cancellationToken);
+            var invalidationTasks = new List<Task>
+            {
+                cache.InvalidateCategoryCacheAsync(challenge.CategoryId, cancellationToken),
+            };
+
+            if (request.IsCorrect)
+                invalidationTasks.Add(
+                    cache.RemoveAsync(Keys.UserGraph(request.UserId), token: cancellationToken)
+                        .AsTask());
+
+            await Task.WhenAll(invalidationTasks);
 
             return submission.Id;
         }

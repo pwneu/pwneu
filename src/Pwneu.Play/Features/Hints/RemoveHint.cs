@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
+using Pwneu.Play.Shared.Extensions;
 using Pwneu.Shared.Common;
 using ZiggyCreatures.Caching.Fusion;
 
@@ -25,14 +26,26 @@ public static class RemoveHint
             if (hint is null)
                 return Result.Failure(NotFound);
 
+            // Get hint's category id first before deleting the hint.
+            var hintCategoryId = await context
+                .Hints
+                .Where(h => h.Id == request.Id)
+                .Select(h => h.Challenge.CategoryId)
+                .FirstOrDefaultAsync(cancellationToken);
+
             context.Remove(hint);
 
             await context.SaveChangesAsync(cancellationToken);
 
-            await cache.RemoveAsync(Keys.Hints(hint.ChallengeId), token: cancellationToken);
-            await cache.RemoveAsync(Keys.Hint(hint.Id), token: cancellationToken);
+            var invalidationTasks = new List<Task>
+            {
+                cache.RemoveAsync(Keys.Hints(hint.ChallengeId), token: cancellationToken).AsTask(),
+                cache.RemoveAsync(Keys.Hint(hint.Id), token: cancellationToken).AsTask(),
+                cache.InvalidateUserGraphs(cancellationToken),
+                cache.InvalidateCategoryCacheAsync(hintCategoryId, cancellationToken)
+            };
 
-            // TODO -- Update user category cache evaluation 
+            await Task.WhenAll(invalidationTasks);
 
             return Result.Success();
         }

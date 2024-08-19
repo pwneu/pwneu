@@ -29,7 +29,8 @@ public static class Keys
     // Key for caching UserDetailsResponse.
     public static string UserDetails(string id) => $"user:{id}:details";
 
-    public static string UserEval(string id) => $"user:{id}:eval";
+    // Key for storing cache of user graph.
+    public static string UserGraph(string id) => $"user:{id}:graph";
 
     public static string Members() => "members";
 
@@ -47,7 +48,7 @@ public static class Keys
     // Key for caching challenge flags.
     public static string Flags(Guid challengeId) => $"challenge:{challengeId}:flag";
 
-    // TODO -- Invalidate or don't cache hints
+    // TODO -- Invalidate cache or don't cache hints
     public static string Hint(Guid id) => $"hint:{id}";
     public static string Hints(Guid challengeId) => $"challenge:{challengeId}:hint";
 

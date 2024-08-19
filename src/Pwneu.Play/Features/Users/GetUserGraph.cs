@@ -8,25 +8,71 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.Users;
 
-// TODO -- Cache and invalidate user graph
-// TODO -- Fix graph
-
 public static class GetUserGraph
 {
-    public record Query(string Id) : IRequest<Result<IEnumerable<UserActivityScore>>>;
+    public record Query(string Id) : IRequest<Result<IEnumerable<UserActivityResponse>>>;
 
-    private static readonly Error NotFound = new("EvaluateUser.NotFound",
+    private static readonly Error NotFound = new("GetUserGraph.NotFound",
         "The user with the specified ID was not found");
 
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, IMemberAccess memberAccess)
-        : IRequestHandler<Query, Result<IEnumerable<UserActivityScore>>>
+        : IRequestHandler<Query, Result<IEnumerable<UserActivityResponse>>>
     {
-        public async Task<Result<IEnumerable<UserActivityScore>>> Handle(Query request,
+        public async Task<Result<IEnumerable<UserActivityResponse>>> Handle(Query request,
             CancellationToken cancellationToken)
         {
             // Check if user exists.
             if (!await memberAccess.MemberExistsAsync(request.Id, cancellationToken))
-                return Result.Failure<IEnumerable<UserActivityScore>>(NotFound);
+                return Result.Failure<IEnumerable<UserActivityResponse>>(NotFound);
+
+            // Get user graph in the cache.
+            var userGraph = await cache.GetOrDefaultAsync<List<UserActivityResponse>>(
+                Keys.UserGraph(request.Id),
+                token: cancellationToken);
+
+            // If there's a cache hit, return it immediately.
+            if (userGraph is not null)
+                return userGraph.ToList();
+
+            // Get the list of correct submissions by the user.
+            var correctSubmissions = await context
+                .Submissions
+                .Where(s => s.UserId == request.Id & s.IsCorrect)
+                .Select(s => new UserActivityResponse
+                {
+                    UserId = s.UserId,
+                    ActivityDate = s.SubmittedAt,
+                    Score = s.Challenge.Points
+                })
+                .ToListAsync(cancellationToken);
+
+            // Get the list of hint usages by the user but store the score in negative form.
+            var hintUsages = await context
+                .HintUsages
+                .Where(h => h.UserId == request.Id)
+                .Select(h => new UserActivityResponse
+                {
+                    UserId = h.UserId,
+                    ActivityDate = h.UsedAt,
+                    Score = -h.Hint.Deduction
+                })
+                .ToListAsync(cancellationToken);
+
+            // Combine correct submissions and hint usages.
+            userGraph = correctSubmissions
+                .Concat(hintUsages)
+                .OrderBy(a => a.ActivityDate)
+                .ToList();
+
+            // Store the cumulative score and update the score of each item in the list.
+            var cumulativeScore = 0;
+            foreach (var userActivity in userGraph)
+            {
+                cumulativeScore += userActivity.Score;
+                userActivity.Score = cumulativeScore;
+            }
+
+            await cache.SetAsync(Keys.UserGraph(request.Id), userGraph, token: cancellationToken);
 
             var activeUserIds = await cache.GetOrDefaultAsync<List<string>>(
                 Keys.ActiveUserIds(),
@@ -40,26 +86,6 @@ public static class GetUserGraph
             await cache.SetAsync(
                 Keys.ActiveUserIds(),
                 activeUserIds, token: cancellationToken);
-
-            var userGraph = await context.Submissions
-                .Where(s => s.UserId == request.Id && s.IsCorrect)
-                .Select(s => new UserActivityScore
-                {
-                    ActivityDate = s.SubmittedAt,
-                    Score = s.Challenge.Points - s.Challenge.Hints
-                        .Where(h => h.HintUsages.Any(hu => hu.UserId == request.Id))
-                        .Sum(h => h.Deduction)
-                })
-                .Union(context.HintUsages
-                    .Where(hu => hu.UserId == request.Id)
-                    .Select(hu => new UserActivityScore
-                    {
-                        ActivityDate = hu.UsedAt,
-                        Score = -hu.Hint.Deduction
-                    })
-                )
-                .OrderBy(a => a.ActivityDate)
-                .ToListAsync(cancellationToken);
 
             return userGraph;
         }
