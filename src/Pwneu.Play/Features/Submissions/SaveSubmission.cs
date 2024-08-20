@@ -53,6 +53,7 @@ public static class SaveSubmission
 
             if (request.IsCorrect)
             {
+                // TODO -- Ensure uniqueness in a race condition
                 var alreadySolved = await context
                     .Submissions
                     .AnyAsync(s =>
@@ -91,9 +92,15 @@ public static class SaveSubmission
             };
 
             if (request.IsCorrect)
+            {
                 invalidationTasks.Add(
                     cache.RemoveAsync(Keys.UserGraph(request.UserId), token: cancellationToken)
                         .AsTask());
+
+                invalidationTasks.Add(
+                    cache.RemoveAsync(Keys.UserSolveIds(request.UserId), token: cancellationToken)
+                        .AsTask());
+            }
 
             await Task.WhenAll(invalidationTasks);
 

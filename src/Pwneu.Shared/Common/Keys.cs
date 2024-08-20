@@ -32,6 +32,9 @@ public static class Keys
     // Key for storing cache of user graph.
     public static string UserGraph(string id) => $"user:{id}:graph";
 
+    // Key for storing cache of user graph.
+    public static string UserSolveIds(string id) => $"user:{id}:solves";
+
     public static string Members() => "members";
 
     // Key for storing cache of active user ids.
