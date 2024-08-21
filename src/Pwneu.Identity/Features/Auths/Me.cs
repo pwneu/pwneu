@@ -18,7 +18,7 @@ public static class Me
             var userId = httpContextAccessor.HttpContext?.User.GetLoggedInUserId<string>();
 
             return Task.FromResult(string.IsNullOrEmpty(userId)
-                ? Result.Failure<UserResponse>(new Error("GetLoggedUser.NoId", "No Id found"))
+                ? Result.Failure<UserResponse>(new Error("GetMe.NoId", "No Id found"))
                 : new UserResponse
                 {
                     Id = userId,

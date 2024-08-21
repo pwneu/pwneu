@@ -13,6 +13,7 @@ using Pwneu.Identity.Shared.Entities;
 using Pwneu.Identity.Shared.Extensions;
 using Pwneu.Identity.Shared.Options;
 using Pwneu.Identity.Shared.Services;
+using Pwneu.Identity.Workers;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Extensions;
 using Swashbuckle.AspNetCore.Filters;
@@ -68,6 +69,8 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
+
+builder.Services.AddHostedService<UserCleanupService>();
 
 // Postgres Database 
 var postgres = builder.Configuration.GetConnectionString(Consts.Postgres) ??
