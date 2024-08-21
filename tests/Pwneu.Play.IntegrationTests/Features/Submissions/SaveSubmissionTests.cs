@@ -1,26 +1,15 @@
 using FluentAssertions;
-using Pwneu.Play.Features.Challenges;
+using Microsoft.EntityFrameworkCore;
+using Pwneu.Play.Features.Submissions;
 using Pwneu.Play.Shared.Entities;
-using Pwneu.Shared.Common;
-using Pwneu.Shared.Contracts;
 
-namespace Pwneu.Play.IntegrationTests.Features.Challenges;
+namespace Pwneu.Play.IntegrationTests.Features.Submissions;
 
 [Collection(nameof(IntegrationTestCollection))]
-public class DeleteChallengeTests(IntegrationTestsWebAppFactory factory) : BaseIntegrationTest(factory)
+public class SaveSubmissionTests(IntegrationTestsWebAppFactory factory) : BaseIntegrationTest(factory)
 {
     [Fact]
-    public async Task Handle_Should_NotDeleteChallenge_WhenChallengeDoesNotExists()
-    {
-        // Act
-        var deleteChallenge = await Sender.Send(new DeleteChallenge.Command(Guid.NewGuid()));
-
-        // Assert
-        deleteChallenge.IsSuccess.Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task Handle_Should_DeleteChallenge_WhenChallengeExists()
+    public async Task Handle_Should_IncreaseChallengeCount_WhenFlagIsCorrect()
     {
         // Arrange
         var categoryId = Guid.NewGuid();
@@ -41,24 +30,29 @@ public class DeleteChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
             Name = F.Lorem.Word(),
             Description = F.Lorem.Sentence(),
             Points = F.Random.Int(1, 100),
-            DeadlineEnabled = F.Random.Bool(),
+            DeadlineEnabled = false,
             Deadline = DateTime.UtcNow,
             MaxAttempts = F.Random.Int(1, 10),
-            Flags = F.Lorem.Words().ToList()
+            Flags = ["flag"]
         });
         await DbContext.SaveChangesAsync();
 
         // Act
-        var deleteChallenge = await Sender.Send(new DeleteChallenge.Command(challengeId));
-        var challenge = DbContext.Challenges.FirstOrDefault(c => c.Id == challengeId);
+        await Sender.Send(new SaveSubmission.Command(
+            UserId: "true",
+            ChallengeId: challengeId,
+            Flag: "flag",
+            SubmittedAt: DateTime.UtcNow,
+            IsCorrect: true));
+        var updatedChallenge = await DbContext.Challenges.Where(ch => ch.Id == challengeId).FirstOrDefaultAsync();
 
         // Assert
-        deleteChallenge.IsSuccess.Should().BeTrue();
-        challenge.Should().BeNull();
+        updatedChallenge.Should().NotBeNull();
+        updatedChallenge.SolveCount.Should().Be(1);
     }
 
     [Fact]
-    public async Task Handle_Should_InvalidateChallengeCache()
+    public async Task Handle_Should_NotSaveSubmission_WhenAlreadySolved()
     {
         // Arrange
         var categoryId = Guid.NewGuid();
@@ -79,20 +73,28 @@ public class DeleteChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
             Name = F.Lorem.Word(),
             Description = F.Lorem.Sentence(),
             Points = F.Random.Int(1, 100),
-            DeadlineEnabled = F.Random.Bool(),
+            DeadlineEnabled = false,
             Deadline = DateTime.UtcNow,
             MaxAttempts = F.Random.Int(1, 10),
-            Flags = F.Lorem.Words().ToList()
+            Flags = ["flag"]
         });
         await DbContext.SaveChangesAsync();
 
-        await Cache.SetAsync(Keys.ChallengeDetails(challengeId), new Challenge());
-
         // Act
-        await Sender.Send(new DeleteChallenge.Command(challengeId));
-        var challengeCache = Cache.GetOrDefault<ChallengeResponse>(Keys.ChallengeDetails(challengeId));
+        await Sender.Send(new SaveSubmission.Command(
+            UserId: "true",
+            ChallengeId: challengeId,
+            Flag: "flag",
+            SubmittedAt: DateTime.UtcNow,
+            IsCorrect: true));
+        var secondSubmit = await Sender.Send(new SaveSubmission.Command(
+            UserId: "true",
+            ChallengeId: challengeId,
+            Flag: "flag",
+            SubmittedAt: DateTime.UtcNow,
+            IsCorrect: true));
 
         // Assert
-        challengeCache.Should().BeNull();
+        secondSubmit.IsSuccess.Should().BeFalse();
     }
 }

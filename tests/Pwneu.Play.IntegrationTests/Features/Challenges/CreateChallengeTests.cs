@@ -24,9 +24,9 @@ public class CreateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
 
         var createChallenges = new List<CreateChallenge.Command>
         {
-            new(categoryId, string.Empty, F.Lorem.Sentence(), 50, false, DateTime.UtcNow, 5, F.Lorem.Words()),
-            new(categoryId, "Sanity Check", string.Empty, 50, false, DateTime.UtcNow, 5, F.Lorem.Words()),
-            new(categoryId, "Sanity Check", F.Lorem.Sentence(), 50, false, DateTime.UtcNow, 5, [])
+            new(categoryId, string.Empty, F.Lorem.Sentence(), 50, false, DateTime.UtcNow, 5, [], F.Lorem.Words()),
+            new(categoryId, "Sanity Check", string.Empty, 50, false, DateTime.UtcNow, 5, [], F.Lorem.Words()),
+            new(categoryId, "Sanity Check", F.Lorem.Sentence(), 50, false, DateTime.UtcNow, 5, [], [])
         };
 
         // Act
@@ -58,7 +58,7 @@ public class CreateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
 
         var createChallenge = new CreateChallenge.Command(categoryId, "Sanity Check", "The flag is in plain sight", 50,
             true,
-            DateTime.UtcNow.AddDays(7), 5, ["flag1", "flag2"]);
+            DateTime.UtcNow.AddDays(7), 5, [], ["flag1", "flag2"]);
 
         // Act
         var createChallengeResult = await Sender.Send(createChallenge);

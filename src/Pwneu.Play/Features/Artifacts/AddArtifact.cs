@@ -3,10 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
 using Pwneu.Play.Shared.Entities;
 using Pwneu.Shared.Common;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.Artifacts;
-
-// TODO -- Support deleting artifact
 
 public static class AddArtifact
 {
@@ -18,7 +17,8 @@ public static class AddArtifact
 
     private static readonly Error NoChallenge = new("AddArtifact.NoChallenge", "No challenge found");
 
-    internal sealed class Handler(ApplicationDbContext context) : IRequestHandler<Command, Result<Guid>>
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
+        : IRequestHandler<Command, Result<Guid>>
     {
         public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -44,6 +44,7 @@ public static class AddArtifact
             context.Add(artifact);
 
             await context.SaveChangesAsync(cancellationToken);
+            await cache.RemoveAsync(Keys.ChallengeDetails(artifact.ChallengeId), token: cancellationToken);
 
             return artifact.Id;
         }

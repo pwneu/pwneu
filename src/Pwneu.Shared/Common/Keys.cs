@@ -9,7 +9,7 @@ public static class Keys
     public static string Categories() => "categories";
 
     // Key for caching a list of all category Ids.
-    public static string CategoryIds() => "categoryIds"; // TODO -- Invalidate cache
+    public static string CategoryIds() => "categoryIds";
 
     // Key for caching access keys.
     public static string AccessKeys() => "accessKeys";
@@ -29,7 +29,11 @@ public static class Keys
     // Key for caching UserDetailsResponse.
     public static string UserDetails(string id) => $"user:{id}:details";
 
-    public static string UserEval(string id) => $"user:{id}:eval";
+    // Key for storing cache of user graph.
+    public static string UserGraph(string id) => $"user:{id}:graph";
+
+    // Key for storing cache of user graph.
+    public static string UserSolveIds(string id) => $"user:{id}:solves";
 
     public static string Members() => "members";
 
@@ -46,10 +50,6 @@ public static class Keys
 
     // Key for caching challenge flags.
     public static string Flags(Guid challengeId) => $"challenge:{challengeId}:flag";
-
-    // TODO -- Invalidate or don't cache hints
-    public static string Hint(Guid id) => $"hint:{id}";
-    public static string Hints(Guid challengeId) => $"challenge:{challengeId}:hint";
 
     // Key for caching if the user has already solved the challenge.
     public static string HasSolved(string userId, Guid challengeId) => $"hasSolved:{userId}:{challengeId}";

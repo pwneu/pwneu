@@ -24,6 +24,7 @@ public static class CreateChallenge
         bool DeadlineEnabled,
         DateTime Deadline,
         int MaxAttempts,
+        IEnumerable<string> Tags,
         IEnumerable<string> Flags) : IRequest<Result<Guid>>;
 
     private static readonly Error CategoryNotFound = new("CreateCategory.CategoryNotFound",
@@ -57,6 +58,7 @@ public static class CreateChallenge
                 DeadlineEnabled = request.DeadlineEnabled,
                 Deadline = request.Deadline,
                 MaxAttempts = request.MaxAttempts,
+                Tags = request.Tags.ToList(),
                 Flags = request.Flags.ToList()
             };
 
@@ -77,8 +79,16 @@ public static class CreateChallenge
             app.MapPost("categories/{categoryId:Guid}/challenges",
                     async (Guid categoryId, CreateChallengeRequest request, ISender sender) =>
                     {
-                        var command = new Command(categoryId, request.Name, request.Description, request.Points,
-                            request.DeadlineEnabled, request.Deadline, request.MaxAttempts, request.Flags);
+                        var command = new Command(
+                            CategoryId: categoryId,
+                            Name: request.Name,
+                            Description: request.Description,
+                            Points: request.Points,
+                            DeadlineEnabled: request.DeadlineEnabled,
+                            Deadline: request.Deadline,
+                            MaxAttempts: request.MaxAttempts,
+                            Tags: request.Tags,
+                            Flags: request.Flags);
 
                         var result = await sender.Send(command);
 
@@ -105,10 +115,9 @@ public static class CreateChallenge
                 .MaximumLength(300)
                 .WithMessage("Challenge description must be 300 characters or less.");
 
-            // TODO -- Allow 0 points on challenges
             RuleFor(c => c.Points)
-                .GreaterThan(0)
-                .WithMessage("Points must be greater than 0.");
+                .GreaterThanOrEqualTo(0)
+                .WithMessage("Points must be greater than or equal to 0.");
 
             RuleFor(c => c.MaxAttempts)
                 .GreaterThanOrEqualTo(0)

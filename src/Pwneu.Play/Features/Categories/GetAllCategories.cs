@@ -28,7 +28,12 @@ public static class GetAllCategories
                         Challenges = c.Challenges.Select(ch => new ChallengeResponse
                         {
                             Id = ch.Id,
-                            Name = ch.Name
+                            Name = ch.Name,
+                            Description = ch.Description,
+                            Points = ch.Points,
+                            DeadlineEnabled = ch.DeadlineEnabled,
+                            Deadline = ch.Deadline,
+                            SolveCount = ch.SolveCount
                         }).ToList()
                     })
                     .ToListAsync(cancellationToken), token: cancellationToken);

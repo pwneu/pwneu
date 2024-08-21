@@ -3,9 +3,11 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
 using Pwneu.Play.Shared.Entities;
+using Pwneu.Play.Shared.Extensions;
 using Pwneu.Play.Shared.Services;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.Submissions;
 
@@ -21,11 +23,15 @@ public static class SaveSubmission
     private static readonly Error UserNotFound = new("SaveSubmission.UserNotFound",
         "The user with the specified ID was not found");
 
+    private static readonly Error ChallengeNotFound = new("SaveSubmission.ChallengeNotFound",
+        "The challenge with the specified ID was not found");
+
     private static readonly Error AlreadySolved = new("SaveSubmission.AlreadySolved",
         "The user already solved the challenge");
 
     internal sealed class Handler(
         ApplicationDbContext context,
+        IFusionCache cache,
         IMemberAccess memberAccess)
         : IRequestHandler<Command, Result<Guid>>
     {
@@ -35,10 +41,19 @@ public static class SaveSubmission
             if (!await memberAccess.MemberExistsAsync(request.UserId, cancellationToken))
                 return Result.Failure<Guid>(UserNotFound);
 
-            // TODO -- Check if challenge exists
+            // Check if the challenge still exists just in case the user has submitted
+            // and the challenge was deleted at the same time.
+            var challenge = await context
+                .Challenges
+                .Where(ch => ch.Id == request.ChallengeId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (challenge is null)
+                return Result.Failure<Guid>(ChallengeNotFound);
 
             if (request.IsCorrect)
             {
+                // TODO -- Ensure uniqueness in a race condition
                 var alreadySolved = await context
                     .Submissions
                     .AnyAsync(s =>
@@ -66,9 +81,28 @@ public static class SaveSubmission
 
             context.Add(submission);
 
+            challenge.SolveCount += 1;
+            context.Update(challenge);
+
             await context.SaveChangesAsync(cancellationToken);
 
-            // TODO -- Update user evaluation in category
+            var invalidationTasks = new List<Task>
+            {
+                cache.InvalidateCategoryCacheAsync(challenge.CategoryId, cancellationToken),
+            };
+
+            if (request.IsCorrect)
+            {
+                invalidationTasks.Add(
+                    cache.RemoveAsync(Keys.UserGraph(request.UserId), token: cancellationToken)
+                        .AsTask());
+
+                invalidationTasks.Add(
+                    cache.RemoveAsync(Keys.UserSolveIds(request.UserId), token: cancellationToken)
+                        .AsTask());
+            }
+
+            await Task.WhenAll(invalidationTasks);
 
             return submission.Id;
         }
@@ -80,7 +114,11 @@ public class SubmittedEventConsumer(ISender sender, ILogger<SubmittedEventConsum
     public async Task Consume(ConsumeContext<SubmittedEvent> context)
     {
         var message = context.Message;
-        var command = new SaveSubmission.Command(message.UserId, message.ChallengeId, message.Flag, message.SubmittedAt,
+        var command = new SaveSubmission.Command(
+            message.UserId,
+            message.ChallengeId,
+            message.Flag,
+            message.SubmittedAt,
             message.IsCorrect);
 
         var result = await sender.Send(command);
@@ -91,6 +129,6 @@ public class SubmittedEventConsumer(ISender sender, ILogger<SubmittedEventConsum
             return;
         }
 
-        logger.LogError("Failed to save submission to database");
+        logger.LogError("Failed to save submission to database: {error}", result.Error.Message);
     }
 }

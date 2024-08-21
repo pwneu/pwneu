@@ -7,8 +7,9 @@ public record GetMemberRequest
     public string Id { get; set; } = default!;
 }
 
-public record UserActivityScore
+public record UserActivityResponse
 {
+    public string UserId { get; set; } = default!;
     public DateTime ActivityDate { get; set; }
     public int Score { get; set; }
 }

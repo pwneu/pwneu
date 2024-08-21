@@ -7,7 +7,9 @@ using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Newtonsoft.Json;
+using Pwneu.Play.IntegrationTests.Shared;
 using Pwneu.Play.Shared.Data;
+using Pwneu.Play.Shared.Services;
 using Testcontainers.PostgreSql;
 using Testcontainers.Redis;
 using ZiggyCreatures.Caching.Fusion;
@@ -32,6 +34,9 @@ public class IntegrationTestsWebAppFactory : WebApplicationFactory<Program>, IAs
     {
         builder.ConfigureTestServices(services =>
         {
+            services.RemoveAll(typeof(IMemberAccess));
+            services.AddScoped<IMemberAccess, MockMemberAccess>();
+
             services.RemoveAll(typeof(DbContextOptions<ApplicationDbContext>));
             services.AddDbContext<ApplicationDbContext>(options =>
             {

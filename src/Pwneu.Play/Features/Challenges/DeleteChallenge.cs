@@ -42,7 +42,8 @@ public static class DeleteChallenge
             var invalidationTasks = new List<Task>
             {
                 cache.InvalidateCategoryCacheAsync(challenge.CategoryId, cancellationToken: cancellationToken),
-                cache.InvalidateChallengeCacheAsync(challenge, cancellationToken)
+                cache.InvalidateChallengeCacheAsync(challenge, cancellationToken),
+                cache.InvalidateUserGraphs(cancellationToken)
             };
 
             await Task.WhenAll(invalidationTasks);

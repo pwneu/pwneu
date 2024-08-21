@@ -6,6 +6,7 @@ namespace Pwneu.Play.Shared.Extensions;
 
 public static class FusionCacheExtensions
 {
+    // TODO -- Separate cache invalidations
     public static async Task InvalidateCategoryCacheAsync(
         this IFusionCache cache,
         Guid categoryId,
@@ -22,13 +23,15 @@ public static class FusionCacheExtensions
             Keys.ActiveUserIds(),
             token: cancellationToken);
 
-        if (activeUserIds is not null)
-            tasks.AddRange(activeUserIds
-                .Select(userId => cache
-                    .RemoveAsync(
-                        Keys.UserCategoryEval(userId, categoryId),
-                        token: cancellationToken)
-                    .AsTask()));
+        if (activeUserIds is null)
+            return;
+
+        tasks.AddRange(activeUserIds
+            .Select(userId => cache
+                .RemoveAsync(
+                    Keys.UserCategoryEval(userId, categoryId),
+                    token: cancellationToken)
+                .AsTask()));
 
         await Task.WhenAll(tasks);
     }
@@ -47,9 +50,6 @@ public static class FusionCacheExtensions
             cache.RemoveAsync(
                 Keys.Flags(challenge.Id),
                 token: cancellationToken).AsTask(),
-            cache.RemoveAsync(
-                Keys.Hints(challenge.Id),
-                token: cancellationToken).AsTask()
         };
 
         tasks.AddRange(challenge
@@ -57,10 +57,26 @@ public static class FusionCacheExtensions
             .Select(a =>
                 cache.RemoveAsync(Keys.ArtifactData(a.Id), token: cancellationToken).AsTask()));
 
-        tasks.AddRange(challenge
-            .Hints
-            .Select(h =>
-                cache.RemoveAsync(Keys.Hint(h.Id), token: cancellationToken).AsTask()));
+        await Task.WhenAll(tasks);
+    }
+
+    public static async Task InvalidateUserGraphs(
+        this IFusionCache cache,
+        CancellationToken cancellationToken = default)
+    {
+        var tasks = new List<Task>();
+
+        var activeUserIds = await cache.GetOrDefaultAsync<List<string>>(
+            Keys.ActiveUserIds(),
+            token: cancellationToken);
+
+        if (activeUserIds is null)
+            return;
+
+        tasks.AddRange(activeUserIds
+            .Select(userId => cache
+                .RemoveAsync(Keys.UserGraph(userId), token: cancellationToken)
+                .AsTask()));
 
         await Task.WhenAll(tasks);
     }
