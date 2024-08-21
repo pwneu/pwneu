@@ -54,6 +54,11 @@ builder.Services.AddCors();
 // ASP.NET Identity
 builder.Services.AddIdentity<User, IdentityRole>(options =>
     {
+        // Email confirmation and account confirmation
+        options.SignIn.RequireConfirmedEmail = true;
+        options.SignIn.RequireConfirmedAccount = true;
+
+        // Password requirements
         options.Password.RequireDigit = true;
         options.Password.RequireLowercase = true;
         options.Password.RequireUppercase = true;
@@ -61,7 +66,8 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
         options.Password.RequiredLength = 12;
     })
     .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
 
 // Postgres Database 
 var postgres = builder.Configuration.GetConnectionString(Consts.Postgres) ??

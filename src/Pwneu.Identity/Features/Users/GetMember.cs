@@ -50,18 +50,25 @@ public class GetMemberConsumer(ISender sender, ILogger<GetMemberConsumer> logger
 {
     public async Task Consume(ConsumeContext<GetMemberRequest> context)
     {
-        var message = context.Message;
-        var query = new GetMember.Query(message.Id);
-        var result = await sender.Send(query);
-
-        if (result.IsSuccess)
+        try
         {
-            logger.LogInformation("Successfully get user: {id}", result.Value);
-            await context.RespondAsync(result.Value);
-            return;
-        }
+            var message = context.Message;
+            var query = new GetMember.Query(message.Id);
+            var result = await sender.Send(query);
 
-        logger.LogError("Failed to get user: {message}", result.Error.Message);
-        await context.RespondAsync(new UserNotFoundResponse());
+            if (result.IsSuccess)
+            {
+                logger.LogInformation("Successfully get user: {id}", result.Value);
+                await context.RespondAsync(result.Value);
+                return;
+            }
+
+            logger.LogError("Failed to get user: {message}", result.Error.Message);
+            await context.RespondAsync(new UserNotFoundResponse());
+        }
+        catch (Exception e)
+        {
+            logger.LogError("{e}", e.Message);
+        }
     }
 }

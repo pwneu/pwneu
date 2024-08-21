@@ -38,20 +38,27 @@ public class GetMembersConsumer(ISender sender, ILogger<GetMembersConsumer> logg
 {
     public async Task Consume(ConsumeContext<GetMembersRequest> context)
     {
-        var query = new GetMembers.Query();
-        var result = await sender.Send(query);
-
-        if (result.IsSuccess)
+        try
         {
-            logger.LogInformation("Successfully get members");
-            await context.RespondAsync(new UserResponses
-            {
-                Users = result.Value
-            });
-            return;
-        }
+            var query = new GetMembers.Query();
+            var result = await sender.Send(query);
 
-        logger.LogError("Failed to get members: {message}", result.Error.Message);
-        await context.RespondAsync(new UserResponses());
+            if (result.IsSuccess)
+            {
+                logger.LogInformation("Successfully get members");
+                await context.RespondAsync(new UserResponses
+                {
+                    Users = result.Value
+                });
+                return;
+            }
+
+            logger.LogError("Failed to get members: {message}", result.Error.Message);
+            await context.RespondAsync(new UserResponses());
+        }
+        catch (Exception e)
+        {
+            logger.LogError("{e}", e.Message);
+        }
     }
 }
