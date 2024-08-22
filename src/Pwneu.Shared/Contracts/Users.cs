@@ -43,3 +43,8 @@ public record UserDetailsResponse
     public string FullName { get; set; } = default!;
     public DateTime CreatedAt { get; set; }
 }
+
+public record UserDeletedEvent
+{
+    public required string Id { get; init; } = default!;
+}
