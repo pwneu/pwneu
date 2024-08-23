@@ -27,6 +27,8 @@ public static class DeleteUser
             if (user is null)
                 return Result.Failure(NotFound);
 
+            await userManager.DeleteAsync(user);
+
             var invalidationTasks = new List<Task>
             {
                 cache.RemoveAsync(Keys.User(request.Id), token: cancellationToken).AsTask(),
