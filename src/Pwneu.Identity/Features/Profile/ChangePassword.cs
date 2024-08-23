@@ -30,7 +30,7 @@ public static class ChangePassword
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
 
             if (!validationResult.IsValid)
-                return Result.Failure<Guid>(new Error("ChangeUserName.Validation", validationResult.ToString()));
+                return Result.Failure<Guid>(new Error("ChangePassword.Validation", validationResult.ToString()));
 
             var user = await userManager.FindByIdAsync(request.UserId);
 
@@ -52,7 +52,7 @@ public static class ChangePassword
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPut("me/userName", async (string currentPassword, string newPassword, string repeatPassword,
+            app.MapPut("me/password", async (string currentPassword, string newPassword, string repeatPassword,
                     ClaimsPrincipal claims, ISender sender) =>
                 {
                     var userId = claims.GetLoggedInUserId<string>();

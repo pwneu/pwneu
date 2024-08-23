@@ -52,6 +52,7 @@ public static class ChangeUserName
         }
     }
 
+    // TODO -- Disable this
     public class Endpoint : IEndpoint
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
