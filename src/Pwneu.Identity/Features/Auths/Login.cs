@@ -28,6 +28,9 @@ public static class Login
 
     private static readonly Error Invalid = new("Login.Invalid", "Incorrect username or password");
 
+    private static readonly Error EmailNotConfirmed = new("Login.EmailNotConfirmed",
+        "Email is not confirmed");
+
     internal sealed class Handler(
         UserManager<User> userManager,
         SignInManager<User> signInManager,
@@ -55,7 +58,12 @@ public static class Login
             var signIn = await signInManager.CheckPasswordSignInAsync(user, request.Password, false);
 
             if (!signIn.Succeeded)
+            {
+                if (!await userManager.IsEmailConfirmedAsync(user))
+                    return Result.Failure<TokenResponse>(EmailNotConfirmed);
+
                 return Result.Failure<TokenResponse>(Invalid);
+            }
 
             string refreshToken;
             using (var rng = RandomNumberGenerator.Create())

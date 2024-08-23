@@ -15,15 +15,16 @@ namespace Pwneu.Identity.IntegrationTests;
 
 public abstract class BaseIntegrationTest : IAsyncLifetime
 {
-    private readonly IServiceScope _scope;
+    protected readonly IServiceScope Scope;
 
     protected BaseIntegrationTest(IntegrationTestsWebAppFactory factory)
     {
-        _scope = factory.Services.CreateScope();
-        Sender = _scope.ServiceProvider.GetRequiredService<ISender>();
-        DbContext = _scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        Cache = _scope.ServiceProvider.GetRequiredService<IFusionCache>();
-        UserManager = _scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        Scope = factory.Services.CreateScope();
+        Sender = Scope.ServiceProvider.GetRequiredService<ISender>();
+        DbContext = Scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Cache = Scope.ServiceProvider.GetRequiredService<IFusionCache>();
+        UserManager = Scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        TestUserPassword = Scope.ServiceProvider.GetRequiredService<IOptions<AppOptions>>().Value.InitialAdminPassword;
 
         AssertionOptions.AssertEquivalencyUsing(options =>
         {
@@ -34,11 +35,10 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
         });
     }
 
+    protected string TestUserPassword { get; private set; }
     protected User TestUser { get; private set; } = null!;
     protected ISender Sender { get; }
-
     protected IFusionCache Cache { get; }
-
     protected UserManager<User> UserManager { get; }
     protected ApplicationDbContext DbContext { get; }
     protected Faker F { get; } = new();
@@ -47,10 +47,10 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
     {
         await DbContext.Database.EnsureCreatedAsync();
 
-        await _scope.ServiceProvider.SeedRolesAsync();
-        await _scope.ServiceProvider.SeedAdminAsync();
+        await Scope.ServiceProvider.SeedRolesAsync();
+        await Scope.ServiceProvider.SeedAdminAsync();
 
-        var appOptions = _scope.ServiceProvider.GetRequiredService<IOptions<AppOptions>>().Value;
+        var appOptions = Scope.ServiceProvider.GetRequiredService<IOptions<AppOptions>>().Value;
 
         var user = new User { UserName = "test" };
         var createUser = await UserManager.CreateAsync(user, appOptions.InitialAdminPassword);

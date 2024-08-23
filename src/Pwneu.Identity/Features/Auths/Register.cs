@@ -1,4 +1,5 @@
 using FluentValidation;
+using MassTransit;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -14,17 +15,18 @@ namespace Pwneu.Identity.Features.Auths;
 
 public static class Register
 {
-    private static readonly Error Failed = new("Register.Failed", "Unable to create user");
-    private static readonly Error AddRoleFailed = new("Register.AddRoleFailed", "Unable to add role to user");
-
     public record Command(string UserName, string Email, string Password, string FullName, string? AccessKey = null)
         : IRequest<Result>;
+
+    private static readonly Error Failed = new("Register.Failed", "Unable to create user");
+    private static readonly Error AddRoleFailed = new("Register.AddRoleFailed", "Unable to add role to user");
 
     internal sealed class Handler(
         ApplicationDbContext context,
         UserManager<User> userManager,
         IFusionCache cache,
         IValidator<Command> validator,
+        IPublishEndpoint publishEndpoint,
         IOptions<AppOptions> appOptions) : IRequestHandler<Command, Result>
     {
         private readonly AppOptions _appOptions = appOptions.Value;
@@ -71,6 +73,14 @@ public static class Register
             var addRole = await userManager.AddToRoleAsync(user, Consts.Member);
             if (!addRole.Succeeded)
                 return Result.Failure(AddRoleFailed);
+
+            var confirmationToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
+
+            await publishEndpoint.Publish(new RegisteredEvent
+            {
+                Email = user.Email,
+                ConfirmationToken = confirmationToken
+            }, cancellationToken);
 
             // If a registration key is not required, accessKey and accessKeys should be null at this point.
             // But still check if the values are null just in case.

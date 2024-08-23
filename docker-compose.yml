@@ -143,7 +143,8 @@ services:
       - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
       - SmtpOptions__SenderAddress=${SMTP_SENDER_ADDRESS}
       - SmtpOptions__SenderPassword=${SMTP_SENDER_PASSWORD}
-      - SmtpOptions__IsEnabled=${SMTP_IS_ENABLED}
+      - SmtpOptions__NotifyLoginIsEnabled=${SMTP_NOTIFY_LOGIN_IS_ENABLED}
+      - SmtpOptions__SendEmailConfirmationIsEnabled=${SMTP_SEND_EMAIL_CONFIRMATION_IS_ENABLED}
     volumes:
       - ./.containers/certs:/home/app/.aspnet/https:ro
     networks:

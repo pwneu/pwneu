@@ -13,6 +13,7 @@ using Pwneu.Identity.Shared.Entities;
 using Pwneu.Identity.Shared.Extensions;
 using Pwneu.Identity.Shared.Options;
 using Pwneu.Identity.Shared.Services;
+using Pwneu.Identity.Workers;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Extensions;
 using Swashbuckle.AspNetCore.Filters;
@@ -54,6 +55,11 @@ builder.Services.AddCors();
 // ASP.NET Identity
 builder.Services.AddIdentity<User, IdentityRole>(options =>
     {
+        // Email confirmation and account confirmation
+        options.SignIn.RequireConfirmedEmail = true;
+        options.SignIn.RequireConfirmedAccount = true;
+
+        // Password requirements
         options.Password.RequireDigit = true;
         options.Password.RequireLowercase = true;
         options.Password.RequireUppercase = true;
@@ -61,7 +67,10 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
         options.Password.RequiredLength = 12;
     })
     .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
+
+builder.Services.AddHostedService<UserCleanupService>();
 
 // Postgres Database 
 var postgres = builder.Configuration.GetConnectionString(Consts.Postgres) ??

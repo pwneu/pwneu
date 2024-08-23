@@ -9,17 +9,12 @@ using Pwneu.Smtp.Shared.Options;
 
 namespace Pwneu.Smtp.Features.Auths;
 
-public static class NotifyLogin
+public static class SendEmailConfirmation
 {
-    public record Command(
-        string FullName,
-        string? Email,
-        string? IpAddress = null,
-        string? UserAgent = null,
-        string? Referer = null) : IRequest<Result>;
+    public record Command(string Email, string ConfirmationToken) : IRequest<Result>;
 
-    private static readonly Error NoEmail = new("NotifyLogin.NoEmail", "No Email specified");
-    private static readonly Error Disabled = new("NotifyLogin.Disabled", "Notify login is disabled");
+    private static readonly Error Disabled = new("SendEmailConfirmation.Disabled",
+        "Email confirmation is disabled");
 
     internal sealed class Handler(IOptions<SmtpOptions> smtpOptions) : IRequestHandler<Command, Result>
     {
@@ -27,10 +22,7 @@ public static class NotifyLogin
 
         public Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
-            if (request.Email is null)
-                return Task.FromResult(Result.Failure(NoEmail));
-
-            if (_smtpOptions.NotifyLoginIsEnabled is false)
+            if (_smtpOptions.SendEmailConfirmationIsEnabled is false)
                 return Task.FromResult(Result.Failure(Disabled));
 
             var smtpClient = new SmtpClient("smtp.gmail.com", Consts.GmailSmtpPort)
@@ -43,43 +35,42 @@ public static class NotifyLogin
 
             using var mailMessage = new MailMessage(_smtpOptions.SenderAddress, request.Email);
             mailMessage.Subject = "Hello Pwneu!";
-            mailMessage.Body = $"{request.FullName} || {request.IpAddress} || {request.UserAgent} || {request.Referer}";
+            mailMessage.Body = $"Confirmation Token: {request.ConfirmationToken}";
 
             try
             {
                 smtpClient.Send(mailMessage);
                 return Task.FromResult(Result.Success());
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return Task.FromResult(Result.Failure(new Error("NotifyLogin.Failed", e.Message)));
+                return Task.FromResult(Result.Failure(new Error("SendEmailConfirmation.Failed", ex.Message)));
             }
         }
     }
 }
 
-public class LoggedInEventConsumer(ISender sender, ILogger<LoggedInEventConsumer> logger)
-    : IConsumer<LoggedInEvent>
+public class RegisteredEventConsumer(ISender sender, ILogger<RegisteredEventConsumer> logger)
+    : IConsumer<RegisteredEvent>
 {
-    public async Task Consume(ConsumeContext<LoggedInEvent> context)
+    public async Task Consume(ConsumeContext<RegisteredEvent> context)
     {
         try
         {
-            logger.LogInformation("Received logged in event message");
+            logger.LogInformation("Received registered event message");
 
             var message = context.Message;
-            var command = new NotifyLogin.Command(message.FullName, message.Email, message.IpAddress, message.UserAgent,
-                message.Referer);
+            var command = new SendEmailConfirmation.Command(message.Email, message.ConfirmationToken);
             var result = await sender.Send(command);
 
             if (result.IsSuccess)
             {
-                logger.LogInformation("Sent login notification to {email}", context.Message.Email);
+                logger.LogInformation("Sent confirmation token to {email}", context.Message.Email);
                 return;
             }
 
             logger.LogError(
-                "Failed to send login notification to {email}: {error}", message.Email, result.Error.Message);
+                "Failed to send confirmation token to {email}: {error}", message.Email, result.Error.Message);
         }
         catch (Exception e)
         {

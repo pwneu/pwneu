@@ -7,23 +7,31 @@ namespace Pwneu.Identity.Features.Auths;
 
 public static class Me
 {
-    public record Query : IRequest<Result<UserResponse>>;
+    public record Query : IRequest<Result<UserInfoResponse>>;
 
     internal sealed class Handler(IHttpContextAccessor httpContextAccessor)
-        : IRequestHandler<Query, Result<UserResponse>>
+        : IRequestHandler<Query, Result<UserInfoResponse>>
     {
-        public Task<Result<UserResponse>> Handle(Query request, CancellationToken cancellationToken)
+        public Task<Result<UserInfoResponse>> Handle(Query request, CancellationToken cancellationToken)
         {
             var userName = httpContextAccessor.HttpContext?.User.GetLoggedInUserName();
             var userId = httpContextAccessor.HttpContext?.User.GetLoggedInUserId<string>();
+            var userRoles = httpContextAccessor.HttpContext?.User.GetRoles().ToList();
 
-            return Task.FromResult(string.IsNullOrEmpty(userId)
-                ? Result.Failure<UserResponse>(new Error("GetLoggedUser.NoId", "No Id found"))
-                : new UserResponse
-                {
-                    Id = userId,
-                    UserName = userName
-                });
+            if (string.IsNullOrEmpty(userId))
+                return Task.FromResult(Result.Failure<UserInfoResponse>(new Error("GetMe.NoId", "No Id found")));
+
+            if (userRoles is null)
+                return Task.FromResult(Result.Failure<UserInfoResponse>(new Error("GetMe.NoRoles", "No Roles found")));
+
+            var response = new UserInfoResponse
+            {
+                Id = userId,
+                UserName = userName,
+                Roles = userRoles
+            };
+
+            return Task.FromResult(Result.Success(response));
         }
     }
 

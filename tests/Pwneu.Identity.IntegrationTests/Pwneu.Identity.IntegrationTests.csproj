@@ -29,12 +29,4 @@
         <ProjectReference Include="..\..\src\Pwneu.Identity\Pwneu.Identity.csproj"/>
     </ItemGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\..\src\Pwneu.Identity\Pwneu.Identity.csproj"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Folder Include="Features\"/>
-    </ItemGroup>
-
 </Project>

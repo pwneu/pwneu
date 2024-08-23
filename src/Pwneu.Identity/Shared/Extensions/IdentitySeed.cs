@@ -40,11 +40,10 @@ public static class IdentitySeed
 
         var admin = await userManager.FindByNameAsync(Consts.Admin);
 
-        // Only use the password in the options once or change the password everytime the app starts
         if (admin is not null)
             return;
 
-        admin = new User { UserName = Consts.Admin.ToLower() };
+        admin = new User { UserName = Consts.Admin.ToLower(), EmailConfirmed = true };
 
         var createAdmin = await userManager.CreateAsync(admin, password);
         if (!createAdmin.Succeeded)

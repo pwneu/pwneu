@@ -9,6 +9,18 @@ public record RegisterRequest
     public string? AccessKey { get; set; }
 }
 
+public record RegisteredEvent
+{
+    public string Email { get; init; } = default!;
+    public string ConfirmationToken { get; init; } = default!;
+}
+
+public record ConfirmEmailRequest
+{
+    public string Email { get; set; } = default!;
+    public string ConfirmationToken { get; set; } = default!;
+}
+
 public record LoginRequest
 {
     public string UserName { get; set; } = default!;
