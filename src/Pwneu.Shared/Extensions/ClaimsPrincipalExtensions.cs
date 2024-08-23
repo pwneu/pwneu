@@ -39,4 +39,11 @@ public static class ClaimsPrincipalExtensions
 
         return principal.FindFirstValue(JwtRegisteredClaimNames.Email);
     }
+
+    public static IEnumerable<string> GetRoles(this ClaimsPrincipal principal)
+    {
+        ArgumentNullException.ThrowIfNull(principal);
+
+        return principal.FindAll(ClaimTypes.Role).Select(c => c.Value);
+    }
 }

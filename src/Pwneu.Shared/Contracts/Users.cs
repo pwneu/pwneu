@@ -35,6 +35,13 @@ public record UserResponse
     public string? UserName { get; set; }
 }
 
+public record UserInfoResponse
+{
+    public string Id { get; set; } = default!;
+    public string? UserName { get; set; }
+    public List<string> Roles { get; set; } = [];
+}
+
 public record UserDetailsResponse
 {
     public string Id { get; set; } = default!;
