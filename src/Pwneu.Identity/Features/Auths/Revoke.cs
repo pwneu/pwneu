@@ -1,8 +1,10 @@
 using System.Security.Claims;
+using MassTransit;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Pwneu.Identity.Shared.Entities;
 using Pwneu.Shared.Common;
+using Pwneu.Shared.Contracts;
 using Pwneu.Shared.Extensions;
 
 namespace Pwneu.Identity.Features.Auths;
@@ -48,6 +50,35 @@ public static class Revoke
                 })
                 .RequireAuthorization()
                 .WithTags(nameof(Auths));
+        }
+    }
+}
+
+public class PasswordChangedEventConsumer(ISender sender, ILogger<PasswordChangedEventConsumer> logger)
+    : IConsumer<PasswordResetEvent>
+{
+    public async Task Consume(ConsumeContext<PasswordResetEvent> context)
+    {
+        try
+        {
+            logger.LogInformation("Received password changed event message");
+
+            var message = context.Message;
+            var command = new Revoke.Command(message.UserId);
+            var result = await sender.Send(command);
+
+            if (result.IsSuccess)
+            {
+                logger.LogInformation("Password reset on {userId}", message.UserId);
+                return;
+            }
+
+            logger.LogError(
+                "Failed to send reset password token to {userId}: {error}", message.UserId, result.Error.Message);
+        }
+        catch (Exception e)
+        {
+            logger.LogError("{e}", e.Message);
         }
     }
 }
