@@ -2,7 +2,6 @@ using System.Linq.Expressions;
 using MediatR;
 using Pwneu.Identity.Shared.Data;
 using Pwneu.Identity.Shared.Entities;
-using Pwneu.Identity.Shared.Services;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 
@@ -22,14 +21,12 @@ public static class GetUsers
         int? PageSize = null)
         : IRequest<Result<PagedList<UserResponse>>>;
 
-    internal sealed class Handler(ApplicationDbContext context, IAccessControl accessControl)
+    internal sealed class Handler(ApplicationDbContext context)
         : IRequestHandler<Query, Result<PagedList<UserResponse>>>
     {
         public async Task<Result<PagedList<UserResponse>>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var managerIds = await accessControl.GetManagerIdsAsync(cancellationToken);
-
-            var usersQuery = context.Users.Where(u => !managerIds.Contains(u.Id));
+            IQueryable<User> usersQuery = context.Users;
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
                 usersQuery = usersQuery.Where(u =>
