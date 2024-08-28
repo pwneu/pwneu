@@ -145,6 +145,7 @@ services:
       - SmtpOptions__SenderPassword=${SMTP_SENDER_PASSWORD}
       - SmtpOptions__NotifyLoginIsEnabled=${SMTP_NOTIFY_LOGIN_IS_ENABLED}
       - SmtpOptions__SendEmailConfirmationIsEnabled=${SMTP_SEND_EMAIL_CONFIRMATION_IS_ENABLED}
+      - SmtpOptions__SendPasswordResetTokenIsEnabled=${SMTP_SEND_PASSWORD_RESET_TOKEN_IS_ENABLED}
     volumes:
       - ./.containers/certs:/home/app/.aspnet/https:ro
     networks:

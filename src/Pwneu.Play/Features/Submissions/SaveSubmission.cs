@@ -81,8 +81,11 @@ public static class SaveSubmission
 
             context.Add(submission);
 
-            challenge.SolveCount += 1;
-            context.Update(challenge);
+            if (request.IsCorrect)
+            {
+                challenge.SolveCount += 1;
+                context.Update(challenge);
+            }
 
             await context.SaveChangesAsync(cancellationToken);
 

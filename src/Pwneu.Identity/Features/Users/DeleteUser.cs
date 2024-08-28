@@ -15,6 +15,9 @@ public static class DeleteUser
     private static readonly Error NotFound = new("DeleteUser.NotFound",
         "The user with the specified ID was not found");
 
+    private static readonly Error CannotDeleteAdmin = new("DeleteUser.CannotDeleteAdmin",
+        "Admin cannot be deleted");
+
     internal sealed class Handler(
         UserManager<User> userManager,
         IFusionCache cache,
@@ -26,6 +29,12 @@ public static class DeleteUser
 
             if (user is null)
                 return Result.Failure(NotFound);
+
+            var userIsAdmin = await userManager.IsInRoleAsync(user, Consts.Admin);
+
+            // Admin shouldn't be deleted
+            if (userIsAdmin)
+                return Result.Failure(CannotDeleteAdmin);
 
             await userManager.DeleteAsync(user);
 

@@ -1,5 +1,7 @@
 namespace Pwneu.Identity.Shared.Entities;
 
+// TODO -- Create access key for managers
+
 public class AccessKey
 {
     public Guid Id { get; init; }

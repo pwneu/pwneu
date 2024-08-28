@@ -1,9 +1,11 @@
+using System.Security.Claims;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
 using Pwneu.Play.Shared.Services;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
+using Pwneu.Shared.Extensions;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.Users;
@@ -103,6 +105,19 @@ public static class GetUserGraph
                     return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
                 })
                 .RequireAuthorization(Consts.ManagerAdminOnly)
+                .WithTags(nameof(Users));
+
+            app.MapGet("me/graph", async (ClaimsPrincipal claims, ISender sender) =>
+                {
+                    var id = claims.GetLoggedInUserId<string>();
+                    if (id is null) return Results.BadRequest();
+
+                    var query = new Query(id);
+                    var result = await sender.Send(query);
+
+                    return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
+                })
+                .RequireAuthorization()
                 .WithTags(nameof(Users));
         }
     }
