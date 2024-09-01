@@ -121,7 +121,7 @@ services:
     volumes:
       - ./.containers/play.db:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "37302:5432"
     networks:
       - pwneu
 
