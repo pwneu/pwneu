@@ -45,8 +45,8 @@ public static class Keys
         string userId,
         Guid categoryId) => $"user:{userId}:category:{categoryId}:eval";
 
-    // Key for getting cache of all user's evaluation in a single category.
-    public static string AllUsersEvalInCategory(Guid categoryId) => $"*user:*:category:{categoryId}:eval*";
+    // Key for getting leaderboards.
+    public static string UserRanks() => "userRanks";
 
     // Key for caching challenge flags.
     public static string Flags(Guid challengeId) => $"challenge:{challengeId}:flag";

@@ -103,6 +103,10 @@ public static class SaveSubmission
                 invalidationTasks.Add(
                     cache.RemoveAsync(Keys.UserSolveIds(request.UserId), token: cancellationToken)
                         .AsTask());
+
+                invalidationTasks.Add(
+                    cache.RemoveAsync(Keys.UserRanks(), token: cancellationToken)
+                        .AsTask());
             }
 
             await Task.WhenAll(invalidationTasks);

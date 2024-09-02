@@ -40,7 +40,8 @@ public static class DeleteCategory
             var invalidationTasks = new List<Task>
             {
                 cache.InvalidateCategoryCacheAsync(category.Id, cancellationToken),
-                cache.InvalidateUserGraphs(cancellationToken)
+                cache.InvalidateUserGraphs(cancellationToken),
+                cache.RemoveAsync(Keys.UserRanks(), token: cancellationToken).AsTask(),
             };
 
             invalidationTasks.AddRange(category.Challenges.Select(challenge =>

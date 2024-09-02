@@ -43,7 +43,8 @@ public static class DeleteChallenge
             {
                 cache.InvalidateCategoryCacheAsync(challenge.CategoryId, cancellationToken: cancellationToken),
                 cache.InvalidateChallengeCacheAsync(challenge, cancellationToken),
-                cache.InvalidateUserGraphs(cancellationToken)
+                cache.InvalidateUserGraphs(cancellationToken),
+                cache.RemoveAsync(Keys.UserRanks(), token: cancellationToken).AsTask(),
             };
 
             await Task.WhenAll(invalidationTasks);

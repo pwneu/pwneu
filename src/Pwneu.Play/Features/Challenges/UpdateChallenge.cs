@@ -73,7 +73,10 @@ public static class UpdateChallenge
             // There's no need to clear the challenge's category evaluation cache of all users.
 
             if (oldChallengePoints != request.Points)
+            {
                 invalidationTasks.Add(cache.InvalidateUserGraphs(cancellationToken));
+                invalidationTasks.Add(cache.RemoveAsync(Keys.UserRanks(), token: cancellationToken).AsTask());
+            }
 
             await Task.WhenAll(invalidationTasks);
 

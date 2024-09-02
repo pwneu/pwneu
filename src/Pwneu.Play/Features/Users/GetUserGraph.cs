@@ -27,54 +27,48 @@ public static class GetUserGraph
             if (!await memberAccess.MemberExistsAsync(request.Id, cancellationToken))
                 return Result.Failure<IEnumerable<UserActivityResponse>>(NotFound);
 
-            // Get user graph in the cache.
-            var userGraph = await cache.GetOrDefaultAsync<List<UserActivityResponse>>(
-                Keys.UserGraph(request.Id),
-                token: cancellationToken);
-
-            // If there's a cache hit, return it immediately.
-            if (userGraph is not null)
-                return userGraph.ToList();
-
-            // Get the list of correct submissions by the user.
-            var correctSubmissions = await context
-                .Submissions
-                .Where(s => s.UserId == request.Id & s.IsCorrect)
-                .Select(s => new UserActivityResponse
-                {
-                    UserId = s.UserId,
-                    ActivityDate = s.SubmittedAt,
-                    Score = s.Challenge.Points
-                })
-                .ToListAsync(cancellationToken);
-
-            // Get the list of hint usages by the user but store the score in negative form.
-            var hintUsages = await context
-                .HintUsages
-                .Where(h => h.UserId == request.Id)
-                .Select(h => new UserActivityResponse
-                {
-                    UserId = h.UserId,
-                    ActivityDate = h.UsedAt,
-                    Score = -h.Hint.Deduction
-                })
-                .ToListAsync(cancellationToken);
-
-            // Combine correct submissions and hint usages.
-            userGraph = correctSubmissions
-                .Concat(hintUsages)
-                .OrderBy(a => a.ActivityDate)
-                .ToList();
-
-            // Store the cumulative score and update the score of each item in the list.
-            var cumulativeScore = 0;
-            foreach (var userActivity in userGraph)
+            var userGraph = await cache.GetOrSetAsync(Keys.UserGraph(request.Id), async _ =>
             {
-                cumulativeScore += userActivity.Score;
-                userActivity.Score = cumulativeScore;
-            }
+                // Get the list of correct submissions by the user.
+                var correctSubmissions = await context
+                    .Submissions
+                    .Where(s => s.UserId == request.Id & s.IsCorrect)
+                    .Select(s => new UserActivityResponse
+                    {
+                        UserId = s.UserId,
+                        ActivityDate = s.SubmittedAt,
+                        Score = s.Challenge.Points
+                    })
+                    .ToListAsync(cancellationToken);
 
-            await cache.SetAsync(Keys.UserGraph(request.Id), userGraph, token: cancellationToken);
+                // Get the list of hint usages by the user but store the score in negative form.
+                var hintUsages = await context
+                    .HintUsages
+                    .Where(h => h.UserId == request.Id)
+                    .Select(h => new UserActivityResponse
+                    {
+                        UserId = h.UserId,
+                        ActivityDate = h.UsedAt,
+                        Score = -h.Hint.Deduction
+                    })
+                    .ToListAsync(cancellationToken);
+
+                // Combine correct submissions and hint usages.
+                var userGraph = correctSubmissions
+                    .Concat(hintUsages)
+                    .OrderBy(a => a.ActivityDate)
+                    .ToList();
+
+                // Store the cumulative score and update the score of each item in the list.
+                var cumulativeScore = 0;
+                foreach (var userActivity in userGraph)
+                {
+                    cumulativeScore += userActivity.Score;
+                    userActivity.Score = cumulativeScore;
+                }
+
+                return userGraph;
+            }, token: cancellationToken);
 
             var activeUserIds = await cache.GetOrDefaultAsync<List<string>>(
                 Keys.ActiveUserIds(),

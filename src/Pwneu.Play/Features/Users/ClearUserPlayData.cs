@@ -52,6 +52,7 @@ public static class ClearUserPlayData
             {
                 cache.RemoveAsync(Keys.UserGraph(request.UserId), token: cancellationToken).AsTask(),
                 cache.RemoveAsync(Keys.UserSolveIds(request.UserId), token: cancellationToken).AsTask(),
+                cache.RemoveAsync(Keys.UserRanks(), token: cancellationToken).AsTask(),
             };
 
             invalidationTasks.AddRange(userSolvedChallengeIds

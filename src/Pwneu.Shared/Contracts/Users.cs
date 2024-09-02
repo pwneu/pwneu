@@ -55,3 +55,17 @@ public record UserDeletedEvent
 {
     public required string Id { get; init; } = default!;
 }
+
+public record LeaderboardsResponse
+{
+    public UserRankResponse? RequesterRank { get; set; } = default!;
+    public List<UserRankResponse> TopUsers { get; set; } = [];
+}
+
+public record UserRankResponse
+{
+    public string Id { get; set; } = default!;
+    public string? UserName { get; set; } = default!;
+    public int Position { get; set; }
+    public int Points { get; set; }
+}
