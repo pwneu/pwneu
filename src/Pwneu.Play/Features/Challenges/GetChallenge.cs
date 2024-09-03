@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
 using Pwneu.Play.Shared.Extensions;
 using Pwneu.Shared.Common;
@@ -29,6 +30,14 @@ public static class GetChallenge
                     .GetDetailsByIdAsync(
                         request.Id,
                         cancellationToken), token: cancellationToken);
+
+            // Cache the challenge flags because why not?
+            await cache.GetOrSetAsync(Keys.Flags(request.Id), async _ =>
+                await context
+                    .Challenges
+                    .Where(c => c.Id == request.Id)
+                    .Select(c => c.Flags)
+                    .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
             return challenge ?? Result.Failure<ChallengeDetailsResponse>(NotFound);
         }
