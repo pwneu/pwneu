@@ -7,7 +7,7 @@ using Pwneu.Shared.Contracts;
 using Pwneu.Shared.Extensions;
 using ZiggyCreatures.Caching.Fusion;
 
-namespace Pwneu.Play.Features.Users;
+namespace Pwneu.Play.Features.Submissions;
 
 // TODO -- Test this
 
@@ -113,6 +113,8 @@ public static class GetLeaderboards
 
             var requesterRank = leaderboards.FirstOrDefault(u => u.Id == request.RequesterId);
 
+            // TODO -- Get user names
+
             return new LeaderboardsResponse
             {
                 RequesterRank = requesterRank,
@@ -136,7 +138,7 @@ public static class GetLeaderboards
                     return result.IsFailure ? Results.StatusCode(500) : Results.Ok(result.Value);
                 })
                 .RequireAuthorization()
-                .WithTags(nameof(Users));
+                .WithTags(nameof(Submissions));
         }
     }
 }
