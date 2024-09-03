@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 USER app
 EXPOSE 8080
 EXPOSE 8081
@@ -6,15 +6,13 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["src/Pwneu.Smtp/Pwneu.Smtp.csproj", "./Pwneu.Smtp/"]
-RUN dotnet restore "./Pwneu.Smtp/Pwneu.Smtp.csproj"
 COPY "src/" .
-WORKDIR "/src/Pwneu.Smtp"
-RUN dotnet build "./Pwneu.Smtp.csproj" -c $BUILD_CONFIGURATION -o /app/build --no-restore
+RUN dotnet restore "./Pwneu.Chat/Pwneu.Chat.csproj"
+RUN dotnet build "./Pwneu.Chat/Pwneu.Chat.csproj" -c $BUILD_CONFIGURATION -o /app/build --no-restore
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Pwneu.Smtp.csproj" -c $BUILD_CONFIGURATION -o /app/publish --no-restore /p:UseAppHost=false
+RUN dotnet publish "./Pwneu.Chat/Pwneu.Chat.csproj" -c $BUILD_CONFIGURATION -o /app/publish --no-restore /p:UseAppHost=false
 
 FROM base AS final
 COPY ["scripts/wait-for-it.sh", "/usr/bin/wait-for-it.sh"]
@@ -27,5 +25,5 @@ ENTRYPOINT ["/bin/sh", "-c", "\
   wait-for-it.sh -t 0 pwneu.mq:5672 && \
   wait-for-it.sh -t 0 pwneu.play:8081 && \
   wait-for-it.sh -t 0 pwneu.identity:8081 && \
-  dotnet Pwneu.Smtp.dll \
+  dotnet Pwneu.Chat.dll \
 "]
