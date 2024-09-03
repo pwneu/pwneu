@@ -144,11 +144,14 @@ services:
       - ASPNETCORE_HTTPS_PORTS=8081
       - MessageBroker__Username=${RABBITMQ_DEFAULT_USER}
       - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
+      - ChatOptions__ConversationIsEnabled=${CHAT_CONVERSATION_IS_ENABLED}
+      - ChatOptions__MaxConversationsPerDay=${CHAT_MAX_CONVERSATIONS_PER_DAY}
       - JwtOptions__Issuer=${JWT_ISSUER}
       - JwtOptions__Audience=${JWT_AUDIENCE}
       - JwtOptions__SigningKey=${JWT_SIGNING_KEY}
     volumes:
       - ./.containers/certs:/home/app/.aspnet/https:ro
+      - ./.containers/chat.db/:/db
     networks:
       - pwneu
 

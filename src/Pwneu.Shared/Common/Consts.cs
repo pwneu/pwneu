@@ -20,6 +20,7 @@ public static class Consts
 
     public const string Postgres = "Postgres";
     public const string Redis = "Redis";
+    public const string Sqlite = "Sqlite";
 
     public const int GmailSmtpPort = 587;
 }
