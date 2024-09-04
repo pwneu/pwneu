@@ -9,6 +9,9 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Identity.Features.Profile;
 
+/// <summary>
+/// DONT USE THIS
+/// </summary>
 public static class ChangeUserName
 {
     public record Command(string UserId, string NewUserName) : IRequest<Result>;

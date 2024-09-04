@@ -58,7 +58,6 @@ public static class SaveSubmission
             if (request.IsCorrect)
             {
                 // TODO -- Ensure uniqueness in a race condition
-                // TODO -- Save immediately to fix race condition
 
                 var alreadySolved = await context
                     .Submissions

@@ -59,7 +59,7 @@ public record UserDeletedEvent
 public record LeaderboardsResponse
 {
     public UserRankResponse? RequesterRank { get; set; } = default!;
-    public List<UserRankResponse> TopUsers { get; set; } = [];
+    public List<UserRankResponse> UserRanks { get; set; } = [];
 }
 
 public record UserRankResponse
