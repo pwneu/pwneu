@@ -10,9 +10,7 @@ using Pwneu.Shared.Contracts;
 using Pwneu.Shared.Extensions;
 using ZiggyCreatures.Caching.Fusion;
 
-// TODO -- Move to submissions
-
-namespace Pwneu.Play.Features.Flags;
+namespace Pwneu.Play.Features.Submissions;
 
 /// <summary>
 /// Submits a flag and stores the submission in the database for tracking user performance.
@@ -173,6 +171,7 @@ public static class SubmitFlag
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
+            // TODO -- Change to "challenges/{challengeId:Guid}/flag"
             app.MapPost("challenges/{challengeId:Guid}/submit",
                     async (Guid challengeId, string flag, ClaimsPrincipal claims, ISender sender) =>
                     {
@@ -185,7 +184,7 @@ public static class SubmitFlag
                         return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value.ToString());
                     })
                 .RequireAuthorization(Consts.MemberOnly)
-                .WithTags(nameof(Flags));
+                .WithTags(nameof(Submissions));
         }
     }
 

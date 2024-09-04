@@ -1,5 +1,5 @@
 using FluentAssertions;
-using Pwneu.Play.Features.Flags;
+using Pwneu.Play.Features.Submissions;
 using Pwneu.Play.Shared.Entities;
 using Pwneu.Shared.Contracts;
 
