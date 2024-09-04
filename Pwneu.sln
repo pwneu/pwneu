@@ -23,6 +23,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pwneu.Identity", "src\Pwneu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pwneu.Identity.IntegrationTests", "tests\Pwneu.Identity.IntegrationTests\Pwneu.Identity.IntegrationTests.csproj", "{9426C9CB-B5F1-4323-AB7E-7493AB2C378F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pwneu.Chat", "src\Pwneu.Chat\Pwneu.Chat.csproj", "{A134931C-6B76-42BC-B2FA-48896C05E1AF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C05A7AB5-3213-45A3-9EBB-FBE5C3521DA3}"
+	ProjectSection(SolutionItems) = preProject
+		.env.example = .env.example
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -61,6 +68,10 @@ Global
 		{9426C9CB-B5F1-4323-AB7E-7493AB2C378F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9426C9CB-B5F1-4323-AB7E-7493AB2C378F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9426C9CB-B5F1-4323-AB7E-7493AB2C378F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A134931C-6B76-42BC-B2FA-48896C05E1AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A134931C-6B76-42BC-B2FA-48896C05E1AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A134931C-6B76-42BC-B2FA-48896C05E1AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A134931C-6B76-42BC-B2FA-48896C05E1AF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -73,5 +84,6 @@ Global
 		{E3BCC232-691F-4AE5-9CE2-C987E7797CB1} = {DBF2348C-56C9-41CB-A26E-833EC3238D3F}
 		{D85F849A-9A7B-403F-98E6-6A6A07485F5E} = {DBF2348C-56C9-41CB-A26E-833EC3238D3F}
 		{9426C9CB-B5F1-4323-AB7E-7493AB2C378F} = {D463125D-0C2D-43FC-A06F-4DA2EF8ECCE3}
+		{A134931C-6B76-42BC-B2FA-48896C05E1AF} = {DBF2348C-56C9-41CB-A26E-833EC3238D3F}
 	EndGlobalSection
 EndGlobal

@@ -10,7 +10,11 @@ services:
   pwneu.play:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-
+  
+  pwneu.chat:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+  
   pwneu.smtp:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development

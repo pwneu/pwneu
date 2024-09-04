@@ -8,11 +8,11 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY "src/" .
 RUN dotnet restore "./Pwneu.Gateway/Pwneu.Gateway.csproj"
-RUN dotnet build "./Pwneu.Gateway/Pwneu.Gateway.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "./Pwneu.Gateway/Pwneu.Gateway.csproj" -c $BUILD_CONFIGURATION -o /app/build --no-restore
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Pwneu.Gateway/Pwneu.Gateway.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./Pwneu.Gateway/Pwneu.Gateway.csproj" -c $BUILD_CONFIGURATION -o /app/publish --no-restore /p:UseAppHost=false
 
 FROM base AS final
 COPY ["scripts/wait-for-it.sh", "/usr/bin/wait-for-it.sh"]
@@ -25,5 +25,6 @@ ENTRYPOINT ["/bin/sh", "-c", "\
   wait-for-it.sh -t 0 pwneu.mq:5672 && \
   wait-for-it.sh -t 0 pwneu.play:8081 && \
   wait-for-it.sh -t 0 pwneu.identity:8081 && \
+  wait-for-it.sh -t 0 pwneu.chat:8081 && \
   dotnet Pwneu.Gateway.dll \
 "]

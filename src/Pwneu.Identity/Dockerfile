@@ -8,11 +8,11 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY "src/" .
 RUN dotnet restore "./Pwneu.Identity/Pwneu.Identity.csproj"
-RUN dotnet build "./Pwneu.Identity/Pwneu.Identity.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "./Pwneu.Identity/Pwneu.Identity.csproj" -c $BUILD_CONFIGURATION -o /app/build --no-restore
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Pwneu.Identity/Pwneu.Identity.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./Pwneu.Identity/Pwneu.Identity.csproj" -c $BUILD_CONFIGURATION -o /app/publish --no-restore /p:UseAppHost=false
 
 FROM base AS final
 COPY ["scripts/wait-for-it.sh", "/usr/bin/wait-for-it.sh"]

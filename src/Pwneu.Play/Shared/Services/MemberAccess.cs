@@ -24,7 +24,7 @@ public class MemberAccess(IRequestClient<GetMemberRequest> client) : IMemberAcce
         if (response.Is(out Response<UserResponse>? userResponse))
             return userResponse.Message;
 
-        response.Is(out Response<UserNotFoundResponse> _);
+        response.Is(out Response<UserNotFoundResponse>? _);
         return null;
     }
 }

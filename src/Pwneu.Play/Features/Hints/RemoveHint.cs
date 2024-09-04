@@ -40,7 +40,8 @@ public static class RemoveHint
             var invalidationTasks = new List<Task>
             {
                 cache.InvalidateUserGraphs(cancellationToken),
-                cache.InvalidateCategoryCacheAsync(hintCategoryId, cancellationToken)
+                cache.InvalidateCategoryCacheAsync(hintCategoryId, cancellationToken),
+                cache.RemoveAsync(Keys.UserRanks(), token: cancellationToken).AsTask(),
             };
 
             await Task.WhenAll(invalidationTasks);

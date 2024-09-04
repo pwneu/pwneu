@@ -80,7 +80,8 @@ public class UseHint
                 cache.RemoveAsync(
                         Keys.UserCategoryEval(request.UserId, hintDetails.CategoryId),
                         token: cancellationToken)
-                    .AsTask()
+                    .AsTask(),
+                cache.RemoveAsync(Keys.UserRanks(), token: cancellationToken).AsTask(),
             };
 
             await Task.WhenAll(invalidationTasks);
