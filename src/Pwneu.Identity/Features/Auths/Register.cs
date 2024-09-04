@@ -125,6 +125,12 @@ public static class Register
                 .EmailAddress()
                 .WithMessage("Email must be a valid email address.");
 
+            RuleFor(c => c.UserName)
+                .NotEmpty()
+                .WithMessage("UserName is required.")
+                .MaximumLength(256)
+                .WithMessage("UserName must be 256 characters or less.");
+
             RuleFor(c => c.Password)
                 .NotEmpty()
                 .WithMessage("Password is required.")

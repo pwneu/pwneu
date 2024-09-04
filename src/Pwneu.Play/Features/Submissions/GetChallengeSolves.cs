@@ -1,6 +1,5 @@
 using MediatR;
 using Pwneu.Play.Shared.Data;
-using Pwneu.Play.Shared.Services;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 
@@ -11,7 +10,7 @@ public static class GetChallengeSolves
     public record Query(Guid Id, int? Page = null, int? PageSize = null)
         : IRequest<Result<PagedList<ChallengeSolveResponse>>>;
 
-    internal sealed class Handler(ApplicationDbContext context, IMemberAccess memberAccess)
+    internal sealed class Handler(ApplicationDbContext context)
         : IRequestHandler<Query, Result<PagedList<ChallengeSolveResponse>>>
     {
         public async Task<Result<PagedList<ChallengeSolveResponse>>> Handle(Query request,
@@ -24,6 +23,7 @@ public static class GetChallengeSolves
                 .Select(s => new ChallengeSolveResponse
                 {
                     UserId = s.UserId,
+                    UserName = s.UserName,
                     SolvedAt = s.SubmittedAt
                 });
 
@@ -31,12 +31,6 @@ public static class GetChallengeSolves
                 challengeSolvesRequest,
                 request.Page ?? 1,
                 request.PageSize ?? 10);
-
-            await Task.WhenAll(challengeSolves.Items.Select(async challengeSolve =>
-            {
-                challengeSolve.UserName = (await memberAccess.GetMemberAsync(
-                    challengeSolve.UserId, cancellationToken))?.UserName;
-            }));
 
             return challengeSolves;
         }

@@ -6,6 +6,8 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.Flags;
 
+// TODO -- Unite with Challenges
+
 /// <summary>
 /// Retrieves a list of flags in a challenge.
 /// Only users with manager or admin roles can access this endpoint.
