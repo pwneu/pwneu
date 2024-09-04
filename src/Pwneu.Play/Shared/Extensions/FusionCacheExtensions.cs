@@ -43,7 +43,6 @@ public static class FusionCacheExtensions
     {
         var tasks = new List<Task>
         {
-            // TODO -- Invalidate cache Keys.Challenge() and Keys.ChallengeDetails()
             cache.RemoveAsync(
                 Keys.ChallengeDetails(challenge.Id),
                 token: cancellationToken).AsTask(),

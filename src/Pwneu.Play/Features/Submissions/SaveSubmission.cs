@@ -11,8 +11,6 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.Submissions;
 
-// TODO -- Unite with SubmitFlag feature
-
 public static class SaveSubmission
 {
     public record Command(

@@ -69,7 +69,6 @@ public static class EvaluateUser
                 Keys.ActiveUserIds(),
                 token: cancellationToken) ?? [];
 
-            // TODO -- use HashSet if possible
             if (!activeUserIds.Contains(request.Id))
                 activeUserIds.Add(request.Id);
 

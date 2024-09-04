@@ -171,7 +171,6 @@ public static class SubmitFlag
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            // TODO -- Change to "challenges/{challengeId:Guid}/flag"
             app.MapPost("challenges/{challengeId:Guid}/submit",
                     async (Guid challengeId, string flag, ClaimsPrincipal claims, ISender sender) =>
                     {
