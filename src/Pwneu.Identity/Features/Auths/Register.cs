@@ -20,6 +20,7 @@ public static class Register
 
     private static readonly Error Failed = new("Register.Failed", "Unable to create user");
     private static readonly Error AddRoleFailed = new("Register.AddRoleFailed", "Unable to add role to user");
+    private static readonly Error EmailInUse = new("Register.EmailInUse", "Email is already in use");
 
     internal sealed class Handler(
         ApplicationDbContext context,
@@ -68,7 +69,11 @@ public static class Register
 
             var createUser = await userManager.CreateAsync(user, request.Password);
             if (!createUser.Succeeded)
-                return Result.Failure(Failed);
+            {
+                return Result.Failure(createUser.Errors.Any(e => e.Code == "DuplicateEmail")
+                    ? EmailInUse
+                    : Failed);
+            }
 
             var addRole = await userManager.AddToRoleAsync(user, Consts.Member);
             if (!addRole.Succeeded)
