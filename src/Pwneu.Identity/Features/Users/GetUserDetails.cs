@@ -32,7 +32,6 @@ public static class GetUserDetails
                     {
                         Id = u.Id,
                         UserName = u.UserName,
-                        Email = u.Email,
                         FullName = u.FullName,
                         CreatedAt = u.CreatedAt,
                     })
@@ -53,7 +52,7 @@ public static class GetUserDetails
 
                     return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
                 })
-                .RequireAuthorization(Consts.ManagerAdminOnly)
+                .RequireAuthorization()
                 .WithTags(nameof(Users));
 
             app.MapGet("me/details", async (ClaimsPrincipal claims, ISender sender) =>
