@@ -38,7 +38,9 @@ public static class SaveSubmission
         public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
         {
             // Check if user exists.
-            if (!await memberAccess.MemberExistsAsync(request.UserId, cancellationToken))
+            var user = await memberAccess.GetMemberAsync(request.UserId, cancellationToken);
+
+            if (user is null)
                 return Result.Failure<Guid>(UserNotFound);
 
             // Check if the challenge still exists just in case the user has submitted
@@ -54,6 +56,7 @@ public static class SaveSubmission
             if (request.IsCorrect)
             {
                 // TODO -- Ensure uniqueness in a race condition
+
                 var alreadySolved = await context
                     .Submissions
                     .AnyAsync(s =>
@@ -73,6 +76,7 @@ public static class SaveSubmission
             {
                 Id = Guid.NewGuid(),
                 UserId = request.UserId,
+                UserName = user.UserName ?? "unknown",
                 ChallengeId = request.ChallengeId,
                 Flag = request.Flag,
                 SubmittedAt = request.SubmittedAt,

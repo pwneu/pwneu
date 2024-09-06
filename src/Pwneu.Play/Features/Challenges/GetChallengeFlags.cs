@@ -4,7 +4,7 @@ using Pwneu.Play.Shared.Data;
 using Pwneu.Shared.Common;
 using ZiggyCreatures.Caching.Fusion;
 
-namespace Pwneu.Play.Features.Flags;
+namespace Pwneu.Play.Features.Challenges;
 
 /// <summary>
 /// Retrieves a list of flags in a challenge.
@@ -45,7 +45,7 @@ public static class GetChallengeFlags
                     return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
                 })
                 .RequireAuthorization(Consts.ManagerAdminOnly)
-                .WithTags(nameof(Flags));
+                .WithTags(nameof(Challenges));
         }
     }
 }

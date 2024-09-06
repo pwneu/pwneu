@@ -46,7 +46,6 @@ public record UserDetailsResponse
 {
     public string Id { get; set; } = default!;
     public string? UserName { get; set; }
-    public string? Email { get; set; }
     public string FullName { get; set; } = default!;
     public DateTime CreatedAt { get; set; }
 }
@@ -59,7 +58,7 @@ public record UserDeletedEvent
 public record LeaderboardsResponse
 {
     public UserRankResponse? RequesterRank { get; set; } = default!;
-    public List<UserRankResponse> TopUsers { get; set; } = [];
+    public List<UserRankResponse> UserRanks { get; set; } = [];
 }
 
 public record UserRankResponse

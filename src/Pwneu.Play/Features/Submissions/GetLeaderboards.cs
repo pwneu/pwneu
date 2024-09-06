@@ -9,8 +9,6 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.Submissions;
 
-// TODO -- Test this
-
 public static class GetLeaderboards
 {
     public record Query(string RequesterId) : IRequest<Result<LeaderboardsResponse>>;
@@ -21,104 +19,64 @@ public static class GetLeaderboards
         public async Task<Result<LeaderboardsResponse>> Handle(Query request,
             CancellationToken cancellationToken)
         {
-            var leaderboards = await cache.GetOrSetAsync(Keys.UserRanks(), async _ =>
+            var userRanks = await cache.GetOrSetAsync(Keys.UserRanks(), async _ =>
             {
-                // Step 1: Calculate total points from correct submissions, considering challenge points
+                // Count all the user points and track the earliest submission time for tie-breaking
                 var userPoints = await context.Submissions
                     .Where(s => s.IsCorrect)
-                    .Join(context.Challenges,
-                        s => s.ChallengeId,
-                        c => c.Id,
-                        (s, c) => new
-                        {
-                            s.UserId,
-                            c.Points
-                        })
-                    .GroupBy(sc => sc.UserId)
+                    .GroupBy(s => new { s.UserId, s.UserName })
                     .Select(g => new
                     {
-                        UserId = g.Key,
-                        Points = g.Sum(sc => sc.Points)
+                        g.Key.UserId,
+                        g.Key.UserName,
+                        TotalPoints = g.Sum(s => s.Challenge.Points),
+                        EarliestSubmission = g.Min(s => s.SubmittedAt) // Track the earliest submission time
                     })
                     .ToListAsync(cancellationToken);
 
-                // Step 2: Calculate total deductions from hint usages
+                // Count all the user deductions of hint usages
                 var userDeductions = await context.HintUsages
-                    .Join(context.Hints,
-                        hu => hu.HintId,
-                        h => h.Id,
-                        (hu, h) => new
-                        {
-                            hu.UserId, h.Deduction
-                        })
-                    .GroupBy(hu => hu.UserId)
+                    .GroupBy(hu => new { hu.UserId })
                     .Select(g => new
                     {
-                        UserId = g.Key,
-                        Deductions = g.Sum(hu => hu.Deduction)
+                        g.Key.UserId,
+                        TotalDeductions = g.Sum(hu => hu.Hint.Deduction)
                     })
                     .ToListAsync(cancellationToken);
 
-                // Step 3: Track the timestamp of the first correct submission for each user
-                var firstSubmissionTimes = await context.Submissions
-                    .Where(s => s.IsCorrect)
-                    .GroupBy(s => s.UserId)
-                    .Select(g => new
-                    {
-                        UserId = g.Key,
-                        FirstSubmissionTime = g.Min(s => s.SubmittedAt)
-                    })
-                    .ToListAsync(cancellationToken);
-
-                // Step 4: Combine points, deductions, and first submission times
-                var userPointsAndDeductions = userPoints
-                    .Join(userDeductions,
-                        p => p.UserId,
-                        d => d.UserId,
-                        (p, d) => new
+                // Combine points and deductions, calculate final score, sort by points, then by earliest submission time, and assign ranks
+                var userRanks = userPoints
+                    .GroupJoin(
+                        userDeductions,
+                        up => up.UserId,
+                        ud => ud.UserId,
+                        (up, uds) => new
                         {
-                            p.UserId,
-                            NetPoints = p.Points - d.Deductions
+                            up.UserId,
+                            up.UserName,
+                            FinalScore = up.TotalPoints - uds.Sum(ud => ud.TotalDeductions),
+                            up.EarliestSubmission
                         })
-                    .ToList();
-
-                var userRanks = firstSubmissionTimes
-                    .Join(userPointsAndDeductions,
-                        t => t.UserId,
-                        pd => pd.UserId,
-                        (t, pd) => new
-                        {
-                            t.UserId,
-                            pd.NetPoints,
-                            t.FirstSubmissionTime
-                        })
-                    .OrderByDescending(r => r.NetPoints)
-                    .ThenBy(r => r.FirstSubmissionTime) // Sort by the first submission time for tie-breaking
-                    .Select(r => new UserRankResponse
+                    .OrderByDescending(u => u.FinalScore)
+                    .ThenBy(u => u.EarliestSubmission) // Break ties by earliest submission time
+                    .Select((u, index) => new UserRankResponse
                     {
-                        Id = r.UserId,
-                        Points = r.NetPoints,
-                        Position = 0 // Placeholder; you will set positions in the final step
+                        Id = u.UserId,
+                        UserName = u.UserName,
+                        Position = index + 1,
+                        Points = u.FinalScore
                     })
                     .ToList();
-
-                // Step 5: Assign positions
-                for (var i = 0; i < userRanks.Count; i++)
-                {
-                    userRanks[i] = userRanks[i] with { Position = i + 1 };
-                }
 
                 return userRanks;
             }, token: cancellationToken);
 
-            var requesterRank = leaderboards.FirstOrDefault(u => u.Id == request.RequesterId);
-
-            // TODO -- Get user names
+            var requesterRank = userRanks.FirstOrDefault(u => u.Id == request.RequesterId);
 
             return new LeaderboardsResponse
             {
                 RequesterRank = requesterRank,
-                TopUsers = leaderboards
+                UserRanks = userRanks
             };
         }
     }

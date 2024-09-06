@@ -1,5 +1,5 @@
 using FluentAssertions;
-using Pwneu.Play.Features.Flags;
+using Pwneu.Play.Features.Challenges;
 using Pwneu.Play.Shared.Entities;
 
 namespace Pwneu.Play.IntegrationTests.Features.Flags;

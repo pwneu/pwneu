@@ -10,7 +10,7 @@ using Pwneu.Shared.Contracts;
 using Pwneu.Shared.Extensions;
 using ZiggyCreatures.Caching.Fusion;
 
-namespace Pwneu.Play.Features.Flags;
+namespace Pwneu.Play.Features.Submissions;
 
 /// <summary>
 /// Submits a flag and stores the submission in the database for tracking user performance.
@@ -183,7 +183,7 @@ public static class SubmitFlag
                         return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value.ToString());
                     })
                 .RequireAuthorization(Consts.MemberOnly)
-                .WithTags(nameof(Flags));
+                .WithTags(nameof(Submissions));
         }
     }
 

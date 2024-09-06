@@ -16,7 +16,9 @@ using Pwneu.Shared.Contracts;
 
 namespace Pwneu.Identity.Features.Auths;
 
-// TODO -- automatically send confirmation token on logged in on unverified email
+// TODO -- Automatically send confirmation token on logged in on unverified email
+// TODO -- Fix login trace
+
 public static class Login
 {
     public record Command(
