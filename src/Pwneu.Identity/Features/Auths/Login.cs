@@ -126,7 +126,22 @@ public static class Login
                     var command = new Command(request.UserName, request.Password, ipAddress, userAgent, referer);
                     var result = await sender.Send(command);
 
-                    return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);
+                    if (result.IsFailure)
+                        return Results.BadRequest(result.Error);
+
+                    var tokenResponse = result.Value;
+
+                    var cookieOptions = new CookieOptions
+                    {
+                        Expires = DateTime.Now.AddDays(7),
+                        HttpOnly = true,
+                        Secure = true,
+                        SameSite = SameSiteMode.Strict
+                    };
+
+                    httpContext.Response.Cookies.Append(Consts.RefreshToken, tokenResponse.RefreshToken, cookieOptions);
+
+                    return Results.Ok(tokenResponse.AccessToken);
                 })
                 .WithTags(nameof(Auths));
         }

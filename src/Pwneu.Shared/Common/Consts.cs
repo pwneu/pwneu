@@ -23,4 +23,6 @@ public static class Consts
     public const string Sqlite = "Sqlite";
 
     public const int GmailSmtpPort = 587;
+
+    public const string RefreshToken = "refreshToken";
 }

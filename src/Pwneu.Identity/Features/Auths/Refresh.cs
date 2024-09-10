@@ -9,14 +9,13 @@ using Microsoft.IdentityModel.Tokens;
 using Pwneu.Identity.Shared.Entities;
 using Pwneu.Identity.Shared.Options;
 using Pwneu.Shared.Common;
-using Pwneu.Shared.Contracts;
 using Pwneu.Shared.Extensions;
 
 namespace Pwneu.Identity.Features.Auths;
 
 public static class Refresh
 {
-    public record Command(string AccessToken, string RefreshToken) : IRequest<Result<TokenResponse>>;
+    public record Command(string AccessToken, string? RefreshToken) : IRequest<Result<string>>;
 
     private static readonly Error Invalid = new("Refresh.Invalid", "Invalid token");
 
@@ -24,16 +23,16 @@ public static class Refresh
         UserManager<User> userManager,
         IOptions<JwtOptions> jwtOptions,
         IValidator<Command> validator)
-        : IRequestHandler<Command, Result<TokenResponse>>
+        : IRequestHandler<Command, Result<string>>
     {
         private readonly JwtOptions _jwtOptions = jwtOptions.Value;
 
-        public async Task<Result<TokenResponse>> Handle(Command request, CancellationToken cancellationToken)
+        public async Task<Result<string>> Handle(Command request, CancellationToken cancellationToken)
         {
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
 
             if (!validationResult.IsValid)
-                return Result.Failure<TokenResponse>(new Error("Refresh.Validation", validationResult.ToString()));
+                return Result.Failure<string>(new Error("Refresh.Validation", validationResult.ToString()));
 
             var validation = new TokenValidationParameters
             {
@@ -47,14 +46,14 @@ public static class Refresh
 
             var userName = principal.GetLoggedInUserName();
             if (userName is null)
-                return Result.Failure<TokenResponse>(Invalid);
+                return Result.Failure<string>(Invalid);
 
             var user = await userManager.FindByNameAsync(userName);
 
             if (user is null ||
                 user.RefreshToken != request.RefreshToken ||
                 user.RefreshTokenExpiry < DateTime.UtcNow)
-                return Result.Failure<TokenResponse>(Invalid);
+                return Result.Failure<string>(Invalid);
 
             var roles = await userManager.GetRolesAsync(user);
             var claims = new List<Claim>
@@ -70,11 +69,7 @@ public static class Refresh
             var accessToken = new JwtSecurityToken(_jwtOptions.Issuer, _jwtOptions.Audience, claims, null,
                 DateTime.UtcNow.AddHours(1), credentials);
 
-            return new TokenResponse
-            {
-                AccessToken = new JwtSecurityTokenHandler().WriteToken(accessToken),
-                RefreshToken = request.RefreshToken
-            };
+            return new JwtSecurityTokenHandler().WriteToken(accessToken);
         }
     }
 
@@ -82,9 +77,11 @@ public static class Refresh
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("refresh", async (RefreshRequest request, ISender sender) =>
+            app.MapPost("refresh", async (string accessToken, HttpContext httpContext, ISender sender) =>
                 {
-                    var command = new Command(request.AccessToken, request.RefreshToken);
+                    var refreshToken = httpContext.Request.Cookies[Consts.RefreshToken];
+
+                    var command = new Command(accessToken, refreshToken);
                     var result = await sender.Send(command);
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);

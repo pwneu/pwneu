@@ -36,12 +36,6 @@ public record LoggedInEvent
     public string? Referer { get; set; }
 }
 
-public record RefreshRequest
-{
-    public string RefreshToken { get; set; } = default!;
-    public string AccessToken { get; set; } = default!;
-}
-
 public record TokenResponse
 {
     public string AccessToken { get; set; } = default!;
