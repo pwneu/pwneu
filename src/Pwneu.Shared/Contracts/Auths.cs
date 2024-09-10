@@ -36,7 +36,7 @@ public record LoggedInEvent
     public string? Referer { get; set; }
 }
 
-public record TokenResponse
+public record LoginResponse
 {
     public string AccessToken { get; set; } = default!;
     public string RefreshToken { get; set; } = default!;

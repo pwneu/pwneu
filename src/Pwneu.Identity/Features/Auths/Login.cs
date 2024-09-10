@@ -27,7 +27,7 @@ public static class Login
         string? IpAddress = null,
         string? UserAgent = null,
         string? Referer = null)
-        : IRequest<Result<TokenResponse>>;
+        : IRequest<Result<LoginResponse>>;
 
     private static readonly Error Invalid = new("Login.Invalid", "Incorrect username or password");
 
@@ -40,32 +40,32 @@ public static class Login
         IOptions<JwtOptions> jwtOptions,
         IPublishEndpoint publishEndpoint,
         IValidator<Command> validator)
-        : IRequestHandler<Command, Result<TokenResponse>>
+        : IRequestHandler<Command, Result<LoginResponse>>
     {
         private readonly JwtOptions _jwtOptions = jwtOptions.Value;
 
-        public async Task<Result<TokenResponse>> Handle(Command request, CancellationToken cancellationToken)
+        public async Task<Result<LoginResponse>> Handle(Command request, CancellationToken cancellationToken)
         {
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
 
             if (!validationResult.IsValid)
-                return Result.Failure<TokenResponse>(new Error("Login.Validation", validationResult.ToString()));
+                return Result.Failure<LoginResponse>(new Error("Login.Validation", validationResult.ToString()));
 
             var user = await userManager
                 .Users
                 .FirstOrDefaultAsync(u => u.UserName == request.UserName, cancellationToken: cancellationToken);
 
             if (user is null)
-                return Result.Failure<TokenResponse>(Invalid);
+                return Result.Failure<LoginResponse>(Invalid);
 
             var signIn = await signInManager.CheckPasswordSignInAsync(user, request.Password, false);
 
             if (!signIn.Succeeded)
             {
                 if (!await userManager.IsEmailConfirmedAsync(user))
-                    return Result.Failure<TokenResponse>(EmailNotConfirmed);
+                    return Result.Failure<LoginResponse>(EmailNotConfirmed);
 
-                return Result.Failure<TokenResponse>(Invalid);
+                return Result.Failure<LoginResponse>(Invalid);
             }
 
             string refreshToken;
@@ -104,7 +104,7 @@ public static class Login
                 Referer = request.Referer
             }, cancellationToken);
 
-            return new TokenResponse
+            return new LoginResponse
             {
                 AccessToken = new JwtSecurityTokenHandler().WriteToken(accessToken),
                 RefreshToken = refreshToken
