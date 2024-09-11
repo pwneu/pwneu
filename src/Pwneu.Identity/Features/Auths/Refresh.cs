@@ -15,7 +15,7 @@ namespace Pwneu.Identity.Features.Auths;
 
 public static class Refresh
 {
-    public record Command(string AccessToken, string? RefreshToken) : IRequest<Result<string>>;
+    public record Command(string? RefreshToken) : IRequest<Result<string>>;
 
     private static readonly Error Invalid = new("Refresh.Invalid", "Invalid token");
 
@@ -34,42 +34,65 @@ public static class Refresh
             if (!validationResult.IsValid)
                 return Result.Failure<string>(new Error("Refresh.Validation", validationResult.ToString()));
 
-            var validation = new TokenValidationParameters
+            try
             {
-                ValidIssuer = _jwtOptions.Issuer,
-                ValidAudience = _jwtOptions.Audience,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey)),
-                ValidateLifetime = false
-            };
+                // Validate the refresh token
+                var validationParameters = new TokenValidationParameters
+                {
+                    ValidIssuer = _jwtOptions.Issuer,
+                    ValidAudience = _jwtOptions.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey)),
+                    ValidateLifetime = true
+                };
 
-            var principal = new JwtSecurityTokenHandler().ValidateToken(request.AccessToken, validation, out _);
+                var principal = new JwtSecurityTokenHandler().ValidateToken(
+                    request.RefreshToken,
+                    validationParameters,
+                    out var validatedToken);
 
-            var userName = principal.GetLoggedInUserName();
-            if (userName is null)
-                return Result.Failure<string>(Invalid);
+                if (validatedToken is not JwtSecurityToken jwtSecurityToken ||
+                    !jwtSecurityToken.Header.Alg.Equals(
+                        SecurityAlgorithms.HmacSha256Signature,
+                        StringComparison.InvariantCultureIgnoreCase))
+                    return Result.Failure<string>(Invalid);
 
-            var user = await userManager.FindByNameAsync(userName);
+                // Extract user information from the claims
+                var userId = principal.GetLoggedInUserId<string>();
+                if (userId is null)
+                    return Result.Failure<string>(Invalid);
 
-            if (user is null ||
-                user.RefreshToken != request.RefreshToken ||
-                user.RefreshTokenExpiry < DateTime.UtcNow)
-                return Result.Failure<string>(Invalid);
+                var user = await userManager.FindByIdAsync(userId);
 
-            var roles = await userManager.GetRolesAsync(user);
-            var claims = new List<Claim>
+                if (user is null ||
+                    user.RefreshToken != request.RefreshToken ||
+                    user.RefreshTokenExpiry < DateTime.UtcNow)
+                    return Result.Failure<string>(Invalid);
+
+                var roles = await userManager.GetRolesAsync(user);
+                var claims = new List<Claim>
+                {
+                    new(JwtRegisteredClaimNames.Name, user.UserName ?? string.Empty),
+                    new(JwtRegisteredClaimNames.Sub, user.Id),
+                };
+                claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey));
+                var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
+
+                var accessToken = new JwtSecurityToken(
+                    issuer: _jwtOptions.Issuer,
+                    audience: _jwtOptions.Audience,
+                    claims: claims,
+                    notBefore: null,
+                    expires: DateTime.UtcNow.AddHours(1),
+                    signingCredentials: credentials);
+
+                return new JwtSecurityTokenHandler().WriteToken(accessToken);
+            }
+            catch (SecurityTokenException)
             {
-                new(JwtRegisteredClaimNames.Name, user.UserName ?? string.Empty),
-                new(JwtRegisteredClaimNames.Sub, user.Id),
-            };
-            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey));
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var accessToken = new JwtSecurityToken(_jwtOptions.Issuer, _jwtOptions.Audience, claims, null,
-                DateTime.UtcNow.AddHours(1), credentials);
-
-            return new JwtSecurityTokenHandler().WriteToken(accessToken);
+                return Result.Failure<string>(Invalid);
+            }
         }
     }
 
@@ -77,11 +100,11 @@ public static class Refresh
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("refresh", async (string accessToken, HttpContext httpContext, ISender sender) =>
+            app.MapPost("refresh", async (HttpContext httpContext, ISender sender) =>
                 {
                     var refreshToken = httpContext.Request.Cookies[Consts.RefreshToken];
 
-                    var command = new Command(accessToken, refreshToken);
+                    var command = new Command(refreshToken);
                     var result = await sender.Send(command);
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);
@@ -94,10 +117,6 @@ public static class Refresh
     {
         public Validator()
         {
-            RuleFor(c => c.AccessToken)
-                .NotEmpty()
-                .WithMessage("Access Token is required.");
-
             RuleFor(c => c.RefreshToken)
                 .NotEmpty()
                 .WithMessage("Refresh Token is required.");

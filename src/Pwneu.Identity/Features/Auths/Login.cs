@@ -1,6 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
 using FluentValidation;
 using MassTransit;
@@ -68,13 +67,27 @@ public static class Login
                 return Result.Failure<LoginResponse>(Invalid);
             }
 
-            string refreshToken;
-            using (var rng = RandomNumberGenerator.Create())
+            var refreshTokenClaims = new List<Claim>
             {
-                var randomNumber = new byte[64];
-                rng.GetBytes(randomNumber);
-                refreshToken = Convert.ToBase64String(randomNumber);
-            }
+                new(JwtRegisteredClaimNames.Name, user.UserName ?? string.Empty),
+                new(JwtRegisteredClaimNames.Sub, user.Id),
+                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
+
+            var refreshTokenKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey));
+            var refreshTokenCredentials = new SigningCredentials(
+                refreshTokenKey,
+                SecurityAlgorithms.HmacSha256Signature);
+
+            var refreshTokenJwt = new JwtSecurityToken(
+                issuer: _jwtOptions.Issuer,
+                audience: _jwtOptions.Audience,
+                claims: refreshTokenClaims,
+                notBefore: DateTime.UtcNow,
+                expires: DateTime.UtcNow.AddDays(7),
+                signingCredentials: refreshTokenCredentials);
+
+            var refreshToken = new JwtSecurityTokenHandler().WriteToken(refreshTokenJwt);
 
             user.RefreshToken = refreshToken;
             user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7);
@@ -82,18 +95,23 @@ public static class Login
             await userManager.UpdateAsync(user);
 
             var roles = await userManager.GetRolesAsync(user);
-            var claims = new List<Claim>
+            var accessTokenClaims = new List<Claim>
             {
                 new(JwtRegisteredClaimNames.Name, user.UserName ?? string.Empty),
                 new(JwtRegisteredClaimNames.Sub, user.Id),
             };
-            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+            accessTokenClaims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey));
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
+            var accessTokenKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey));
+            var accessTokenCredentials = new SigningCredentials(accessTokenKey, SecurityAlgorithms.HmacSha256Signature);
 
-            var accessToken = new JwtSecurityToken(_jwtOptions.Issuer, _jwtOptions.Audience, claims, null,
-                DateTime.UtcNow.AddHours(1), credentials);
+            var accessToken = new JwtSecurityToken(
+                issuer: _jwtOptions.Issuer,
+                audience: _jwtOptions.Audience,
+                claims: accessTokenClaims,
+                notBefore: null,
+                expires: DateTime.UtcNow.AddHours(1),
+                signingCredentials: accessTokenCredentials);
 
             await publishEndpoint.Publish(new LoggedInEvent
             {
