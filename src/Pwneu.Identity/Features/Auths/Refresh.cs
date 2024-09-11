@@ -107,7 +107,7 @@ public static class Refresh
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("refresh", async (HttpContext httpContext, ISender sender) =>
+            app.MapGet("refresh", async (HttpContext httpContext, ISender sender) =>
                 {
                     var refreshToken = httpContext.Request.Cookies[Consts.RefreshToken];
 
