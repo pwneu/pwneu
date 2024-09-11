@@ -33,9 +33,21 @@ public static class SendEmailConfirmation
                 Credentials = new NetworkCredential(_smtpOptions.SenderAddress, _smtpOptions.SenderPassword)
             };
 
+            var encodedEmail = WebUtility.UrlEncode(request.Email);
+            var encodedConfirmationToken = WebUtility.UrlEncode(request.ConfirmationToken);
+
             using var mailMessage = new MailMessage(_smtpOptions.SenderAddress, request.Email);
-            mailMessage.Subject = "Hello Pwneu!";
-            mailMessage.Body = $"Confirmation Token: {request.ConfirmationToken}";
+            mailMessage.Subject = "Welcome to PWNEU!";
+            mailMessage.IsBodyHtml = true;
+            mailMessage.Body = $"""
+                                    <p>Dear User,</p>
+                                    <p>Please verify your email address by clicking the link below:</p>
+                                    <p><a href='{_smtpOptions.VerifyEmailUrl}?email={encodedEmail}&confirmationToken={encodedConfirmationToken}'>Click here to confirm your email</a></p>
+                                    <p>This verification link will expire in 24 hours. If you do not verify your email within this time, the registered account may be removed.</p>
+                                    <p>If you did not request this registration, please ignore this email. No action will be taken on this account.</p>
+                                    <p>Thank you!</p>
+                                    <p>Pwneu Team</p>
+                                """;
 
             try
             {

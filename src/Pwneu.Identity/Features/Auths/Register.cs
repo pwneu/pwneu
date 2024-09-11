@@ -122,13 +122,18 @@ public static class Register
 
     public class Validator : AbstractValidator<Command>
     {
-        public Validator()
+        public Validator(IOptions<AppOptions> appOptions)
         {
+            var validDomain = appOptions.Value.ValidEmailDomain;
+
             RuleFor(c => c.Email)
                 .NotEmpty()
                 .WithMessage("Email is required.")
                 .EmailAddress()
-                .WithMessage("Email must be a valid email address.");
+                .WithMessage("Email must be a valid email address.")
+                .Must((_, email) => IsValidDomain(email, validDomain))
+                .WithMessage((_, email) =>
+                    $"Email domain '{email.Split('@').LastOrDefault()}' is not allowed. Use the domain '{validDomain}'.");
 
             RuleFor(c => c.UserName)
                 .NotEmpty()
@@ -155,6 +160,15 @@ public static class Register
                 .WithMessage("Full Name is required.")
                 .MaximumLength(100)
                 .WithMessage("Full Name must be 100 characters or less.");
+        }
+
+        private static bool IsValidDomain(string email, string? validDomain)
+        {
+            if (string.IsNullOrWhiteSpace(validDomain))
+                return true;
+
+            var emailDomain = email.Split('@').LastOrDefault();
+            return emailDomain?.Equals(validDomain, StringComparison.OrdinalIgnoreCase) == true;
         }
     }
 }

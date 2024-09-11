@@ -57,6 +57,7 @@ services:
       - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
       - AppOptions__RequireRegistrationKey=${REQUIRE_REGISTRATION_KEY}
       - AppOptions__InitialAdminPassword=${ADMIN_PASSWORD}
+      - AppOptions__ValidEmailDomain=${VALID_EMAIL_DOMAIN}
       - JwtOptions__Issuer=${JWT_ISSUER}
       - JwtOptions__Audience=${JWT_AUDIENCE}
       - JwtOptions__SigningKey=${JWT_SIGNING_KEY}
@@ -176,6 +177,7 @@ services:
       - SmtpOptions__NotifyLoginIsEnabled=${SMTP_NOTIFY_LOGIN_IS_ENABLED}
       - SmtpOptions__SendEmailConfirmationIsEnabled=${SMTP_SEND_EMAIL_CONFIRMATION_IS_ENABLED}
       - SmtpOptions__SendPasswordResetTokenIsEnabled=${SMTP_SEND_PASSWORD_RESET_TOKEN_IS_ENABLED}
+      - SmtpOptions__VerifyEmailUrl=${SMTP_VERIFY_EMAIL_URL}
     volumes:
       - ./.containers/certs:/home/app/.aspnet/https:ro
     networks:
