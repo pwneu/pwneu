@@ -124,6 +124,9 @@ public static class Login
 
             return new LoginResponse
             {
+                Id = user.Id,
+                UserName = user.UserName,
+                Roles = roles.ToList(),
                 AccessToken = new JwtSecurityTokenHandler().WriteToken(accessToken),
                 RefreshToken = refreshToken
             };
@@ -147,7 +150,7 @@ public static class Login
                     if (result.IsFailure)
                         return Results.BadRequest(result.Error);
 
-                    var tokenResponse = result.Value;
+                    var response = result.Value;
 
                     var cookieOptions = new CookieOptions
                     {
@@ -157,9 +160,15 @@ public static class Login
                         SameSite = SameSiteMode.Strict
                     };
 
-                    httpContext.Response.Cookies.Append(Consts.RefreshToken, tokenResponse.RefreshToken, cookieOptions);
+                    httpContext.Response.Cookies.Append(Consts.RefreshToken, response.RefreshToken, cookieOptions);
 
-                    return Results.Ok(tokenResponse.AccessToken);
+                    return Results.Ok(new TokenResponse
+                    {
+                        Id = response.Id,
+                        UserName = response.UserName,
+                        Roles = response.Roles,
+                        AccessToken = response.AccessToken
+                    });
                 })
                 .WithTags(nameof(Auths));
         }

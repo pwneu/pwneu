@@ -9,13 +9,14 @@ using Microsoft.IdentityModel.Tokens;
 using Pwneu.Identity.Shared.Entities;
 using Pwneu.Identity.Shared.Options;
 using Pwneu.Shared.Common;
+using Pwneu.Shared.Contracts;
 using Pwneu.Shared.Extensions;
 
 namespace Pwneu.Identity.Features.Auths;
 
 public static class Refresh
 {
-    public record Command(string? RefreshToken) : IRequest<Result<string>>;
+    public record Command(string? RefreshToken) : IRequest<Result<TokenResponse>>;
 
     private static readonly Error Invalid = new("Refresh.Invalid", "Invalid token");
 
@@ -23,16 +24,16 @@ public static class Refresh
         UserManager<User> userManager,
         IOptions<JwtOptions> jwtOptions,
         IValidator<Command> validator)
-        : IRequestHandler<Command, Result<string>>
+        : IRequestHandler<Command, Result<TokenResponse>>
     {
         private readonly JwtOptions _jwtOptions = jwtOptions.Value;
 
-        public async Task<Result<string>> Handle(Command request, CancellationToken cancellationToken)
+        public async Task<Result<TokenResponse>> Handle(Command request, CancellationToken cancellationToken)
         {
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
 
             if (!validationResult.IsValid)
-                return Result.Failure<string>(new Error("Refresh.Validation", validationResult.ToString()));
+                return Result.Failure<TokenResponse>(new Error("Refresh.Validation", validationResult.ToString()));
 
             try
             {
@@ -54,19 +55,19 @@ public static class Refresh
                     !jwtSecurityToken.Header.Alg.Equals(
                         SecurityAlgorithms.HmacSha256Signature,
                         StringComparison.InvariantCultureIgnoreCase))
-                    return Result.Failure<string>(Invalid);
+                    return Result.Failure<TokenResponse>(Invalid);
 
                 // Extract user information from the claims
                 var userId = principal.GetLoggedInUserId<string>();
                 if (userId is null)
-                    return Result.Failure<string>(Invalid);
+                    return Result.Failure<TokenResponse>(Invalid);
 
                 var user = await userManager.FindByIdAsync(userId);
 
                 if (user is null ||
                     user.RefreshToken != request.RefreshToken ||
                     user.RefreshTokenExpiry < DateTime.UtcNow)
-                    return Result.Failure<string>(Invalid);
+                    return Result.Failure<TokenResponse>(Invalid);
 
                 var roles = await userManager.GetRolesAsync(user);
                 var claims = new List<Claim>
@@ -87,11 +88,17 @@ public static class Refresh
                     expires: DateTime.UtcNow.AddHours(1),
                     signingCredentials: credentials);
 
-                return new JwtSecurityTokenHandler().WriteToken(accessToken);
+                return new TokenResponse
+                {
+                    Id = user.Id,
+                    UserName = user.UserName,
+                    Roles = roles.ToList(),
+                    AccessToken = new JwtSecurityTokenHandler().WriteToken(accessToken)
+                };
             }
             catch (SecurityTokenException)
             {
-                return Result.Failure<string>(Invalid);
+                return Result.Failure<TokenResponse>(Invalid);
             }
         }
     }
