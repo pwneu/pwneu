@@ -32,9 +32,6 @@ services:
     build:
       context: .
       dockerfile: src/Pwneu.Identity/Dockerfile
-    ports:
-      - "37200:8080"
-      - "37201:8081"
     environment:
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
@@ -77,9 +74,6 @@ services:
     build:
       context: .
       dockerfile: src/Pwneu.Play/Dockerfile
-    ports:
-      - "37300:8080"
-      - "37301:8081"
     environment:
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
@@ -120,9 +114,6 @@ services:
     build:
       context: .
       dockerfile: src/Pwneu.Chat/Dockerfile
-    ports:
-      - "37400:8080"
-      - "37401:8081"
     environment:
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
