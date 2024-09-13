@@ -12,6 +12,8 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.Submissions;
 
+// TODO -- Add checking if event is still up
+
 /// <summary>
 /// Submits a flag and stores the submission in the database for tracking user performance.
 /// Only users with a member role can access this endpoint.

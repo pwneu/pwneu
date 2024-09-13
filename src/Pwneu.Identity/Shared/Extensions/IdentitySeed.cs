@@ -41,7 +41,17 @@ public static class IdentitySeed
         var admin = await userManager.FindByNameAsync(Consts.Admin);
 
         if (admin is not null)
+        {
+            // Change the password if the admin exists
+            var token = await userManager.GeneratePasswordResetTokenAsync(admin);
+            var resetPassword = await userManager.ResetPasswordAsync(admin, token, password);
+            if (!resetPassword.Succeeded)
+                throw new InvalidOperationException(
+                    "Failed to reset admin password: " +
+                    string.Join(", ", resetPassword.Errors.Select(e => e.Description)));
+
             return;
+        }
 
         admin = new User { UserName = Consts.Admin.ToLower(), EmailConfirmed = true };
 

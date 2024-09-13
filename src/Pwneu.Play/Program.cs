@@ -24,7 +24,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // OpenTelemetry (for metrics, traces, and logs)
 builder.Services.AddOpenTelemetry()
-    .ConfigureResource(resource => resource.AddService("Pwneu"))
+    .ConfigureResource(resource => resource.AddService(nameof(Pwneu.Play)))
     .WithMetrics(metrics =>
     {
         metrics
@@ -156,7 +156,25 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())
-    app.MapGet("/", () => "Hello Play!");
+    app.MapGet("/", async context =>
+    {
+        var clientIp = context.Connection.RemoteIpAddress?.ToString();
+        var forwardedForHeader = context.Request.Headers["X-Forwarded-For"].ToString();
+        var forwardedProtoHeader = context.Request.Headers["X-Forwarded-Proto"].ToString();
+        var forwardedHostHeader = context.Request.Headers["X-Forwarded-Host"].ToString();
+
+        var response = new
+        {
+            Service = "Pwneu Play",
+            ClientIp = clientIp,
+            ForwardedFor = forwardedForHeader,
+            ForwardedProto = forwardedProtoHeader,
+            ForwardedHost = forwardedHostHeader
+        };
+
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(response);
+    });
 
 app.MapEndpoints();
 

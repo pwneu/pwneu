@@ -7,14 +7,31 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
 
+  pwneu.identity.db:
+    ports:
+      - "37202:5432"
+
   pwneu.play:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-  
+
+  pwneu.play.db:
+    ports:
+      - "37302:5432"
+
   pwneu.chat:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-  
+
   pwneu.smtp:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+
+  pwneu.cache:
+    ports:
+      - "6379:6379"
+
+  pwneu.mq:
+    ports:
+      - "5672:5672"
+      - "15672:15672"

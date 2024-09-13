@@ -17,6 +17,9 @@ public static class Revoke
 {
     public record Command(string UserId) : IRequest<Result>;
 
+    private static readonly Error UserNotFound = new("Revoke.UserNotFound", "User not found");
+    private static readonly Error UpdateFailed = new("Revoke.UpdateFailed", "Failed to update user");
+
     internal sealed class Handler(UserManager<User> userManager) : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
@@ -24,13 +27,13 @@ public static class Revoke
             var user = await userManager.FindByIdAsync(request.UserId);
 
             if (user is null)
-                return Result.Failure(Error.None);
+                return Result.Failure(UserNotFound);
 
             user.RefreshToken = null;
 
-            await userManager.UpdateAsync(user);
+            var updateResult = await userManager.UpdateAsync(user);
 
-            return Result.Success();
+            return updateResult.Succeeded ? Result.Success() : Result.Failure(UpdateFailed);
         }
     }
 

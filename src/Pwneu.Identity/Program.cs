@@ -8,6 +8,10 @@ using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Pwneu.Identity.Shared.Data;
 using Pwneu.Identity.Shared.Entities;
 using Pwneu.Identity.Shared.Extensions;
@@ -35,6 +39,26 @@ builder.Services
     .BindConfiguration($"{nameof(JwtOptions)}")
     .ValidateDataAnnotations()
     .ValidateOnStart();
+
+// OpenTelemetry (for metrics, traces, and logs)
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService(nameof(Pwneu.Identity)))
+    .WithMetrics(metrics =>
+    {
+        metrics
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddOtlpExporter();
+    })
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddOtlpExporter();
+    });
+
+builder.Logging.AddOpenTelemetry(logging => logging.AddOtlpExporter());
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -173,7 +197,25 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())
-    app.MapGet("/", () => "Hello Identity!");
+    app.MapGet("/", async context =>
+    {
+        var clientIp = context.Connection.RemoteIpAddress?.ToString();
+        var forwardedForHeader = context.Request.Headers["X-Forwarded-For"].ToString();
+        var forwardedProtoHeader = context.Request.Headers["X-Forwarded-Proto"].ToString();
+        var forwardedHostHeader = context.Request.Headers["X-Forwarded-Host"].ToString();
+
+        var response = new
+        {
+            Service = "Pwneu Identity",
+            ClientIp = clientIp,
+            ForwardedFor = forwardedForHeader,
+            ForwardedProto = forwardedProtoHeader,
+            ForwardedHost = forwardedHostHeader
+        };
+
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(response);
+    });
 
 app.MapEndpoints();
 

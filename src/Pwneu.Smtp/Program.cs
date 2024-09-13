@@ -1,4 +1,8 @@
 using MassTransit;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Pwneu.Shared.Common;
 using Pwneu.Smtp.Shared.Options;
 
@@ -8,6 +12,26 @@ builder.Services.AddOptions<SmtpOptions>()
     .BindConfiguration(nameof(SmtpOptions))
     .ValidateDataAnnotations()
     .ValidateOnStart();
+
+// OpenTelemetry (for metrics, traces, and logs)
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService(nameof(Pwneu.Smtp)))
+    .WithMetrics(metrics =>
+    {
+        metrics
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddOtlpExporter();
+    })
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddOtlpExporter();
+    });
+
+builder.Logging.AddOpenTelemetry(logging => logging.AddOtlpExporter());
 
 var assembly = typeof(Program).Assembly;
 

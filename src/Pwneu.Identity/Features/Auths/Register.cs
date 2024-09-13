@@ -21,6 +21,8 @@ public static class Register
     private static readonly Error Failed = new("Register.Failed", "Unable to create user");
     private static readonly Error AddRoleFailed = new("Register.AddRoleFailed", "Unable to add role to user");
     private static readonly Error EmailInUse = new("Register.EmailInUse", "Email is already in use");
+    private static readonly Error UserNameInUse = new("Register.UserNameInUse", "UserName is already in use");
+    private static readonly Error InvalidUserName = new("Register.InvalidUserName", "Invalid UserName");
 
     internal sealed class Handler(
         ApplicationDbContext context,
@@ -70,9 +72,14 @@ public static class Register
             var createUser = await userManager.CreateAsync(user, request.Password);
             if (!createUser.Succeeded)
             {
-                return Result.Failure(createUser.Errors.Any(e => e.Code == "DuplicateEmail")
-                    ? EmailInUse
-                    : Failed);
+                var error = createUser.Errors.FirstOrDefault();
+                return Result.Failure(error?.Code switch
+                {
+                    "DuplicateEmail" => EmailInUse,
+                    "InvalidUserName" => InvalidUserName,
+                    "DuplicateUserName" => UserNameInUse,
+                    _ => Failed
+                });
             }
 
             var addRole = await userManager.AddToRoleAsync(user, Consts.Member);
@@ -122,13 +129,18 @@ public static class Register
 
     public class Validator : AbstractValidator<Command>
     {
-        public Validator()
+        public Validator(IOptions<AppOptions> appOptions)
         {
+            var validDomain = appOptions.Value.ValidEmailDomain;
+
             RuleFor(c => c.Email)
                 .NotEmpty()
                 .WithMessage("Email is required.")
                 .EmailAddress()
-                .WithMessage("Email must be a valid email address.");
+                .WithMessage("Email must be a valid email address.")
+                .Must((_, email) => IsValidDomain(email, validDomain))
+                .WithMessage((_, email) =>
+                    $"Email domain '{email.Split('@').LastOrDefault()}' is not allowed. Use the domain '{validDomain}'.");
 
             RuleFor(c => c.UserName)
                 .NotEmpty()
@@ -155,6 +167,15 @@ public static class Register
                 .WithMessage("Full Name is required.")
                 .MaximumLength(100)
                 .WithMessage("Full Name must be 100 characters or less.");
+        }
+
+        private static bool IsValidDomain(string email, string? validDomain)
+        {
+            if (string.IsNullOrWhiteSpace(validDomain))
+                return true;
+
+            var emailDomain = email.Split('@').LastOrDefault();
+            return emailDomain?.Equals(validDomain, StringComparison.OrdinalIgnoreCase) == true;
         }
     }
 }

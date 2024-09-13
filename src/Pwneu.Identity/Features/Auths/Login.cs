@@ -1,6 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
 using FluentValidation;
 using MassTransit;
@@ -13,6 +12,7 @@ using Pwneu.Identity.Shared.Entities;
 using Pwneu.Identity.Shared.Options;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Identity.Features.Auths;
 
@@ -27,54 +27,88 @@ public static class Login
         string? IpAddress = null,
         string? UserAgent = null,
         string? Referer = null)
-        : IRequest<Result<TokenResponse>>;
+        : IRequest<Result<LoginResponse>>;
 
     private static readonly Error Invalid = new("Login.Invalid", "Incorrect username or password");
 
     private static readonly Error EmailNotConfirmed = new("Login.EmailNotConfirmed",
         "Email is not confirmed");
 
+    private static readonly Error IpLocked = new("Login.IpLocked",
+        "Ip address was locked. Please wait for a few minutes");
+
     internal sealed class Handler(
         UserManager<User> userManager,
         SignInManager<User> signInManager,
         IOptions<JwtOptions> jwtOptions,
         IPublishEndpoint publishEndpoint,
+        IFusionCache cache,
         IValidator<Command> validator)
-        : IRequestHandler<Command, Result<TokenResponse>>
+        : IRequestHandler<Command, Result<LoginResponse>>
     {
         private readonly JwtOptions _jwtOptions = jwtOptions.Value;
 
-        public async Task<Result<TokenResponse>> Handle(Command request, CancellationToken cancellationToken)
+        public async Task<Result<LoginResponse>> Handle(Command request, CancellationToken cancellationToken)
         {
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
 
             if (!validationResult.IsValid)
-                return Result.Failure<TokenResponse>(new Error("Login.Validation", validationResult.ToString()));
+                return Result.Failure<LoginResponse>(new Error("Login.Validation", validationResult.ToString()));
+
+            if (request.IpAddress is not null)
+            {
+                var ipFailedLoginCount = await cache.GetOrDefaultAsync<int>(
+                    Keys.FailedLoginCount(request.IpAddress),
+                    token: cancellationToken);
+
+                if (ipFailedLoginCount > 5)
+                    return Result.Failure<LoginResponse>(IpLocked);
+
+                await cache.SetAsync(
+                    Keys.FailedLoginCount(request.IpAddress),
+                    ipFailedLoginCount + 1,
+                    new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(1) },
+                    cancellationToken);
+            }
 
             var user = await userManager
                 .Users
-                .FirstOrDefaultAsync(u => u.UserName == request.UserName, cancellationToken: cancellationToken);
+                .FirstOrDefaultAsync(u => u.UserName == request.UserName, cancellationToken);
 
             if (user is null)
-                return Result.Failure<TokenResponse>(Invalid);
+                return Result.Failure<LoginResponse>(Invalid);
 
             var signIn = await signInManager.CheckPasswordSignInAsync(user, request.Password, false);
 
             if (!signIn.Succeeded)
             {
                 if (!await userManager.IsEmailConfirmedAsync(user))
-                    return Result.Failure<TokenResponse>(EmailNotConfirmed);
+                    return Result.Failure<LoginResponse>(EmailNotConfirmed);
 
-                return Result.Failure<TokenResponse>(Invalid);
+                return Result.Failure<LoginResponse>(Invalid);
             }
 
-            string refreshToken;
-            using (var rng = RandomNumberGenerator.Create())
+            var refreshTokenClaims = new List<Claim>
             {
-                var randomNumber = new byte[64];
-                rng.GetBytes(randomNumber);
-                refreshToken = Convert.ToBase64String(randomNumber);
-            }
+                new(JwtRegisteredClaimNames.Name, user.UserName ?? string.Empty),
+                new(JwtRegisteredClaimNames.Sub, user.Id),
+                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
+
+            var refreshTokenKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey));
+            var refreshTokenCredentials = new SigningCredentials(
+                refreshTokenKey,
+                SecurityAlgorithms.HmacSha256Signature);
+
+            var refreshTokenJwt = new JwtSecurityToken(
+                issuer: _jwtOptions.Issuer,
+                audience: _jwtOptions.Audience,
+                claims: refreshTokenClaims,
+                notBefore: DateTime.UtcNow,
+                expires: DateTime.UtcNow.AddDays(7),
+                signingCredentials: refreshTokenCredentials);
+
+            var refreshToken = new JwtSecurityTokenHandler().WriteToken(refreshTokenJwt);
 
             user.RefreshToken = refreshToken;
             user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7);
@@ -82,18 +116,23 @@ public static class Login
             await userManager.UpdateAsync(user);
 
             var roles = await userManager.GetRolesAsync(user);
-            var claims = new List<Claim>
+            var accessTokenClaims = new List<Claim>
             {
                 new(JwtRegisteredClaimNames.Name, user.UserName ?? string.Empty),
                 new(JwtRegisteredClaimNames.Sub, user.Id),
             };
-            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+            accessTokenClaims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey));
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
+            var accessTokenKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey));
+            var accessTokenCredentials = new SigningCredentials(accessTokenKey, SecurityAlgorithms.HmacSha256Signature);
 
-            var accessToken = new JwtSecurityToken(_jwtOptions.Issuer, _jwtOptions.Audience, claims, null,
-                DateTime.UtcNow.AddHours(1), credentials);
+            var accessToken = new JwtSecurityToken(
+                issuer: _jwtOptions.Issuer,
+                audience: _jwtOptions.Audience,
+                claims: accessTokenClaims,
+                notBefore: null,
+                expires: DateTime.UtcNow.AddHours(1),
+                signingCredentials: accessTokenCredentials);
 
             await publishEndpoint.Publish(new LoggedInEvent
             {
@@ -104,8 +143,14 @@ public static class Login
                 Referer = request.Referer
             }, cancellationToken);
 
-            return new TokenResponse
+            if (request.IpAddress is not null)
+                await cache.SetAsync(Keys.FailedLoginCount(request.IpAddress), 0, token: cancellationToken);
+
+            return new LoginResponse
             {
+                Id = user.Id,
+                UserName = user.UserName,
+                Roles = roles.ToList(),
                 AccessToken = new JwtSecurityTokenHandler().WriteToken(accessToken),
                 RefreshToken = refreshToken
             };
@@ -118,15 +163,36 @@ public static class Login
         {
             app.MapPost("login", async (LoginRequest request, HttpContext httpContext, ISender sender) =>
                 {
-                    // var ipAddress = httpContext.Request.Headers["X-Forwarded-For"].ToString();
-                    var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString();
+                    var ipAddress = httpContext.Request.Headers["X-Forwarded-For"].ToString();
+                    // var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString();
                     var userAgent = httpContext.Request.Headers.UserAgent.ToString();
                     var referer = httpContext.Request.Headers.Referer.ToString();
 
                     var command = new Command(request.UserName, request.Password, ipAddress, userAgent, referer);
                     var result = await sender.Send(command);
 
-                    return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);
+                    if (result.IsFailure)
+                        return Results.BadRequest(result.Error);
+
+                    var response = result.Value;
+
+                    var cookieOptions = new CookieOptions
+                    {
+                        Expires = DateTime.Now.AddDays(7),
+                        HttpOnly = true,
+                        Secure = true,
+                        SameSite = SameSiteMode.Strict
+                    };
+
+                    httpContext.Response.Cookies.Append(Consts.RefreshToken, response.RefreshToken, cookieOptions);
+
+                    return Results.Ok(new TokenResponse
+                    {
+                        Id = response.Id,
+                        UserName = response.UserName,
+                        Roles = response.Roles,
+                        AccessToken = response.AccessToken
+                    });
                 })
                 .WithTags(nameof(Auths));
         }

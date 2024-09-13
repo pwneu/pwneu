@@ -21,7 +21,7 @@ public static class GetLeaderboards
         {
             var userRanks = await cache.GetOrSetAsync(Keys.UserRanks(), async _ =>
             {
-                // Count all the user points and track the earliest submission time for tie-breaking
+                // Count all the user points and track the earliest submission time where the points are not zero
                 var userPoints = await context.Submissions
                     .Where(s => s.IsCorrect)
                     .GroupBy(s => new { s.UserId, s.UserName })
@@ -30,7 +30,9 @@ public static class GetLeaderboards
                         g.Key.UserId,
                         g.Key.UserName,
                         TotalPoints = g.Sum(s => s.Challenge.Points),
-                        EarliestSubmission = g.Min(s => s.SubmittedAt) // Track the earliest submission time
+                        EarliestNonZeroSubmission = g
+                            .Where(s => s.Challenge.Points > 0)
+                            .Min(s => s.SubmittedAt) // Track the earliest submission where points > 0
                     })
                     .ToListAsync(cancellationToken);
 
@@ -44,7 +46,7 @@ public static class GetLeaderboards
                     })
                     .ToListAsync(cancellationToken);
 
-                // Combine points and deductions, calculate final score, sort by points, then by earliest submission time, and assign ranks
+                // Combine points and deductions, calculate final score, sort by points, then by earliest non-zero submission time, and assign ranks
                 var userRanks = userPoints
                     .GroupJoin(
                         userDeductions,
@@ -55,10 +57,10 @@ public static class GetLeaderboards
                             up.UserId,
                             up.UserName,
                             FinalScore = up.TotalPoints - uds.Sum(ud => ud.TotalDeductions),
-                            up.EarliestSubmission
+                            up.EarliestNonZeroSubmission
                         })
                     .OrderByDescending(u => u.FinalScore)
-                    .ThenBy(u => u.EarliestSubmission) // Break ties by earliest submission time
+                    .ThenBy(u => u.EarliestNonZeroSubmission) // Break ties by earliest non-zero submission time
                     .Select((u, index) => new UserRankResponse
                     {
                         Id = u.UserId,

@@ -36,14 +36,19 @@ public record LoggedInEvent
     public string? Referer { get; set; }
 }
 
-public record RefreshRequest
+public record LoginResponse
 {
-    public string RefreshToken { get; set; } = default!;
+    public string Id { get; set; } = default!;
+    public string? UserName { get; set; } = default!;
+    public List<string> Roles { get; set; } = [];
     public string AccessToken { get; set; } = default!;
+    public string RefreshToken { get; set; } = default!;
 }
 
 public record TokenResponse
 {
+    public string Id { get; set; } = default!;
+    public string? UserName { get; set; } = default!;
+    public List<string> Roles { get; set; } = [];
     public string AccessToken { get; set; } = default!;
-    public string RefreshToken { get; set; } = default!;
 }
