@@ -27,7 +27,25 @@ app.UseCors(corsPolicy =>
 app.UseHttpsRedirection();
 
 if (app.Environment.IsDevelopment())
-    app.MapGet("/", () => "Hello Gateway!");
+    app.MapGet("/", async context =>
+    {
+        var clientIp = context.Connection.RemoteIpAddress?.ToString();
+        var forwardedForHeader = context.Request.Headers["X-Forwarded-For"].ToString();
+        var forwardedProtoHeader = context.Request.Headers["X-Forwarded-Proto"].ToString();
+        var forwardedHostHeader = context.Request.Headers["X-Forwarded-Host"].ToString();
+
+        var response = new
+        {
+            Service = "Pwneu Gateway",
+            ClientIp = clientIp,
+            ForwardedFor = forwardedForHeader,
+            ForwardedProto = forwardedProtoHeader,
+            ForwardedHost = forwardedHostHeader
+        };
+
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(response);
+    });
 
 app.MapReverseProxy();
 
