@@ -12,6 +12,7 @@ using Pwneu.Identity.Shared.Entities;
 using Pwneu.Identity.Shared.Options;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Identity.Features.Auths;
 
@@ -33,11 +34,15 @@ public static class Login
     private static readonly Error EmailNotConfirmed = new("Login.EmailNotConfirmed",
         "Email is not confirmed");
 
+    private static readonly Error IpLocked = new("Login.IpLocked",
+        "Ip address was locked. Please wait for a few minutes");
+
     internal sealed class Handler(
         UserManager<User> userManager,
         SignInManager<User> signInManager,
         IOptions<JwtOptions> jwtOptions,
         IPublishEndpoint publishEndpoint,
+        IFusionCache cache,
         IValidator<Command> validator)
         : IRequestHandler<Command, Result<LoginResponse>>
     {
@@ -50,9 +55,25 @@ public static class Login
             if (!validationResult.IsValid)
                 return Result.Failure<LoginResponse>(new Error("Login.Validation", validationResult.ToString()));
 
+            if (request.IpAddress is not null)
+            {
+                var ipFailedLoginCount = await cache.GetOrDefaultAsync<int>(
+                    Keys.FailedLoginCount(request.IpAddress),
+                    token: cancellationToken);
+
+                if (ipFailedLoginCount > 5)
+                    return Result.Failure<LoginResponse>(IpLocked);
+
+                await cache.SetAsync(
+                    Keys.FailedLoginCount(request.IpAddress),
+                    ipFailedLoginCount + 1,
+                    new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(1) },
+                    cancellationToken);
+            }
+
             var user = await userManager
                 .Users
-                .FirstOrDefaultAsync(u => u.UserName == request.UserName, cancellationToken: cancellationToken);
+                .FirstOrDefaultAsync(u => u.UserName == request.UserName, cancellationToken);
 
             if (user is null)
                 return Result.Failure<LoginResponse>(Invalid);
@@ -122,6 +143,9 @@ public static class Login
                 Referer = request.Referer
             }, cancellationToken);
 
+            if (request.IpAddress is not null)
+                await cache.SetAsync(Keys.FailedLoginCount(request.IpAddress), 0, token: cancellationToken);
+
             return new LoginResponse
             {
                 Id = user.Id,
@@ -139,8 +163,8 @@ public static class Login
         {
             app.MapPost("login", async (LoginRequest request, HttpContext httpContext, ISender sender) =>
                 {
-                    // var ipAddress = httpContext.Request.Headers["X-Forwarded-For"].ToString();
-                    var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString();
+                    var ipAddress = httpContext.Request.Headers["X-Forwarded-For"].ToString();
+                    // var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString();
                     var userAgent = httpContext.Request.Headers.UserAgent.ToString();
                     var referer = httpContext.Request.Headers.Referer.ToString();
 
