@@ -24,7 +24,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // OpenTelemetry (for metrics, traces, and logs)
 builder.Services.AddOpenTelemetry()
-    .ConfigureResource(resource => resource.AddService("Pwneu"))
+    .ConfigureResource(resource => resource.AddService(nameof(Pwneu.Play)))
     .WithMetrics(metrics =>
     {
         metrics

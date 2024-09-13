@@ -40,6 +40,7 @@ services:
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_HTTPS_PORTS=8081
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://pwneu.dashboard:18889
       - ConnectionStrings__Postgres=${IDENTITY_CONNECTION}
       - MessageBroker__Username=${RABBITMQ_DEFAULT_USER}
       - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
@@ -63,8 +64,6 @@ services:
       - POSTGRES_PASSWORD=${IDENTITY_PASSWORD}
     volumes:
       - ./.containers/identity.db:/var/lib/postgresql/data
-    ports:
-      - "37202:5432"
     networks:
       - pwneu
 
@@ -109,8 +108,6 @@ services:
       - POSTGRES_PASSWORD=${PLAY_PASSWORD}
     volumes:
       - ./.containers/play.db:/var/lib/postgresql/data
-    ports:
-      - "37302:5432"
     networks:
       - pwneu
 
@@ -131,6 +128,7 @@ services:
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_HTTPS_PORTS=8081
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://pwneu.dashboard:18889
       - MessageBroker__Username=${RABBITMQ_DEFAULT_USER}
       - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
       - ChatOptions__ConversationIsEnabled=${CHAT_CONVERSATION_IS_ENABLED}
@@ -158,6 +156,7 @@ services:
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_HTTPS_PORTS=8081
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://pwneu.dashboard:18889
       - MessageBroker__Username=${RABBITMQ_DEFAULT_USER}
       - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
       - SmtpOptions__SenderAddress=${SMTP_SENDER_ADDRESS}
@@ -182,17 +181,12 @@ services:
   pwneu.cache:
     image: redis:latest
     container_name: pwneu.cache
-    ports:
-      - "6379:6379"
     networks:
       - pwneu
 
   pwneu.mq:
     image: rabbitmq:management
     container_name: pwneu.mq
-    ports:
-      - "5672:5672"
-      - "15672:15672"
     volumes:
       - ./.containers/queue/data/:/var/lib/rabbitmq
       - ./.containers/queue/log/:/var/log/rabbitmq

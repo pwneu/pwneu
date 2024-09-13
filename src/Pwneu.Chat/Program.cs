@@ -5,6 +5,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Pwneu.Chat.Shared.Data;
 using Pwneu.Chat.Shared.Extensions;
 using Pwneu.Chat.Shared.Options;
@@ -20,6 +24,26 @@ builder.Services
     .BindConfiguration($"{nameof(ChatOptions)}")
     .ValidateDataAnnotations()
     .ValidateOnStart();
+
+// OpenTelemetry (for metrics, traces, and logs)
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService(nameof(Pwneu.Chat)))
+    .WithMetrics(metrics =>
+    {
+        metrics
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddOtlpExporter();
+    })
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddOtlpExporter();
+    });
+
+builder.Logging.AddOpenTelemetry(logging => logging.AddOtlpExporter());
 
 // Swagger UI
 builder.Services.AddEndpointsApiExplorer();
