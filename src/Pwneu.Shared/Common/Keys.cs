@@ -29,6 +29,9 @@ public static class Keys
     // Key for caching UserDetailsResponse.
     public static string UserDetails(string id) => $"user:{id}:details";
 
+    // Key for caching UserTokenResponse.
+    public static string UserToken(string id) => $"user:{id}:token";
+
     // Key for storing cache of user graph.
     public static string UserGraph(string id) => $"user:{id}:graph";
 

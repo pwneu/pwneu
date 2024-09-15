@@ -3,14 +3,15 @@ using System.Security.Claims;
 using System.Text;
 using FluentValidation;
 using MediatR;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Pwneu.Identity.Shared.Entities;
+using Pwneu.Identity.Shared.Data;
 using Pwneu.Identity.Shared.Options;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 using Pwneu.Shared.Extensions;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Identity.Features.Auths;
 
@@ -21,8 +22,9 @@ public static class Refresh
     private static readonly Error Invalid = new("Refresh.Invalid", "Invalid token");
 
     internal sealed class Handler(
-        UserManager<User> userManager,
+        ApplicationDbContext context,
         IOptions<JwtOptions> jwtOptions,
+        IFusionCache cache,
         IValidator<Command> validator)
         : IRequestHandler<Command, Result<TokenResponse>>
     {
@@ -59,23 +61,37 @@ public static class Refresh
 
                 // Extract user information from the claims
                 var userId = principal.GetLoggedInUserId<string>();
-                if (userId is null)
+                var userName = principal.GetLoggedInUserName();
+                var roles = principal.GetRoles().ToList();
+
+                if (userId is null || userName is null || roles.Count == 0)
                     return Result.Failure<TokenResponse>(Invalid);
 
-                var user = await userManager.FindByIdAsync(userId);
+                var userToken = await cache.GetOrSetAsync(Keys.UserToken(userId), async _ =>
+                    {
+                        return await context
+                            .Users
+                            .Where(u => u.Id == userId)
+                            .Select(u => new UserTokenResponse
+                            {
+                                RefreshToken = u.RefreshToken,
+                                RefreshTokenExpiry = u.RefreshTokenExpiry
+                            })
+                            .FirstOrDefaultAsync(cancellationToken);
+                    },
+                    new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(15) },
+                    cancellationToken);
 
-                if (user is null ||
-                    user.RefreshToken != request.RefreshToken ||
-                    user.RefreshTokenExpiry < DateTime.UtcNow)
+                if (userToken is null ||
+                    userToken.RefreshToken != request.RefreshToken ||
+                    userToken.RefreshTokenExpiry < DateTime.UtcNow)
                     return Result.Failure<TokenResponse>(Invalid);
 
-                var roles = await userManager.GetRolesAsync(user);
                 var claims = new List<Claim>
                 {
-                    new(JwtRegisteredClaimNames.Name, user.UserName ?? string.Empty),
-                    new(JwtRegisteredClaimNames.Sub, user.Id),
+                    new(JwtRegisteredClaimNames.Name, userName),
+                    new(JwtRegisteredClaimNames.Sub, userId),
                 };
-                claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
                 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey));
                 var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
@@ -90,9 +106,9 @@ public static class Refresh
 
                 return new TokenResponse
                 {
-                    Id = user.Id,
-                    UserName = user.UserName,
-                    Roles = roles.ToList(),
+                    Id = userId,
+                    UserName = userName,
+                    Roles = roles,
                     AccessToken = new JwtSecurityTokenHandler().WriteToken(accessToken)
                 };
             }

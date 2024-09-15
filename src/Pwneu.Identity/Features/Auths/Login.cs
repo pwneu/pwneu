@@ -67,7 +67,7 @@ public static class Login
                 await cache.SetAsync(
                     Keys.FailedLoginCount(request.IpAddress),
                     ipFailedLoginCount + 1,
-                    new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(1) },
+                    new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(5) },
                     cancellationToken);
             }
 
@@ -88,12 +88,14 @@ public static class Login
                 return Result.Failure<LoginResponse>(Invalid);
             }
 
+            var userRoles = await userManager.GetRolesAsync(user);
             var refreshTokenClaims = new List<Claim>
             {
                 new(JwtRegisteredClaimNames.Name, user.UserName ?? string.Empty),
                 new(JwtRegisteredClaimNames.Sub, user.Id),
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
+            refreshTokenClaims.AddRange(userRoles.Select(role => new Claim(ClaimTypes.Role, role)));
 
             var refreshTokenKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey));
             var refreshTokenCredentials = new SigningCredentials(
@@ -115,13 +117,12 @@ public static class Login
 
             await userManager.UpdateAsync(user);
 
-            var roles = await userManager.GetRolesAsync(user);
             var accessTokenClaims = new List<Claim>
             {
                 new(JwtRegisteredClaimNames.Name, user.UserName ?? string.Empty),
                 new(JwtRegisteredClaimNames.Sub, user.Id),
             };
-            accessTokenClaims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+            accessTokenClaims.AddRange(userRoles.Select(role => new Claim(ClaimTypes.Role, role)));
 
             var accessTokenKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey));
             var accessTokenCredentials = new SigningCredentials(accessTokenKey, SecurityAlgorithms.HmacSha256Signature);
@@ -150,7 +151,7 @@ public static class Login
             {
                 Id = user.Id,
                 UserName = user.UserName,
-                Roles = roles.ToList(),
+                Roles = userRoles.ToList(),
                 AccessToken = new JwtSecurityTokenHandler().WriteToken(accessToken),
                 RefreshToken = refreshToken
             };
