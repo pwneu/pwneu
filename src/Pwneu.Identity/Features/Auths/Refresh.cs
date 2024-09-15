@@ -101,7 +101,7 @@ public static class Refresh
                     audience: _jwtOptions.Audience,
                     claims: claims,
                     notBefore: null,
-                    expires: DateTime.UtcNow.AddHours(1),
+                    expires: DateTime.UtcNow.AddMinutes(15),
                     signingCredentials: credentials);
 
                 return new TokenResponse

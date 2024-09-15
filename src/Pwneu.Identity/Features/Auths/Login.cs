@@ -132,7 +132,7 @@ public static class Login
                 audience: _jwtOptions.Audience,
                 claims: accessTokenClaims,
                 notBefore: null,
-                expires: DateTime.UtcNow.AddHours(1),
+                expires: DateTime.UtcNow.AddMinutes(15),
                 signingCredentials: accessTokenCredentials);
 
             await publishEndpoint.Publish(new LoggedInEvent
