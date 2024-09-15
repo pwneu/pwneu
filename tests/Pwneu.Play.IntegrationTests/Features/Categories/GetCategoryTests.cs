@@ -23,7 +23,7 @@ public class GetCategoryTests(IntegrationTestsWebAppFactory factory) : BaseInteg
         DbContext.Add(category);
         await DbContext.SaveChangesAsync();
 
-        var categoryResponse = new CategoryResponse
+        var categoryResponse = new CategoryDetailsResponse
         {
             Id = categoryId,
             Name = category.Name,
@@ -37,7 +37,7 @@ public class GetCategoryTests(IntegrationTestsWebAppFactory factory) : BaseInteg
 
         // Assert
         getCategoryResult.IsSuccess.Should().BeTrue();
-        getCategoryResult.Should().BeOfType<Result<CategoryResponse>>();
+        getCategoryResult.Should().BeOfType<Result<CategoryDetailsResponse>>();
         getCategoryResult.Value.Should().BeEquivalentTo(categoryResponse);
     }
 

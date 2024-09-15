@@ -17,6 +17,9 @@ public static class Keys
     // Key for caching a single CategoryResponse.
     public static string Category(Guid id) => $"category:{id}";
 
+    // Key for caching a LIST of CategoryDetailsResponse.
+    public static string AllChallenges() => "challenge:all";
+
     // Key for caching ChallengeDetailsResponse.
     public static string ChallengeDetails(Guid id) => $"challenge:{id}:details";
 

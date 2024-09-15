@@ -76,6 +76,7 @@ public static class UpdateChallenge
             {
                 invalidationTasks.Add(cache.InvalidateUserGraphs(cancellationToken));
                 invalidationTasks.Add(cache.RemoveAsync(Keys.UserRanks(), token: cancellationToken).AsTask());
+                invalidationTasks.Add(cache.RemoveAsync(Keys.AllChallenges(), token: cancellationToken).AsTask());
             }
 
             await Task.WhenAll(invalidationTasks);
