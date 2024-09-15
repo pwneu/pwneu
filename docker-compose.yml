@@ -17,6 +17,7 @@ services:
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_HTTPS_PORTS=8081
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://pwneu.dashboard:18889
     volumes:
       - ./.containers/certs:/home/app/.aspnet/https:ro
     networks:
