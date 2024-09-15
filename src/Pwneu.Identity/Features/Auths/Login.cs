@@ -16,7 +16,6 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Identity.Features.Auths;
 
-// TODO -- Automatically send confirmation token on logged in on unverified email
 // TODO -- Fix login trace
 
 public static class Login
@@ -146,6 +145,8 @@ public static class Login
 
             if (request.IpAddress is not null)
                 await cache.SetAsync(Keys.FailedLoginCount(request.IpAddress), 0, token: cancellationToken);
+
+            await cache.RemoveAsync(Keys.UserToken(user.Id), token: cancellationToken);
 
             return new LoginResponse
             {
