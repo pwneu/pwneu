@@ -58,7 +58,8 @@ public class DeleteCategoryTests(IntegrationTestsWebAppFactory factory) : BaseIn
 
         // Act
         await Sender.Send(new DeleteCategory.Command(categoryId));
-        var categoryCache = Cache.GetOrDefault<CategoryResponse>($"{nameof(CategoryResponse)}:{categoryId}");
+        var categoryCache =
+            Cache.GetOrDefault<CategoryDetailsResponse>($"{nameof(CategoryDetailsResponse)}:{categoryId}");
 
         // Assert
         categoryCache.Should().BeNull();

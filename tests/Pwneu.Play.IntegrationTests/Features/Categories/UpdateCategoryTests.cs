@@ -75,7 +75,7 @@ public class UpdateCategoryTests(IntegrationTestsWebAppFactory factory) : BaseIn
         });
         await DbContext.SaveChangesAsync();
 
-        var category = new CategoryResponse
+        var category = new CategoryDetailsResponse
         {
             Id = categoryId,
             Name = F.Lorem.Word(),
@@ -93,7 +93,7 @@ public class UpdateCategoryTests(IntegrationTestsWebAppFactory factory) : BaseIn
         var updatedCategory = await DbContext
             .Categories
             .Where(ctg => ctg.Id == categoryId)
-            .Select(ctg => new CategoryResponse
+            .Select(ctg => new CategoryDetailsResponse
             {
                 Id = ctg.Id,
                 Name = ctg.Name,
@@ -138,7 +138,8 @@ public class UpdateCategoryTests(IntegrationTestsWebAppFactory factory) : BaseIn
             Name: F.Lorem.Word(),
             Description: F.Lorem.Sentence()));
 
-        var categoryCache = Cache.GetOrDefault<CategoryResponse>($"{nameof(CategoryResponse)}:{categoryId}");
+        var categoryCache =
+            Cache.GetOrDefault<CategoryDetailsResponse>($"{nameof(CategoryDetailsResponse)}:{categoryId}");
 
         // Assert
         categoryCache.Should().BeNull();

@@ -18,12 +18,12 @@ public static class GetCategories
         string? SortColumn = null,
         string? SortOrder = null,
         int? Page = null,
-        int? PageSize = null) : IRequest<Result<PagedList<CategoryResponse>>>;
+        int? PageSize = null) : IRequest<Result<PagedList<CategoryDetailsResponse>>>;
 
     internal sealed class Handler(ApplicationDbContext context)
-        : IRequestHandler<Query, Result<PagedList<CategoryResponse>>>
+        : IRequestHandler<Query, Result<PagedList<CategoryDetailsResponse>>>
     {
-        public async Task<Result<PagedList<CategoryResponse>>> Handle(Query request,
+        public async Task<Result<PagedList<CategoryDetailsResponse>>> Handle(Query request,
             CancellationToken cancellationToken)
         {
             IQueryable<Category> categoriesQuery = context.Categories.Include(ctg => ctg.Challenges);
@@ -44,7 +44,7 @@ public static class GetCategories
                 : categoriesQuery.OrderBy(keySelector);
 
             var categoryResponsesQuery = categoriesQuery
-                .Select(ctg => new CategoryResponse
+                .Select(ctg => new CategoryDetailsResponse
                 {
                     Id = ctg.Id,
                     Name = ctg.Name,
@@ -62,7 +62,7 @@ public static class GetCategories
                 });
 
             var categories =
-                await PagedList<CategoryResponse>.CreateAsync(categoryResponsesQuery, request.Page ?? 1,
+                await PagedList<CategoryDetailsResponse>.CreateAsync(categoryResponsesQuery, request.Page ?? 1,
                     request.PageSize ?? 10);
 
             return categories;

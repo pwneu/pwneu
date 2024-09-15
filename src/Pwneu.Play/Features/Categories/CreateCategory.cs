@@ -42,7 +42,8 @@ public static class CreateCategory
             // Clear categories cache.
             await Task.WhenAll(
                 cache.RemoveAsync(Keys.Categories(), token: cancellationToken).AsTask(),
-                cache.RemoveAsync(Keys.CategoryIds(), token: cancellationToken).AsTask()
+                cache.RemoveAsync(Keys.CategoryIds(), token: cancellationToken).AsTask(),
+                cache.RemoveAsync(Keys.AllChallenges(), token: cancellationToken).AsTask()
             );
 
             return category.Id;

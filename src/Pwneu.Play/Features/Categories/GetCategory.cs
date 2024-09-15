@@ -15,18 +15,18 @@ public static class GetCategory
     private static readonly Error NotFound = new("GetCategory.Null",
         "The category with the specified ID was not found");
 
-    public record Query(Guid Id) : IRequest<Result<CategoryResponse>>;
+    public record Query(Guid Id) : IRequest<Result<CategoryDetailsResponse>>;
 
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
-        : IRequestHandler<Query, Result<CategoryResponse>>
+        : IRequestHandler<Query, Result<CategoryDetailsResponse>>
     {
-        public async Task<Result<CategoryResponse>> Handle(Query request, CancellationToken cancellationToken)
+        public async Task<Result<CategoryDetailsResponse>> Handle(Query request, CancellationToken cancellationToken)
         {
             var category = await cache.GetOrSetAsync(Keys.Category(request.Id), async _ =>
                 await context
                     .Categories
                     .Where(ctg => ctg.Id == request.Id)
-                    .Select(ctg => new CategoryResponse
+                    .Select(ctg => new CategoryDetailsResponse
                         {
                             Id = ctg.Id,
                             Name = ctg.Name,
@@ -45,7 +45,7 @@ public static class GetCategory
                     )
                     .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
-            return category ?? Result.Failure<CategoryResponse>(NotFound);
+            return category ?? Result.Failure<CategoryDetailsResponse>(NotFound);
         }
     }
 

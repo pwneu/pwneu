@@ -35,6 +35,12 @@ public record UserResponse
     public string? UserName { get; set; }
 }
 
+public record UserTokenResponse
+{
+    public string? RefreshToken { get; set; } = default!;
+    public DateTime RefreshTokenExpiry { get; set; } = default!;
+}
+
 public record UserInfoResponse
 {
     public string Id { get; set; } = default!;

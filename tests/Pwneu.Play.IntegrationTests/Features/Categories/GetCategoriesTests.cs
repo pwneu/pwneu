@@ -31,6 +31,6 @@ public class GetCategoriesTests(IntegrationTestsWebAppFactory factory) : BaseInt
 
         // Assert
         getCategoriesResult.IsSuccess.Should().BeTrue();
-        getCategoriesResult.Should().BeOfType<Result<PagedList<CategoryResponse>>>();
+        getCategoriesResult.Should().BeOfType<Result<PagedList<CategoryDetailsResponse>>>();
     }
 }

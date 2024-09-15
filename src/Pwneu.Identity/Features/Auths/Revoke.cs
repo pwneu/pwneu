@@ -6,6 +6,7 @@ using Pwneu.Identity.Shared.Entities;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 using Pwneu.Shared.Extensions;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Identity.Features.Auths;
 
@@ -20,7 +21,7 @@ public static class Revoke
     private static readonly Error UserNotFound = new("Revoke.UserNotFound", "User not found");
     private static readonly Error UpdateFailed = new("Revoke.UpdateFailed", "Failed to update user");
 
-    internal sealed class Handler(UserManager<User> userManager) : IRequestHandler<Command, Result>
+    internal sealed class Handler(UserManager<User> userManager, IFusionCache cache) : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -28,6 +29,8 @@ public static class Revoke
 
             if (user is null)
                 return Result.Failure(UserNotFound);
+
+            await cache.RemoveAsync(user.Id, token: cancellationToken);
 
             user.RefreshToken = null;
 
@@ -41,13 +44,23 @@ public static class Revoke
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("revoke", async (ClaimsPrincipal claims, ISender sender) =>
+            app.MapPost("revoke", async (ClaimsPrincipal claims, HttpContext httpContext, ISender sender) =>
                 {
                     var userId = claims.GetLoggedInUserId<string>();
                     if (userId is null) return Results.Unauthorized();
 
                     var command = new Command(userId);
                     var result = await sender.Send(command);
+
+                    var cookieOptions = new CookieOptions
+                    {
+                        Expires = DateTimeOffset.UtcNow.AddDays(-1),
+                        HttpOnly = true,
+                        Secure = true,
+                        SameSite = SameSiteMode.Strict
+                    };
+
+                    httpContext.Response.Cookies.Append(Consts.RefreshToken, string.Empty, cookieOptions);
 
                     return result.IsFailure ? Results.Unauthorized() : Results.NoContent();
                 })

@@ -4,6 +4,12 @@ public record CategoryResponse
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = default!;
+}
+
+public record CategoryDetailsResponse
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = default!;
     public string Description { get; set; } = default!;
     public IEnumerable<ChallengeResponse> Challenges { get; set; } = [];
 }
