@@ -9,7 +9,7 @@ namespace Pwneu.Identity.Features.AccessKeys;
 
 public static class CreateAccessKey
 {
-    public record Command(bool CanBeReused, DateTime Expiration) : IRequest<Result<Guid>>;
+    public record Command(bool ForManager, bool CanBeReused, DateTime Expiration) : IRequest<Result<Guid>>;
 
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
         : IRequestHandler<Command, Result<Guid>>
@@ -19,6 +19,7 @@ public static class CreateAccessKey
             var accessKey = new AccessKey
             {
                 Id = Guid.NewGuid(),
+                ForManager = request.ForManager,
                 CanBeReused = request.CanBeReused,
                 Expiration = request.Expiration
             };
@@ -39,7 +40,7 @@ public static class CreateAccessKey
         {
             app.MapPost("keys", async (CreateAccessKeyRequest request, ISender sender) =>
                 {
-                    var command = new Command(request.CanBeReused, request.Expiration);
+                    var command = new Command(request.ForManager, request.CanBeReused, request.Expiration);
 
                     var result = await sender.Send(command);
 

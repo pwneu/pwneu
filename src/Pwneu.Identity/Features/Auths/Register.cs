@@ -82,9 +82,18 @@ public static class Register
                 });
             }
 
-            var addRole = await userManager.AddToRoleAsync(user, Consts.Member);
+            IdentityResult addRole;
+
+            if (accessKey is not null && accessKey.ForManager)
+                addRole = await userManager.AddToRoleAsync(user, Consts.Manager);
+            else addRole = await userManager.AddToRoleAsync(user, Consts.Member);
+
             if (!addRole.Succeeded)
+            {
+                // If role assignment fails, delete the user
+                await userManager.DeleteAsync(user);
                 return Result.Failure(AddRoleFailed);
+            }
 
             var confirmationToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
 
@@ -144,9 +153,9 @@ public static class Register
 
             RuleFor(c => c.UserName)
                 .NotEmpty()
-                .WithMessage("UserName is required.")
+                .WithMessage("Username is required.")
                 .MaximumLength(256)
-                .WithMessage("UserName must be 256 characters or less.");
+                .WithMessage("Username must be 256 characters or less.");
 
             RuleFor(c => c.Password)
                 .NotEmpty()
