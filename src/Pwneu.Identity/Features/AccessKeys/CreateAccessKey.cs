@@ -1,3 +1,4 @@
+using FluentValidation;
 using MediatR;
 using Pwneu.Identity.Shared.Data;
 using Pwneu.Identity.Shared.Entities;
@@ -11,11 +12,16 @@ public static class CreateAccessKey
 {
     public record Command(bool ForManager, bool CanBeReused, DateTime Expiration) : IRequest<Result<Guid>>;
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, IValidator<Command> validator)
         : IRequestHandler<Command, Result<Guid>>
     {
         public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
         {
+            var validationResult = await validator.ValidateAsync(request, cancellationToken);
+
+            if (!validationResult.IsValid)
+                return Result.Failure<Guid>(new Error("CreateAccessKey.Validation", validationResult.ToString()));
+
             var accessKey = new AccessKey
             {
                 Id = Guid.NewGuid(),
@@ -48,6 +54,16 @@ public static class CreateAccessKey
                 })
                 .RequireAuthorization(Consts.AdminOnly)
                 .WithTags(nameof(AccessKeys));
+        }
+    }
+
+    public class Validator : AbstractValidator<Command>
+    {
+        public Validator()
+        {
+            RuleFor(c => c.Expiration)
+                .GreaterThan(DateTime.UtcNow)
+                .WithMessage("Expiration date must be in the future.");
         }
     }
 }
