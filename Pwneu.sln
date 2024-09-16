@@ -28,6 +28,13 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C05A7AB5-3213-45A3-9EBB-FBE5C3521DA3}"
 	ProjectSection(SolutionItems) = preProject
 		.env.example = .env.example
+		LICENSE = LICENSE
+		AUTHORS = AUTHORS
+		CODE-OF-CONDUCT.md = CODE-OF-CONDUCT.md
+		README.md = README.md
+		.gitignore = .gitignore
+		.gitattributes = .gitattributes
+		.env = .env
 	EndProjectSection
 EndProject
 Global
