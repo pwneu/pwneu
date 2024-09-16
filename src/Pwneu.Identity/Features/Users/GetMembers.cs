@@ -9,7 +9,6 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Identity.Features.Users;
 
-// TODO -- Use this
 public static class GetMembers
 {
     public record Query : IRequest<Result<IEnumerable<UserResponse>>>;

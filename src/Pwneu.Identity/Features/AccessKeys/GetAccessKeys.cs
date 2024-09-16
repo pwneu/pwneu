@@ -27,6 +27,7 @@ public static class GetAccessKeys
                     new AccessKeyResponse
                     {
                         Id = a.Id,
+                        ForManager = a.ForManager,
                         Expiration = a.Expiration,
                         CanBeReused = a.CanBeReused
                     })
