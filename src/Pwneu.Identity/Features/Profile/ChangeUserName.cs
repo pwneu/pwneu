@@ -1,10 +1,8 @@
-using System.Security.Claims;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Pwneu.Identity.Shared.Entities;
 using Pwneu.Shared.Common;
-using Pwneu.Shared.Extensions;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Identity.Features.Profile;
@@ -52,27 +50,6 @@ public static class ChangeUserName
             await Task.WhenAll(invalidationTasks);
 
             return Result.Success();
-        }
-    }
-
-    // TODO -- Disable this
-    public class Endpoint : IEndpoint
-    {
-        public void MapEndpoint(IEndpointRouteBuilder app)
-        {
-            app.MapPut("me/userName", async (string newUserName, ClaimsPrincipal claims, ISender sender) =>
-                {
-                    var userId = claims.GetLoggedInUserId<string>();
-                    if (userId is null) return Results.BadRequest();
-
-                    var command = new Command(userId, newUserName);
-
-                    var result = await sender.Send(command);
-
-                    return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
-                })
-                .RequireAuthorization()
-                .WithTags(nameof(Profile));
         }
     }
 
