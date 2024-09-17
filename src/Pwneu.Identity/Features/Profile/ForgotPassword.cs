@@ -55,7 +55,8 @@ public static class ForgotPassword
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
                 })
-                .WithTags(nameof(Profile));
+                .WithTags(nameof(Profile))
+                .RequireRateLimiting(Consts.AntiEmailAbuse);
         }
     }
 

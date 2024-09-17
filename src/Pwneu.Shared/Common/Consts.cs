@@ -27,4 +27,5 @@ public static class Consts
     public const int GmailSmtpPort = 587;
 
     public const string RefreshToken = "refreshToken";
+    public const string AntiEmailAbuse = "antiEmailAbuse";
 }
