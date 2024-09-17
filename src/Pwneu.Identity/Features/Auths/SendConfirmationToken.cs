@@ -7,17 +7,17 @@ using Pwneu.Shared.Contracts;
 
 namespace Pwneu.Identity.Features.Auths;
 
-public static class ResendConfirmationToken
+public static class SendConfirmationToken
 {
     public record Command(string Email) : IRequest<Result>;
 
-    private static readonly Error UserNotFound = new("ResendConfirmationToken.NotFound",
+    private static readonly Error UserNotFound = new("SendConfirmationToken.NotFound",
         "User with the specified email was not found");
 
-    private static readonly Error EmailAlreadyConfirmed = new("ResendConfirmationEmail.EmailAlreadyConfirmed",
+    private static readonly Error EmailAlreadyConfirmed = new("SendConfirmationToken.EmailAlreadyConfirmed",
         "Email is already confirmed.");
 
-    private static readonly Error NoEmail = new("ResendConfirmationToken.NoEmail", "No Email specified");
+    private static readonly Error NoEmail = new("SendConfirmationToken.NoEmail", "No Email specified");
 
     internal sealed class Handler(UserManager<User> userManager, IPublishEndpoint publishEndpoint)
         : IRequestHandler<Command, Result>

@@ -79,9 +79,11 @@ builder.Services.AddCors();
 // ASP.NET Identity
 builder.Services.AddIdentity<User, IdentityRole>(options =>
     {
+        var requireEmailVerification = bool.Parse(builder.Configuration[Consts.AppOptionsRequireEmailVerification]!);
+
         // Email confirmation and account confirmation
-        options.SignIn.RequireConfirmedEmail = true;
-        options.SignIn.RequireConfirmedAccount = true;
+        options.SignIn.RequireConfirmedEmail = requireEmailVerification;
+        options.SignIn.RequireConfirmedAccount = requireEmailVerification;
 
         // Password requirements
         options.Password.RequireDigit = true;
