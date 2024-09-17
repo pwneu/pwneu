@@ -1,15 +1,6 @@
-﻿<!--suppress ALL-->
+# PWNEU Backend Server
 
-<h2 align="center">PWNEU Backend Server</h2>
-
-<p align="center">
-    <img src="https://img.shields.io/github/license/pwneu/pwneu?style=for-the-badge" alt="GitHub License">
-    <img src="https://img.shields.io/github/stars/pwneu/pwneu?style=for-the-badge" alt="GitHub Repo stars">
-    <img src="https://img.shields.io/github/forks/pwneu/pwneu?style=for-the-badge" alt="GitHub forks">
-    <img src="https://img.shields.io/github/issues/pwneu/pwneu?style=for-the-badge" alt="GitHub Issues or Pull Requests">
-</p>
-
-<p align="center">The official backend server of PWNEU.</p>
+The official backend server of PWNEU.
 
 ### 📚 Prerequisites
 
