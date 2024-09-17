@@ -25,9 +25,6 @@ builder.Services.AddOpenTelemetry()
 
 builder.Logging.AddOpenTelemetry(logging => logging.AddOtlpExporter());
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
 // CORS (Cross-Origin Resource Sharing)
 builder.Services.AddCors();
 
