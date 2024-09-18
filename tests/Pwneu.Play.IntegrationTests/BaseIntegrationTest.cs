@@ -3,6 +3,8 @@ using FluentAssertions;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Pwneu.Play.Shared.Data;
+using Pwneu.Play.Shared.Extensions;
+using Pwneu.Shared.Common;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.IntegrationTests;
@@ -32,7 +34,11 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
     protected ApplicationDbContext DbContext { get; }
     protected Faker F { get; } = new();
 
-    public async Task InitializeAsync() => await DbContext.Database.EnsureCreatedAsync();
+    public async Task InitializeAsync()
+    {
+        await DbContext.Database.EnsureCreatedAsync();
+        await DbContext.SetPlayConfigurationValueAsync(Consts.SubmissionsAllowed, true);
+    }
 
     public async Task DisposeAsync() => await DbContext.Database.EnsureDeletedAsync();
 }

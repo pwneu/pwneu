@@ -46,7 +46,7 @@ public static class GetConversations
             var conversations = await PagedList<ConversationResponse>.CreateAsync(
                 conversationResponseQuery,
                 request.Page ?? 1,
-                request.PageSize ?? 10);
+                Math.Min(request.PageSize ?? 10, 20));
 
             return conversations;
         }
@@ -79,6 +79,7 @@ public static class GetConversations
                         return result.IsFailure ? Results.StatusCode(500) : Results.Ok(result.Value);
                     })
                 .RequireAuthorization(Consts.MemberOnly)
+                .RequireRateLimiting(Consts.Fixed)
                 .WithTags(nameof(Conversations));
         }
     }

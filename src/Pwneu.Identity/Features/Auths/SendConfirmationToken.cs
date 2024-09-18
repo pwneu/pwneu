@@ -1,39 +1,39 @@
 using MassTransit;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using Pwneu.Identity.Shared.Entities;
+using Pwneu.Identity.Shared.Options;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 
 namespace Pwneu.Identity.Features.Auths;
 
-public static class ResendConfirmationToken
+public static class SendConfirmationToken
 {
     public record Command(string Email) : IRequest<Result>;
 
-    private static readonly Error UserNotFound = new("ResendConfirmationToken.NotFound",
-        "User with the specified email was not found");
+    private static readonly Error NotRequired =
+        new("SendConfirmationToken.NotRequired", "Email verification is not required");
 
-    private static readonly Error EmailAlreadyConfirmed = new("ResendConfirmationEmail.EmailAlreadyConfirmed",
-        "Email is already confirmed.");
-
-    private static readonly Error NoEmail = new("ResendConfirmationToken.NoEmail", "No Email specified");
-
-    internal sealed class Handler(UserManager<User> userManager, IPublishEndpoint publishEndpoint)
+    internal sealed class Handler(
+        UserManager<User> userManager,
+        IPublishEndpoint publishEndpoint,
+        IOptions<AppOptions> appOptions)
         : IRequestHandler<Command, Result>
     {
+        private readonly AppOptions _appOptions = appOptions.Value;
+
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
+            if (!_appOptions.RequireEmailVerification)
+                return Result.Failure(NotRequired);
+
             var user = await userManager.FindByEmailAsync(request.Email);
 
-            if (user is null)
-                return Result.Failure(UserNotFound);
-
-            if (user.Email is null)
-                return Result.Failure(NoEmail);
-
-            if (user.EmailConfirmed)
-                return Result.Failure(EmailAlreadyConfirmed);
+            // Don't give the requester a clue if the user exists with the specified email.
+            if (user?.Email is null || user.EmailConfirmed)
+                return Result.Success();
 
             var confirmationToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
 
@@ -58,7 +58,8 @@ public static class ResendConfirmationToken
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
                 })
-                .WithTags(nameof(Auths));
+                .WithTags(nameof(Auths))
+                .RequireRateLimiting(Consts.AntiEmailAbuse);
         }
     }
 }

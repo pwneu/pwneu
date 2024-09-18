@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using FluentValidation;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -79,9 +80,11 @@ builder.Services.AddCors();
 // ASP.NET Identity
 builder.Services.AddIdentity<User, IdentityRole>(options =>
     {
+        var requireEmailVerification = bool.Parse(builder.Configuration[Consts.AppOptionsRequireEmailVerification]!);
+
         // Email confirmation and account confirmation
-        options.SignIn.RequireConfirmedEmail = true;
-        options.SignIn.RequireConfirmedAccount = true;
+        options.SignIn.RequireConfirmedEmail = requireEmailVerification;
+        options.SignIn.RequireConfirmedAccount = requireEmailVerification;
 
         // Password requirements
         options.Password.RequireDigit = true;
@@ -170,6 +173,20 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy(Consts.ManagerAdminOnly, policy => { policy.RequireRole(Consts.Manager); })
     .AddPolicy(Consts.MemberOnly, policy => { policy.RequireRole(Consts.Member); });
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy(Consts.AntiEmailAbuse, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Request.Headers["X-Forwarded-For"].ToString(),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 2,
+                Window = TimeSpan.FromDays(1),
+            }));
+});
+
 builder.Services.AddScoped<IAccessControl, AccessControl>();
 
 var app = builder.Build();
@@ -195,6 +212,8 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseRateLimiter();
 
 if (app.Environment.IsDevelopment())
     app.MapGet("/", async context =>

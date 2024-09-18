@@ -30,7 +30,7 @@ public static class GetChallengeSolves
             var challengeSolves = await PagedList<ChallengeSolveResponse>.CreateAsync(
                 challengeSolvesRequest,
                 request.Page ?? 1,
-                request.PageSize ?? 10);
+                Math.Min(request.PageSize ?? 10, 20));
 
             return challengeSolves;
         }
@@ -48,6 +48,7 @@ public static class GetChallengeSolves
                     return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
                 })
                 .RequireAuthorization()
+                .RequireRateLimiting(Consts.Fixed)
                 .WithTags(nameof(Submissions));
         }
     }

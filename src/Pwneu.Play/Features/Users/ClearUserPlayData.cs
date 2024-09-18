@@ -12,7 +12,6 @@ public static class ClearUserPlayData
 {
     public record Command(string UserId) : IRequest<Result>;
 
-    // TODO -- Add integration tests
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache) : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)

@@ -74,7 +74,6 @@ public static class GetUserGraph
                 Keys.ActiveUserIds(),
                 token: cancellationToken) ?? [];
 
-            // TODO -- use HashSet if possible
             if (!activeUserIds.Contains(request.Id))
                 activeUserIds.Add(request.Id);
 

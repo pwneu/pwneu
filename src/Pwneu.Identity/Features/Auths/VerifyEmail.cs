@@ -12,6 +12,9 @@ public class VerifyEmail
 
     private static readonly Error Failed = new("VerifyEmail.Failed", "Unable to verify email");
 
+    private static readonly Error EmailAlreadyConfirmed = new("VerifyEmail.EmailAlreadyConfirmed",
+        "Email is already confirmed.");
+
     internal sealed class Handler(UserManager<User> userManager)
         : IRequestHandler<Command, Result>
     {
@@ -22,9 +25,12 @@ public class VerifyEmail
             if (user is null)
                 return Result.Failure(Failed);
 
-            var isVerified = await userManager.ConfirmEmailAsync(user, request.ConfirmationToken);
+            if (user.EmailConfirmed)
+                return Result.Failure(EmailAlreadyConfirmed);
 
-            return isVerified.Succeeded
+            var verifyEmail = await userManager.ConfirmEmailAsync(user, request.ConfirmationToken);
+
+            return verifyEmail.Succeeded
                 ? Result.Success()
                 : Result.Failure(Failed);
         }

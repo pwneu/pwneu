@@ -12,7 +12,6 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.5"/>
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0"/>
         <PackageReference Include="Yarp.ReverseProxy" Version="2.1.0"/>
     </ItemGroup>
 
@@ -23,7 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Pwneu.Shared\Pwneu.Shared.csproj" />
+        <ProjectReference Include="..\Pwneu.Shared\Pwneu.Shared.csproj"/>
     </ItemGroup>
 
 </Project>

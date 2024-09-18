@@ -1,8 +1,10 @@
+using System.Security.Claims;
 using MediatR;
 using Pwneu.Play.Shared.Data;
 using Pwneu.Play.Shared.Services;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
+using Pwneu.Shared.Extensions;
 
 namespace Pwneu.Play.Features.Submissions;
 
@@ -35,8 +37,10 @@ public static class GetUserSolves
                     SolvedAt = s.SubmittedAt
                 });
 
-            var userSolves = await PagedList<UserSolveResponse>.CreateAsync(userSolvesRequest, request.Page ?? 1,
-                request.PageSize ?? 10);
+            var userSolves = await PagedList<UserSolveResponse>.CreateAsync(
+                userSolvesRequest,
+                request.Page ?? 1,
+                Math.Min(request.PageSize ?? 10, 20));
 
             return userSolves;
         }
@@ -55,6 +59,21 @@ public static class GetUserSolves
                         return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
                     })
                 .RequireAuthorization(Consts.ManagerAdminOnly)
+                .WithTags(nameof(Submissions));
+
+            app.MapGet("me/solves",
+                    async (int? page, int? pageSize, ClaimsPrincipal claims, ISender sender) =>
+                    {
+                        var id = claims.GetLoggedInUserId<string>();
+                        if (id is null) return Results.BadRequest();
+
+                        var query = new Query(id, page, pageSize);
+                        var result = await sender.Send(query);
+
+                        return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
+                    })
+                .RequireAuthorization(Consts.MemberOnly)
+                .RequireRateLimiting(Consts.Fixed)
                 .WithTags(nameof(Submissions));
         }
     }

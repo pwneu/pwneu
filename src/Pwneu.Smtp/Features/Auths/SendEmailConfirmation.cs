@@ -43,7 +43,7 @@ public static class SendEmailConfirmation
                                     <p>Dear User,</p>
                                     <p>Please verify your email address by clicking the link below:</p>
                                     <p><a href='{_smtpOptions.VerifyEmailUrl}?email={encodedEmail}&confirmationToken={encodedConfirmationToken}'>Click here to confirm your email</a></p>
-                                    <p>This verification link will expire in 24 hours. If you do not verify your email within this time, the registered account may be removed.</p>
+                                    <p>If email verification is required and you do not verify your email within 48 hours, your account may be removed.</p>
                                     <p>If you did not request this registration, please ignore this email. No action will be taken on this account.</p>
                                     <p>Thank you!</p>
                                     <p>Pwneu Team</p>

@@ -6,7 +6,7 @@ public record RegisterRequest
     public string Email { get; set; } = default!;
     public string Password { get; set; } = default!;
     public string FullName { get; set; } = default!;
-    public string? AccessKey { get; set; }
+    public string AccessKey { get; set; } = default!;
 }
 
 public record RegisteredEvent

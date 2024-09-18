@@ -12,8 +12,6 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.Submissions;
 
-// TODO -- Add checking if event is still up
-
 /// <summary>
 /// Submits a flag and stores the submission in the database for tracking user performance.
 /// Only users with a member role can access this endpoint.
@@ -82,6 +80,14 @@ public static class SubmitFlag
 
             if (hasSolved)
                 return FlagStatus.AlreadySolved;
+
+            // Check if the submissions are allowed.
+            var submissionsAllowed = await cache.GetOrSetAsync(Keys.SubmissionsAllowed(), async _ =>
+                    await context.GetPlayConfigurationValueAsync<bool>(Consts.SubmissionsAllowed, cancellationToken),
+                token: cancellationToken);
+
+            if (!submissionsAllowed)
+                return FlagStatus.SubmissionsNotAllowed;
 
             // Check if the deadline has been reached.
             if (challenge.DeadlineEnabled && challenge.Deadline < DateTime.Now)

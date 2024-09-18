@@ -15,7 +15,7 @@ namespace Pwneu.Identity.Features.Auths;
 
 public static class Register
 {
-    public record Command(string UserName, string Email, string Password, string FullName, string? AccessKey = null)
+    public record Command(string UserName, string Email, string Password, string FullName, string AccessKey)
         : IRequest<Result>;
 
     private static readonly Error Failed = new("Register.Failed", "Unable to create user");
@@ -41,25 +41,18 @@ public static class Register
             if (!validationResult.IsValid)
                 return Result.Failure(new Error("Register.Validation", validationResult.ToString()));
 
-            List<AccessKey>? accessKeys = default;
-            AccessKey? accessKey = default;
+            // Set values of the variables above.
+            var accessKeys = await cache.GetOrSetAsync(Keys.AccessKeys(), async _ =>
+                await context
+                    .AccessKeys
+                    .ToListAsync(cancellationToken), token: cancellationToken);
 
-            // Check if a registration key is required.
-            if (_appOptions.RequireRegistrationKey)
-            {
-                // Set values of the variables above.
-                accessKeys = await cache.GetOrSetAsync(Keys.AccessKeys(), async _ =>
-                    await context
-                        .AccessKeys
-                        .ToListAsync(cancellationToken), token: cancellationToken);
+            var accessKey = accessKeys.FirstOrDefault(a =>
+                a.Id.ToString() == request.AccessKey && a.Expiration > DateTime.UtcNow);
 
-                accessKey = accessKeys.FirstOrDefault(a =>
-                    a.Id.ToString() == request.AccessKey && a.Expiration > DateTime.UtcNow);
-
-                // If no access key matched, don't register the user.
-                if (accessKey is null)
-                    return Result.Failure(Failed);
-            }
+            // If no access key matched, don't register the user.
+            if (accessKey is null)
+                return Result.Failure(Failed);
 
             var user = new User
             {
@@ -84,7 +77,7 @@ public static class Register
 
             IdentityResult addRole;
 
-            if (accessKey is not null && accessKey.ForManager)
+            if (accessKey.ForManager)
                 addRole = await userManager.AddToRoleAsync(user, Consts.Manager);
             else addRole = await userManager.AddToRoleAsync(user, Consts.Member);
 
@@ -95,17 +88,19 @@ public static class Register
                 return Result.Failure(AddRoleFailed);
             }
 
-            var confirmationToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
-
-            await publishEndpoint.Publish(new RegisteredEvent
+            // Send email confirmation if verified email is required.
+            if (_appOptions.RequireEmailVerification)
             {
-                Email = user.Email,
-                ConfirmationToken = confirmationToken
-            }, cancellationToken);
+                var confirmationToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
 
-            // If a registration key is not required, accessKey and accessKeys should be null at this point.
-            // But still check if the values are null just in case.
-            if (!_appOptions.RequireRegistrationKey || accessKey is null || accessKeys is null || accessKey.CanBeReused)
+                await publishEndpoint.Publish(new RegisteredEvent
+                {
+                    Email = user.Email,
+                    ConfirmationToken = confirmationToken
+                }, cancellationToken);
+            }
+
+            if (accessKey.CanBeReused)
                 return Result.Success();
 
             // Remove key since it cannot be reused.
@@ -130,7 +125,7 @@ public static class Register
                         request.AccessKey);
                     var result = await sender.Send(command);
 
-                    return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
+                    return result.IsFailure ? Results.BadRequest(result.Error) : Results.Created();
                 })
                 .WithTags(nameof(Auths));
         }
@@ -156,6 +151,10 @@ public static class Register
                 .WithMessage("Username is required.")
                 .MaximumLength(256)
                 .WithMessage("Username must be 256 characters or less.");
+
+            RuleFor(c => c.AccessKey)
+                .NotEmpty()
+                .WithMessage("Access key is required.");
 
             RuleFor(c => c.Password)
                 .NotEmpty()
