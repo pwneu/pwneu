@@ -48,23 +48,6 @@ public static class UpdateCategory
         }
     }
 
-    // public class Endpoint : IEndpoint
-    // {
-    //     public void MapEndpoint(IEndpointRouteBuilder app)
-    //     {
-    //         app.MapPut("categories/{id:Guid}", async (Guid id, UpdateCategoryRequest request, ISender sender) =>
-    //             {
-    //                 var command = new Command(id, request.Name, request.Description);
-    //
-    //                 var result = await sender.Send(command);
-    //
-    //                 return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
-    //             })
-    //             .RequireAuthorization(Consts.ManagerAdminOnly)
-    //             .WithTags(nameof(Categories));
-    //     }
-    // }
-
     public class Validator : AbstractValidator<Command>
     {
         public Validator()
