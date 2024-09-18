@@ -62,8 +62,10 @@ public static class GetCategories
                 });
 
             var categories =
-                await PagedList<CategoryDetailsResponse>.CreateAsync(categoryResponsesQuery, request.Page ?? 1,
-                    request.PageSize ?? 10);
+                await PagedList<CategoryDetailsResponse>.CreateAsync(
+                    categoryResponsesQuery,
+                    request.Page ?? 1,
+                    Math.Min(request.PageSize ?? 10, 20));
 
             return categories;
         }
@@ -83,6 +85,7 @@ public static class GetCategories
                         return result.IsFailure ? Results.StatusCode(500) : Results.Ok(result.Value);
                     })
                 .RequireAuthorization()
+                .RequireRateLimiting(Consts.Fixed)
                 .WithTags(nameof(Categories));
         }
     }

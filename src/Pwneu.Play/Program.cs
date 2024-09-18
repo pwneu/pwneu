@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using FluentValidation;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -132,6 +133,20 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy(Consts.ManagerAdminOnly, policy => { policy.RequireRole(Consts.Manager); })
     .AddPolicy(Consts.MemberOnly, policy => { policy.RequireRole(Consts.Member); });
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy(Consts.Fixed, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.User.GetLoggedInUserId<string>(),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromSeconds(10),
+            }));
+});
+
 builder.Services.AddScoped<IMemberAccess, MemberAccess>();
 
 var app = builder.Build();
@@ -156,6 +171,8 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseRateLimiter();
 
 if (app.Environment.IsDevelopment())
     app.MapGet("/", async context =>

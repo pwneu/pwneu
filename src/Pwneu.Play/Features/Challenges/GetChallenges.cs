@@ -85,7 +85,7 @@ public static class GetChallenges
 
             var challenges = await PagedList<ChallengeResponse>.CreateAsync(
                 challengeResponsesQuery,
-                request.Page ?? 1,
+                Math.Min(request.Page ?? 1, 20),
                 request.PageSize ?? 10);
 
             return challenges;
@@ -96,7 +96,6 @@ public static class GetChallenges
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            // TODO -- Support multiple category filtering
             app.MapGet("challenges", async (Guid? categoryId, bool? excludeSolves, string? searchTerm,
                     string? sortColumn, string? sortOrder, int? page, int? pageSize, ClaimsPrincipal claims,
                     ISender sender) =>
@@ -117,6 +116,7 @@ public static class GetChallenges
                     return result.IsFailure ? Results.StatusCode(500) : Results.Ok(result.Value);
                 })
                 .RequireAuthorization()
+                .RequireRateLimiting(Consts.Fixed)
                 .WithTags(nameof(Challenges));
         }
     }
