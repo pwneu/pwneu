@@ -33,12 +33,6 @@ builder.Services.AddReverseProxy()
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
 app.UseCors(corsPolicy =>
     corsPolicy
         .SetIsOriginAllowed(_ => true)
