@@ -3,12 +3,9 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
 using Pwneu.Shared.Common;
-using Pwneu.Shared.Contracts;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.Categories;
-
-// TODO -- Invalidate challenge cache when updating or don't allow changing category name.
 
 /// <summary>
 /// Updates a challenge under a specified ID.
@@ -51,22 +48,22 @@ public static class UpdateCategory
         }
     }
 
-    public class Endpoint : IEndpoint
-    {
-        public void MapEndpoint(IEndpointRouteBuilder app)
-        {
-            app.MapPut("categories/{id:Guid}", async (Guid id, UpdateCategoryRequest request, ISender sender) =>
-                {
-                    var command = new Command(id, request.Name, request.Description);
-
-                    var result = await sender.Send(command);
-
-                    return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
-                })
-                .RequireAuthorization(Consts.ManagerAdminOnly)
-                .WithTags(nameof(Categories));
-        }
-    }
+    // public class Endpoint : IEndpoint
+    // {
+    //     public void MapEndpoint(IEndpointRouteBuilder app)
+    //     {
+    //         app.MapPut("categories/{id:Guid}", async (Guid id, UpdateCategoryRequest request, ISender sender) =>
+    //             {
+    //                 var command = new Command(id, request.Name, request.Description);
+    //
+    //                 var result = await sender.Send(command);
+    //
+    //                 return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
+    //             })
+    //             .RequireAuthorization(Consts.ManagerAdminOnly)
+    //             .WithTags(nameof(Categories));
+    //     }
+    // }
 
     public class Validator : AbstractValidator<Command>
     {

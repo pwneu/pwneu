@@ -6,7 +6,6 @@ namespace Pwneu.Play.Shared.Extensions;
 
 public static class FusionCacheExtensions
 {
-    // TODO -- Separate cache invalidations
     public static async Task InvalidateCategoryCacheAsync(
         this IFusionCache cache,
         Guid categoryId,
