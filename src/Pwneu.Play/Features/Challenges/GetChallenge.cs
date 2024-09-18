@@ -39,6 +39,11 @@ public static class GetChallenge
                     .Select(c => c.Flags)
                     .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
+            // Cache submissions allowed configuration because why not?
+            await cache.GetOrSetAsync(Keys.SubmissionsAllowed(), async _ =>
+                    await context.GetPlayConfigurationValueAsync<bool>(Consts.SubmissionsAllowed, cancellationToken),
+                token: cancellationToken);
+
             return challenge ?? Result.Failure<ChallengeDetailsResponse>(NotFound);
         }
     }

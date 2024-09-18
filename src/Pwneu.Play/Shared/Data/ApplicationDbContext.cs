@@ -9,6 +9,13 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     {
         base.OnModelCreating(builder);
 
+        builder.Entity<PlayConfiguration>()
+            .HasKey(c => c.Key);
+
+        builder.Entity<PlayConfiguration>()
+            .HasIndex(c => c.Key)
+            .IsUnique();
+
         builder
             .Entity<Category>()
             .HasMany(c => c.Challenges)
@@ -53,6 +60,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasKey(hu => new { hu.UserId, hu.HintId });
     }
 
+    public virtual DbSet<PlayConfiguration> PlayConfigurations { get; init; } = null!;
     public virtual DbSet<Category> Categories { get; init; } = null!;
     public virtual DbSet<Challenge> Challenges { get; init; } = null!;
     public virtual DbSet<Artifact> Artifacts { get; init; } = null!;

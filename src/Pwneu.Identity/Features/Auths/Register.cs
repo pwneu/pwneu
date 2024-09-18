@@ -88,8 +88,8 @@ public static class Register
                 return Result.Failure(AddRoleFailed);
             }
 
-            // Don't send email confirmation if verified email is not required.
-            if (!_appOptions.RequireEmailVerification)
+            // Send email confirmation if verified email is required.
+            if (_appOptions.RequireEmailVerification)
             {
                 var confirmationToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
 

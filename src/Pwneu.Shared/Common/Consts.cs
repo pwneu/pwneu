@@ -28,4 +28,6 @@ public static class Consts
 
     public const string RefreshToken = "refreshToken";
     public const string AntiEmailAbuse = "antiEmailAbuse";
+
+    public const string SubmissionsAllowed = "SubmissionsAllowed";
 }

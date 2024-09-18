@@ -57,6 +57,9 @@ public static class Keys
     // Key for caching challenge flags.
     public static string Flags(Guid challengeId) => $"challenge:{challengeId}:flag";
 
+    // Key for caching if submissions are allowed.
+    public static string SubmissionsAllowed() => "submissionsAllowed";
+
     // Key for caching if the user has already solved the challenge.
     public static string HasSolved(string userId, Guid challengeId) => $"hasSolved:{userId}:{challengeId}";
 

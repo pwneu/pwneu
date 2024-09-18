@@ -7,7 +7,8 @@ public enum FlagStatus
     MaxAttemptReached,
     DeadlineReached,
     AlreadySolved,
-    SubmittingTooOften
+    SubmittingTooOften,
+    SubmissionsNotAllowed
 }
 
 public record SubmittedEvent

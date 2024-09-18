@@ -150,6 +150,8 @@ app.UseCors(corsPolicy =>
         .AllowAnyHeader()
         .AllowAnyOrigin());
 
+await app.Services.SeedPlayConfigurationAsync();
+
 app.UseHttpsRedirection();
 
 app.UseAuthentication();

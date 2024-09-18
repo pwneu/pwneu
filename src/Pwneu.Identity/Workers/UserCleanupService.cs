@@ -11,6 +11,7 @@ namespace Pwneu.Identity.Workers;
 
 /// <summary>
 /// A background service for cleaning up unverified emails.
+/// This action is dangerous if AppOptions.RequireEmailVerification was set to false, and it changed to true, all the users might be deleted.
 /// </summary>
 /// <param name="serviceProvider">Service provider.</param>
 /// <param name="logger">Logger.</param>

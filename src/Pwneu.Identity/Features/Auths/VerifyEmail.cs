@@ -28,9 +28,9 @@ public class VerifyEmail
             if (user.EmailConfirmed)
                 return Result.Failure(EmailAlreadyConfirmed);
 
-            var isVerified = await userManager.ConfirmEmailAsync(user, request.ConfirmationToken);
+            var verifyEmail = await userManager.ConfirmEmailAsync(user, request.ConfirmationToken);
 
-            return isVerified.Succeeded
+            return verifyEmail.Succeeded
                 ? Result.Success()
                 : Result.Failure(Failed);
         }
