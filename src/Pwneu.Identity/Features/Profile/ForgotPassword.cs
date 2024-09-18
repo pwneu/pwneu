@@ -43,10 +43,7 @@ public static class ForgotPassword
             var user = await userManager.FindByEmailAsync(request.Email);
 
             // Don't give the requester a clue if the user exists with the specified email.
-            if (user is null)
-                return Result.Success();
-
-            if (!user.EmailConfirmed)
+            if (user?.Email is null || user.EmailConfirmed)
                 return Result.Success();
 
             var token = await userManager.GeneratePasswordResetTokenAsync(user);

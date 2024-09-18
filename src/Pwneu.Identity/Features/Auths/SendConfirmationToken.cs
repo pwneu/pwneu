@@ -13,14 +13,6 @@ public static class SendConfirmationToken
 {
     public record Command(string Email) : IRequest<Result>;
 
-    private static readonly Error UserNotFound = new("SendConfirmationToken.NotFound",
-        "User with the specified email was not found");
-
-    private static readonly Error EmailAlreadyConfirmed = new("SendConfirmationToken.EmailAlreadyConfirmed",
-        "Email is already confirmed.");
-
-    private static readonly Error NoEmail = new("SendConfirmationToken.NoEmail", "No Email specified");
-
     private static readonly Error NotRequired =
         new("SendConfirmationToken.NotRequired", "Email verification is not required");
 
@@ -39,14 +31,9 @@ public static class SendConfirmationToken
 
             var user = await userManager.FindByEmailAsync(request.Email);
 
-            if (user is null)
-                return Result.Failure(UserNotFound);
-
-            if (user.Email is null)
-                return Result.Failure(NoEmail);
-
-            if (user.EmailConfirmed)
-                return Result.Failure(EmailAlreadyConfirmed);
+            // Don't give the requester a clue if the user exists with the specified email.
+            if (user?.Email is null || user.EmailConfirmed)
+                return Result.Success();
 
             var confirmationToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
 
