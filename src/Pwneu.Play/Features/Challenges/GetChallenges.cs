@@ -85,8 +85,8 @@ public static class GetChallenges
 
             var challenges = await PagedList<ChallengeResponse>.CreateAsync(
                 challengeResponsesQuery,
-                Math.Min(request.Page ?? 1, 20),
-                request.PageSize ?? 10);
+                request.Page ?? 1,
+                Math.Min(request.PageSize ?? 10, 20));
 
             return challenges;
         }
