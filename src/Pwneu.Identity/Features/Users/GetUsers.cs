@@ -19,12 +19,13 @@ public static class GetUsers
         string? SortOrder = null,
         int? Page = null,
         int? PageSize = null)
-        : IRequest<Result<PagedList<UserResponse>>>;
+        : IRequest<Result<PagedList<UserDetailsResponse>>>;
 
     internal sealed class Handler(ApplicationDbContext context)
-        : IRequestHandler<Query, Result<PagedList<UserResponse>>>
+        : IRequestHandler<Query, Result<PagedList<UserDetailsResponse>>>
     {
-        public async Task<Result<PagedList<UserResponse>>> Handle(Query request, CancellationToken cancellationToken)
+        public async Task<Result<PagedList<UserDetailsResponse>>> Handle(Query request,
+            CancellationToken cancellationToken)
         {
             IQueryable<User> usersQuery = context.Users;
 
@@ -43,13 +44,17 @@ public static class GetUsers
                 ? usersQuery.OrderByDescending(keySelector)
                 : usersQuery.OrderBy(keySelector);
 
-            var userResponsesQuery = usersQuery.Select(u => new UserResponse
-            {
-                Id = u.Id,
-                UserName = u.UserName
-            });
+            var userResponsesQuery = usersQuery
+                .Select(u => new UserDetailsResponse
+                {
+                    Id = u.Id,
+                    UserName = u.UserName,
+                    FullName = u.FullName,
+                    CreatedAt = u.CreatedAt,
+                    EmailConfirmed = u.EmailConfirmed
+                });
 
-            var users = await PagedList<UserResponse>.CreateAsync(
+            var users = await PagedList<UserDetailsResponse>.CreateAsync(
                 userResponsesQuery,
                 request.Page ?? 1,
                 request.PageSize ?? 10);

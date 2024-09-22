@@ -14,7 +14,7 @@ public record UserActivityResponse
     public int Score { get; set; }
 }
 
-// TODO -- Use this
+// Unused
 public record GetMembersRequest;
 
 public record UserEvalResponse
@@ -23,7 +23,7 @@ public record UserEvalResponse
     public IEnumerable<UserCategoryEvalResponse> CategoryEvaluations { get; set; } = [];
 }
 
-// TODO -- Use this
+// Unused
 public record UserResponses
 {
     public IEnumerable<UserResponse> Users { get; set; } = [];
@@ -54,6 +54,7 @@ public record UserDetailsResponse
     public string? UserName { get; set; }
     public string FullName { get; set; } = default!;
     public DateTime CreatedAt { get; set; }
+    public bool EmailConfirmed { get; set; }
 }
 
 public record UserDeletedEvent

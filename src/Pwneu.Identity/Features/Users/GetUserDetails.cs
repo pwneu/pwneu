@@ -34,6 +34,7 @@ public static class GetUserDetails
                         UserName = u.UserName,
                         FullName = u.FullName,
                         CreatedAt = u.CreatedAt,
+                        EmailConfirmed = u.EmailConfirmed
                     })
                     .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
 
