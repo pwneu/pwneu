@@ -14,6 +14,7 @@ namespace Pwneu.Identity.Features.Users;
 public static class GetUsers
 {
     public record Query(
+        bool? ExcludeVerified = false,
         string? SearchTerm = null,
         string? SortBy = null,
         string? SortOrder = null,
@@ -34,9 +35,14 @@ public static class GetUsers
                     u.UserName != default &&
                     u.UserName.Contains(request.SearchTerm));
 
+            if (request.ExcludeVerified is true)
+                usersQuery = usersQuery.Where(u => !u.EmailConfirmed);
+
             Expression<Func<User, object>> keySelector = request.SortBy?.ToLower() switch
             {
                 "username" => user => user.UserName!,
+                "fullname" => user => user.FullName,
+                "email" => user => user.Email!,
                 _ => user => user.CreatedAt
             };
 
@@ -68,15 +74,17 @@ public static class GetUsers
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             app.MapGet("users",
-                    async (string? searchTerm, string? sortBy, string? sortOrder, int? page, int? pageSize,
+                    async (bool? excludeVerified, string? searchTerm, string? sortBy, string? sortOrder, int? page,
+                        int? pageSize,
                         ISender sender) =>
                     {
-                        var query = new Query(searchTerm, sortBy, sortOrder, page, pageSize);
+                        var query = new Query(excludeVerified, searchTerm, sortBy, sortOrder, page, pageSize);
                         var result = await sender.Send(query);
 
                         return result.IsFailure ? Results.StatusCode(500) : Results.Ok(result.Value);
                     })
                 .RequireAuthorization(Consts.ManagerAdminOnly)
+                .RequireRateLimiting(Consts.Fixed)
                 .WithTags(nameof(Users));
         }
     }

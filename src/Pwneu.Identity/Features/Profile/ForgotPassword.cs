@@ -2,9 +2,7 @@ using FluentValidation;
 using MassTransit;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
 using Pwneu.Identity.Shared.Entities;
-using Pwneu.Identity.Shared.Options;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 
@@ -18,23 +16,13 @@ public static class ForgotPassword
 {
     public record Command(string Email) : IRequest<Result>;
 
-    private static readonly Error EmailVerificationDisabled =
-        new("ForgotPassword.EmailVerificationDisabled",
-            "Unfortunately, email verification is disabled, forgot password via email is not allowed.");
-
     internal sealed class Handler(
         UserManager<User> userManager,
         IPublishEndpoint publishEndpoint,
-        IValidator<Command> validator,
-        IOptions<AppOptions> appOptions) : IRequestHandler<Command, Result>
+        IValidator<Command> validator) : IRequestHandler<Command, Result>
     {
-        private readonly AppOptions _appOptions = appOptions.Value;
-
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
-            if (!_appOptions.RequireEmailVerification)
-                return Result.Failure(EmailVerificationDisabled);
-
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
 
             if (!validationResult.IsValid)

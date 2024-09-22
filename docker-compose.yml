@@ -42,7 +42,6 @@ services:
       - ConnectionStrings__Postgres=${IDENTITY_CONNECTION}
       - MessageBroker__Username=${RABBITMQ_DEFAULT_USER}
       - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
-      - AppOptions__RequireEmailVerification=${REQUIRE_EMAIL_VERIFICATION}
       - AppOptions__InitialAdminPassword=${ADMIN_PASSWORD}
       - AppOptions__ValidEmailDomain=${VALID_EMAIL_DOMAIN}
       - JwtOptions__Issuer=${JWT_ISSUER}

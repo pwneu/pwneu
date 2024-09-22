@@ -29,11 +29,8 @@ public static class Register
         UserManager<User> userManager,
         IFusionCache cache,
         IValidator<Command> validator,
-        IPublishEndpoint publishEndpoint,
-        IOptions<AppOptions> appOptions) : IRequestHandler<Command, Result>
+        IPublishEndpoint publishEndpoint) : IRequestHandler<Command, Result>
     {
-        private readonly AppOptions _appOptions = appOptions.Value;
-
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
@@ -88,17 +85,13 @@ public static class Register
                 return Result.Failure(AddRoleFailed);
             }
 
-            // Send email confirmation if verified email is required.
-            if (_appOptions.RequireEmailVerification)
-            {
-                var confirmationToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
+            var confirmationToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
 
-                await publishEndpoint.Publish(new RegisteredEvent
-                {
-                    Email = user.Email,
-                    ConfirmationToken = confirmationToken
-                }, cancellationToken);
-            }
+            await publishEndpoint.Publish(new RegisteredEvent
+            {
+                Email = user.Email,
+                ConfirmationToken = confirmationToken
+            }, cancellationToken);
 
             if (accessKey.CanBeReused)
                 return Result.Success();
