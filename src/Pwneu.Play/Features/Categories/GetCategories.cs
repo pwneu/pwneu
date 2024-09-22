@@ -15,7 +15,7 @@ public static class GetCategories
 {
     public record Query(
         string? SearchTerm = null,
-        string? SortColumn = null,
+        string? SortBy = null,
         string? SortOrder = null,
         int? Page = null,
         int? PageSize = null) : IRequest<Result<PagedList<CategoryDetailsResponse>>>;
@@ -33,7 +33,7 @@ public static class GetCategories
                     ctg.Name.Contains(request.SearchTerm) ||
                     ctg.Description.Contains(request.SearchTerm));
 
-            Expression<Func<Category, object>> keySelector = request.SortColumn?.ToLower() switch
+            Expression<Func<Category, object>> keySelector = request.SortBy?.ToLower() switch
             {
                 "description" => category => category.Description,
                 _ => category => category.Name
@@ -76,10 +76,10 @@ public static class GetCategories
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             app.MapGet("categories",
-                    async (string? searchTerm, string? sortColumn, string? sortOrder, int? page, int? pageSize,
+                    async (string? searchTerm, string? sortBy, string? sortOrder, int? page, int? pageSize,
                         ISender sender) =>
                     {
-                        var query = new Query(searchTerm, sortColumn, sortOrder, page, pageSize);
+                        var query = new Query(searchTerm, sortBy, sortOrder, page, pageSize);
                         var result = await sender.Send(query);
 
                         return result.IsFailure ? Results.StatusCode(500) : Results.Ok(result.Value);

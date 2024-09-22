@@ -21,7 +21,7 @@ public static class GetChallenges
         string? UserId = null,
         bool? ExcludeSolves = false,
         string? SearchTerm = null,
-        string? SortColumn = null,
+        string? SortBy = null,
         string? SortOrder = null,
         int? Page = null,
         int? PageSize = null) : IRequest<Result<PagedList<ChallengeResponse>>>;
@@ -59,7 +59,7 @@ public static class GetChallenges
                 //     !ch.Submissions.Any(s => s.UserId == request.UserId && s.IsCorrect));
             }
 
-            Expression<Func<Challenge, object>> keySelector = request.SortColumn?.ToLower() switch
+            Expression<Func<Challenge, object>> keySelector = request.SortBy?.ToLower() switch
             {
                 "description" => challenge => challenge.Description,
                 "points" => challenge => challenge.Points,
@@ -97,7 +97,7 @@ public static class GetChallenges
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             app.MapGet("challenges", async (Guid? categoryId, bool? excludeSolves, string? searchTerm,
-                    string? sortColumn, string? sortOrder, int? page, int? pageSize, ClaimsPrincipal claims,
+                    string? sortBy, string? sortOrder, int? page, int? pageSize, ClaimsPrincipal claims,
                     ISender sender) =>
                 {
                     var userId = claims.GetLoggedInUserId<string>();
@@ -107,7 +107,7 @@ public static class GetChallenges
                         UserId: userId,
                         ExcludeSolves: excludeSolves ?? false,
                         SearchTerm: searchTerm,
-                        SortColumn: sortColumn,
+                        SortBy: sortBy,
                         SortOrder: sortOrder,
                         Page: page,
                         PageSize: pageSize);
