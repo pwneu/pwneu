@@ -154,6 +154,7 @@ services:
       - SmtpOptions__SendEmailConfirmationIsEnabled=${SMTP_SEND_EMAIL_CONFIRMATION_IS_ENABLED}
       - SmtpOptions__SendPasswordResetTokenIsEnabled=${SMTP_SEND_PASSWORD_RESET_TOKEN_IS_ENABLED}
       - SmtpOptions__VerifyEmailUrl=${SMTP_VERIFY_EMAIL_URL}
+      - SmtpOptions__ResetPasswordUrl=${SMTP_RESET_PASSWORD_URL}
     volumes:
       - ./.containers/certs:/home/app/.aspnet/https:ro
     networks:

@@ -33,9 +33,20 @@ public static class SendPasswordResetToken
                 Credentials = new NetworkCredential(_smtpOptions.SenderAddress, _smtpOptions.SenderPassword)
             };
 
+            var encodedEmail = WebUtility.UrlEncode(request.Email);
+            var encodedPasswordResetToken = WebUtility.UrlEncode(request.PasswordResetToken);
+
             using var mailMessage = new MailMessage(_smtpOptions.SenderAddress, request.Email);
-            mailMessage.Subject = "Pwneu Reset!";
-            mailMessage.Body = $"Password Reset Token: {request.PasswordResetToken}";
+            mailMessage.Subject = "PWNEU Password Reset!";
+            mailMessage.IsBodyHtml = true;
+            mailMessage.Body = $"""
+                                    <p>Dear User,</p>
+                                    <p>You have requested to reset your password. Please click the link below to reset your password:</p>
+                                    <p><a href='{_smtpOptions.ResetPasswordUrl}?email={encodedEmail}&resetToken={encodedPasswordResetToken}'>Click here to reset your password</a></p>
+                                    <p>If you did not request a password reset, please ignore this email. No changes will be made to your account.</p>
+                                    <p>Thank you!</p>
+                                    <p>Pwneu Team</p>
+                                """;
 
             try
             {
