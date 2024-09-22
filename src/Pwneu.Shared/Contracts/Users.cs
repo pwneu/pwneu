@@ -66,6 +66,7 @@ public record LeaderboardsResponse
 {
     public UserRankResponse? RequesterRank { get; set; } = default!;
     public List<UserRankResponse> UserRanks { get; set; } = [];
+    public bool RequesterIsMember { get; set; }
 }
 
 public record UserRankResponse
