@@ -33,7 +33,7 @@ public static class GetUsers
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
                 usersQuery = usersQuery.Where(u =>
                     u.UserName != default &&
-                    u.UserName.Contains(request.SearchTerm));
+                    (u.UserName.Contains(request.SearchTerm) || u.FullName.Contains(request.SearchTerm)));
 
             if (request.ExcludeVerified is true)
                 usersQuery = usersQuery.Where(u => !u.EmailConfirmed);
