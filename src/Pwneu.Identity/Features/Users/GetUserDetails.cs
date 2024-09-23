@@ -34,6 +34,11 @@ public static class GetUserDetails
                         UserName = u.UserName,
                         FullName = u.FullName,
                         CreatedAt = u.CreatedAt,
+
+                        // Set null when getting a single user.
+                        // We set this to null just in case we want to allow users to view other user's profile.
+                        // There's a separate endpoint on getting the user email.
+                        Email = null,
                         EmailConfirmed = u.EmailConfirmed
                     })
                     .FirstOrDefaultAsync(cancellationToken), token: cancellationToken);
