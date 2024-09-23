@@ -79,7 +79,13 @@ public class ClearUserPlayDataTests(IntegrationTestsWebAppFactory factory) : Bas
             new Submission { UserId = testUserId, ChallengeId = challengeId2, IsCorrect = false }
         );
 
-        DbContext.HintUsages.Add(new HintUsage { UserId = testUserId, HintId = hintId, UsedAt = DateTime.UtcNow });
+        DbContext.HintUsages.Add(new HintUsage
+        {
+            UserId = testUserId,
+            UserName = "test",
+            HintId = hintId,
+            UsedAt = DateTime.UtcNow
+        });
 
         await DbContext.SaveChangesAsync();
 

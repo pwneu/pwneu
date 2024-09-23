@@ -13,7 +13,7 @@ public record ChallengeHintUsageResponse
 {
     public Guid HintId { get; init; }
     public string UserId { get; init; } = default!;
-    public string UserName { get; init; } = default!; // TODO -- Add UserName on HintUsage
+    public string UserName { get; init; } = default!;
     public DateTime UsedAt { get; init; }
     public int Deduction { get; init; }
 }

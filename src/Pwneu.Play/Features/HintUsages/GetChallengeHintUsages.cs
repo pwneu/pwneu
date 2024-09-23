@@ -49,6 +49,7 @@ public static class GetChallengeHintUsages
                 {
                     HintId = hu.HintId,
                     UserId = hu.UserId,
+                    UserName = hu.UserName,
                     UsedAt = hu.UsedAt,
                     Deduction = hu.Hint.Deduction,
                 });
