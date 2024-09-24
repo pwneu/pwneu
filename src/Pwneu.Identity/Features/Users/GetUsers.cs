@@ -14,28 +14,36 @@ namespace Pwneu.Identity.Features.Users;
 public static class GetUsers
 {
     public record Query(
+        bool? ExcludeVerified = false,
         string? SearchTerm = null,
         string? SortBy = null,
         string? SortOrder = null,
         int? Page = null,
         int? PageSize = null)
-        : IRequest<Result<PagedList<UserResponse>>>;
+        : IRequest<Result<PagedList<UserDetailsResponse>>>;
 
     internal sealed class Handler(ApplicationDbContext context)
-        : IRequestHandler<Query, Result<PagedList<UserResponse>>>
+        : IRequestHandler<Query, Result<PagedList<UserDetailsResponse>>>
     {
-        public async Task<Result<PagedList<UserResponse>>> Handle(Query request, CancellationToken cancellationToken)
+        public async Task<Result<PagedList<UserDetailsResponse>>> Handle(Query request,
+            CancellationToken cancellationToken)
         {
             IQueryable<User> usersQuery = context.Users;
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
                 usersQuery = usersQuery.Where(u =>
-                    u.UserName != default &&
-                    u.UserName.Contains(request.SearchTerm));
+                    (u.UserName != null && u.UserName.Contains(request.SearchTerm)) ||
+                    (u.Email != null && u.Email.Contains(request.SearchTerm)) ||
+                    u.FullName.Contains(request.SearchTerm));
+
+            if (request.ExcludeVerified is true)
+                usersQuery = usersQuery.Where(u => !u.EmailConfirmed);
 
             Expression<Func<User, object>> keySelector = request.SortBy?.ToLower() switch
             {
-                "username" => user => user.UserName!,
+                "username" => user => user.UserName ?? string.Empty,
+                "fullname" => user => user.FullName,
+                "email" => user => user.Email ?? string.Empty,
                 _ => user => user.CreatedAt
             };
 
@@ -43,13 +51,18 @@ public static class GetUsers
                 ? usersQuery.OrderByDescending(keySelector)
                 : usersQuery.OrderBy(keySelector);
 
-            var userResponsesQuery = usersQuery.Select(u => new UserResponse
-            {
-                Id = u.Id,
-                UserName = u.UserName
-            });
+            var userResponsesQuery = usersQuery
+                .Select(u => new UserDetailsResponse
+                {
+                    Id = u.Id,
+                    UserName = u.UserName,
+                    FullName = u.FullName,
+                    CreatedAt = u.CreatedAt,
+                    Email = u.Email,
+                    EmailConfirmed = u.EmailConfirmed
+                });
 
-            var users = await PagedList<UserResponse>.CreateAsync(
+            var users = await PagedList<UserDetailsResponse>.CreateAsync(
                 userResponsesQuery,
                 request.Page ?? 1,
                 request.PageSize ?? 10);
@@ -62,16 +75,16 @@ public static class GetUsers
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("users",
-                    async (string? searchTerm, string? sortBy, string? sortOrder, int? page, int? pageSize,
-                        ISender sender) =>
-                    {
-                        var query = new Query(searchTerm, sortBy, sortOrder, page, pageSize);
-                        var result = await sender.Send(query);
+            app.MapGet("users", async (bool? excludeVerified, string? searchTerm, string? sortBy, string? sortOrder,
+                    int? page, int? pageSize, ISender sender) =>
+                {
+                    var query = new Query(excludeVerified, searchTerm, sortBy, sortOrder, page, pageSize);
+                    var result = await sender.Send(query);
 
-                        return result.IsFailure ? Results.StatusCode(500) : Results.Ok(result.Value);
-                    })
+                    return result.IsFailure ? Results.StatusCode(500) : Results.Ok(result.Value);
+                })
                 .RequireAuthorization(Consts.ManagerAdminOnly)
+                .RequireRateLimiting(Consts.Fixed)
                 .WithTags(nameof(Users));
         }
     }

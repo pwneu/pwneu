@@ -1,45 +1,36 @@
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Pwneu.Identity.Features.Users;
 using Pwneu.Identity.Shared.Entities;
-using Pwneu.Identity.Shared.Options;
 using Pwneu.Shared.Common;
 
 namespace Pwneu.Identity.Workers;
 
 /// <summary>
 /// A background service for cleaning up unverified emails.
-/// This action is dangerous if AppOptions.RequireEmailVerification was set to false, and it changed to true, all the users might be deleted.
 /// </summary>
 /// <param name="serviceProvider">Service provider.</param>
 /// <param name="logger">Logger.</param>
 public class UserCleanupService(
     IServiceProvider serviceProvider,
     ILogger<UserCleanupService> logger,
-    ISender sender,
-    IOptions<AppOptions> appOptions)
+    ISender sender)
     : BackgroundService
 {
-    private readonly AppOptions _appOptions = appOptions.Value;
     private readonly TimeSpan _cleanupInterval = TimeSpan.FromHours(24);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            if (_appOptions.RequireEmailVerification)
-                await CleanupUnconfirmedAccountsAsync(stoppingToken);
+            await CleanupUnconfirmedAccountsAsync(stoppingToken);
             await Task.Delay(_cleanupInterval, stoppingToken);
         }
     }
 
     private async Task CleanupUnconfirmedAccountsAsync(CancellationToken cancellationToken)
     {
-        if (!_appOptions.RequireEmailVerification)
-            return;
-
         logger.LogInformation("Started deleting unconfirmed users");
         using var scope = serviceProvider.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();

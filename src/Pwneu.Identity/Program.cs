@@ -80,11 +80,9 @@ builder.Services.AddCors();
 // ASP.NET Identity
 builder.Services.AddIdentity<User, IdentityRole>(options =>
     {
-        var requireEmailVerification = bool.Parse(builder.Configuration[Consts.AppOptionsRequireEmailVerification]!);
-
         // Email confirmation and account confirmation
-        options.SignIn.RequireConfirmedEmail = requireEmailVerification;
-        options.SignIn.RequireConfirmedAccount = requireEmailVerification;
+        options.SignIn.RequireConfirmedEmail = true;
+        options.SignIn.RequireConfirmedAccount = true;
 
         // Password requirements
         options.Password.RequireDigit = true;
@@ -97,7 +95,8 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-builder.Services.AddHostedService<UserCleanupService>();
+if (!builder.Environment.IsDevelopment())
+    builder.Services.AddHostedService<UserCleanupService>();
 
 // Postgres Database 
 var postgres = builder.Configuration.GetConnectionString(Consts.Postgres) ??
@@ -184,6 +183,24 @@ builder.Services.AddRateLimiter(options =>
             {
                 PermitLimit = 2,
                 Window = TimeSpan.FromDays(1),
+            }));
+
+    options.AddPolicy(Consts.Fixed, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.User.GetLoggedInUserId<string>(),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromSeconds(10),
+            }));
+
+    options.AddPolicy(Consts.Registration, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Request.Headers["X-Forwarded-For"].ToString(),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
             }));
 });
 

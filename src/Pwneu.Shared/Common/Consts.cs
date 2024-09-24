@@ -1,5 +1,8 @@
 namespace Pwneu.Shared.Common;
 
+/// <summary>
+/// Constant strings for preventing typos
+/// </summary>
 public static class Consts
 {
     public const string Member = "Member";
@@ -18,8 +21,6 @@ public static class Consts
     public const string JwtOptionsAudience = "JwtOptions:Audience";
     public const string JwtOptionsSigningKey = "JwtOptions:SigningKey";
 
-    public const string AppOptionsRequireEmailVerification = "AppOptions:RequireEmailVerification";
-
     public const string Postgres = "Postgres";
     public const string Redis = "Redis";
     public const string Sqlite = "Sqlite";
@@ -29,6 +30,7 @@ public static class Consts
     public const string RefreshToken = "refreshToken";
     public const string AntiEmailAbuse = "antiEmailAbuse";
     public const string Fixed = "fixed";
+    public const string Registration = "registration";
 
     public const string SubmissionsAllowed = "SubmissionsAllowed";
 }

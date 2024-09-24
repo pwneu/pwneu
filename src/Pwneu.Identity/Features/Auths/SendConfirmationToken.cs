@@ -1,9 +1,7 @@
 using MassTransit;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
 using Pwneu.Identity.Shared.Entities;
-using Pwneu.Identity.Shared.Options;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 
@@ -13,22 +11,13 @@ public static class SendConfirmationToken
 {
     public record Command(string Email) : IRequest<Result>;
 
-    private static readonly Error NotRequired =
-        new("SendConfirmationToken.NotRequired", "Email verification is not required");
-
     internal sealed class Handler(
         UserManager<User> userManager,
-        IPublishEndpoint publishEndpoint,
-        IOptions<AppOptions> appOptions)
+        IPublishEndpoint publishEndpoint)
         : IRequestHandler<Command, Result>
     {
-        private readonly AppOptions _appOptions = appOptions.Value;
-
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
-            if (!_appOptions.RequireEmailVerification)
-                return Result.Failure(NotRequired);
-
             var user = await userManager.FindByEmailAsync(request.Email);
 
             // Don't give the requester a clue if the user exists with the specified email.

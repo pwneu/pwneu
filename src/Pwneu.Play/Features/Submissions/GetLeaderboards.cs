@@ -9,9 +9,14 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.Submissions;
 
+/// <summary>
+/// Gets the leaderboards
+/// Shows full leaderboards if manager admin.
+/// Shows top 10 if member
+/// </summary>
 public static class GetLeaderboards
 {
-    public record Query(string RequesterId) : IRequest<Result<LeaderboardsResponse>>;
+    public record Query(string RequesterId, bool IsMember) : IRequest<Result<LeaderboardsResponse>>;
 
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
         : IRequestHandler<Query, Result<LeaderboardsResponse>>
@@ -71,14 +76,19 @@ public static class GetLeaderboards
                     .ToList();
 
                 return userRanks;
-            }, token: cancellationToken);
+            }, new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(20) }, cancellationToken);
 
             var requesterRank = userRanks.FirstOrDefault(u => u.Id == request.RequesterId);
+
+            // Only show top 10 if the requester is a member.
+            if (request.IsMember)
+                userRanks = userRanks.Take(10).ToList();
 
             return new LeaderboardsResponse
             {
                 RequesterRank = requesterRank,
-                UserRanks = userRanks
+                UserRanks = userRanks,
+                RequesterIsMember = request.IsMember
             };
         }
     }
@@ -90,9 +100,12 @@ public static class GetLeaderboards
             app.MapGet("leaderboards", async (ClaimsPrincipal claims, ISender sender) =>
                 {
                     var userId = claims.GetLoggedInUserId<string>();
-                    if (userId is null) return Results.BadRequest();
+                    if (userId is null)
+                        return Results.BadRequest();
 
-                    var query = new Query(userId);
+                    var isMember = claims.GetRoles().Contains(Consts.Member);
+
+                    var query = new Query(userId, isMember);
                     var result = await sender.Send(query);
 
                     return result.IsFailure ? Results.StatusCode(500) : Results.Ok(result.Value);

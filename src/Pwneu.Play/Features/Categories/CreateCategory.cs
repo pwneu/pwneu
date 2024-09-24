@@ -10,7 +10,7 @@ namespace Pwneu.Play.Features.Categories;
 
 /// <summary>
 /// Creates a category.
-/// Only users with manager or admin roles can access this endpoint.
+/// Only admin can create a category.
 /// </summary>
 public static class CreateCategory
 {
@@ -62,7 +62,7 @@ public static class CreateCategory
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);
                 })
-                .RequireAuthorization(Consts.ManagerAdminOnly)
+                .RequireAuthorization(Consts.AdminOnly)
                 .WithTags(nameof(Categories));
         }
     }

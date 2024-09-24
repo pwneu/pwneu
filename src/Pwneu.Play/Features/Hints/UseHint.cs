@@ -11,7 +11,7 @@ namespace Pwneu.Play.Features.Hints;
 
 public class UseHint
 {
-    public record Command(string UserId, Guid HintId) : IRequest<Result<string>>;
+    public record Command(string UserId, string UserName, Guid HintId) : IRequest<Result<string>>;
 
     private static readonly Error NotFound = new("UseHint.NotFound",
         "The hint with the specified ID was not found");
@@ -66,6 +66,7 @@ public class UseHint
             var hintUsage = new HintUsage
             {
                 UserId = request.UserId,
+                UserName = request.UserName,
                 HintId = request.HintId,
                 UsedAt = DateTime.UtcNow
             };
@@ -99,7 +100,10 @@ public class UseHint
                     var userId = claims.GetLoggedInUserId<string>();
                     if (userId is null) return Results.BadRequest();
 
-                    var query = new Command(userId, id);
+                    var userName = claims.GetLoggedInUserName();
+                    if (userName is null) return Results.BadRequest();
+
+                    var query = new Command(userId, userName, id);
                     var result = await sender.Send(query);
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);

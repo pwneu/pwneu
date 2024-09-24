@@ -9,7 +9,7 @@ namespace Pwneu.Play.Features.Categories;
 
 /// <summary>
 /// Deletes a category by ID.
-/// Only users with manager or admin roles can access this endpoint.
+/// Only the admin can delete a category.
 /// </summary>
 public static class DeleteCategory
 {
@@ -65,7 +65,7 @@ public static class DeleteCategory
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
                 })
-                .RequireAuthorization(Consts.ManagerAdminOnly)
+                .RequireAuthorization(Consts.AdminOnly)
                 .WithTags(nameof(Categories));
         }
     }
