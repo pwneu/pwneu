@@ -54,7 +54,7 @@ public record UserDetailsResponse
     public string? UserName { get; set; }
     public string FullName { get; set; } = default!;
     public DateTime CreatedAt { get; set; }
-    public required string? Email { get; set; }
+    public string? Email { get; set; }
     public bool EmailConfirmed { get; set; }
 }
 

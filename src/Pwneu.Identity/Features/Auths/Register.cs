@@ -120,6 +120,7 @@ public static class Register
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.Created();
                 })
+                .RequireRateLimiting(Consts.Registration)
                 .WithTags(nameof(Auths));
         }
     }
