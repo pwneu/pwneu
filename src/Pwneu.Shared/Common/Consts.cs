@@ -33,4 +33,5 @@ public static class Consts
     public const string Registration = "registration";
 
     public const string SubmissionsAllowed = "SubmissionsAllowed";
+    public const string PublicLeaderboardCount = "PublicLeaderboardCount";
 }

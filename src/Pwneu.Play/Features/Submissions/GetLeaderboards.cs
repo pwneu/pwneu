@@ -2,6 +2,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
+using Pwneu.Play.Shared.Extensions;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 using Pwneu.Shared.Extensions;
@@ -80,15 +81,22 @@ public static class GetLeaderboards
 
             var requesterRank = userRanks.FirstOrDefault(u => u.Id == request.RequesterId);
 
-            // Only show top 10 if the requester is a member.
+            var leaderboardCount = await cache.GetOrSetAsync(Keys.PublicLeaderboardCount(),
+                async _ => await context.GetPlayConfigurationValueAsync<int>(
+                    Consts.PublicLeaderboardCount,
+                    cancellationToken),
+                token: cancellationToken);
+
+            // Only show top users the requester is a member.
             if (request.IsMember)
-                userRanks = userRanks.Take(10).ToList();
+                userRanks = userRanks.Take(leaderboardCount).ToList();
 
             return new LeaderboardsResponse
             {
                 RequesterRank = requesterRank,
                 UserRanks = userRanks,
-                RequesterIsMember = request.IsMember
+                RequesterIsMember = request.IsMember,
+                LeaderboardCount = leaderboardCount
             };
         }
     }
