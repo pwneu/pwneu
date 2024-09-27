@@ -11,9 +11,9 @@ using ZiggyCreatures.Caching.Fusion;
 namespace Pwneu.Play.Features.Submissions;
 
 /// <summary>
-/// Gets the leaderboards
+/// Gets the leaderboards.
 /// Shows full leaderboards if manager admin.
-/// Shows top 10 if member
+/// Shows top users if member.
 /// </summary>
 public static class GetLeaderboards
 {
@@ -72,7 +72,8 @@ public static class GetLeaderboards
                         Id = u.UserId,
                         UserName = u.UserName,
                         Position = index + 1,
-                        Points = u.FinalScore
+                        Points = u.FinalScore,
+                        LatestCorrectSubmission = u.EarliestNonZeroSubmission
                     })
                     .ToList();
 
@@ -81,7 +82,7 @@ public static class GetLeaderboards
 
             var requesterRank = userRanks.FirstOrDefault(u => u.Id == request.RequesterId);
 
-            var leaderboardCount = await cache.GetOrSetAsync(Keys.PublicLeaderboardCount(),
+            var publicLeaderboardCount = await cache.GetOrSetAsync(Keys.PublicLeaderboardCount(),
                 async _ => await context.GetPlayConfigurationValueAsync<int>(
                     Consts.PublicLeaderboardCount,
                     cancellationToken),
@@ -89,14 +90,14 @@ public static class GetLeaderboards
 
             // Only show top users the requester is a member.
             if (request.IsMember)
-                userRanks = userRanks.Take(leaderboardCount).ToList();
+                userRanks = userRanks.Take(publicLeaderboardCount).ToList();
 
             return new LeaderboardsResponse
             {
                 RequesterRank = requesterRank,
                 UserRanks = userRanks,
                 RequesterIsMember = request.IsMember,
-                LeaderboardCount = leaderboardCount
+                PublicLeaderboardCount = publicLeaderboardCount
             };
         }
     }
