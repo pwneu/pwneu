@@ -194,14 +194,31 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromSeconds(10),
             }));
 
-    options.AddPolicy(Consts.Registration, httpContext =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: httpContext.Request.Headers["X-Forwarded-For"].ToString(),
-            factory: _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = 30,
-                Window = TimeSpan.FromMinutes(1),
-            }));
+    // Policy for registration
+    if (builder.Environment.IsDevelopment())
+    {
+        // In development, set very high limits to effectively disable rate limiting
+        options.AddPolicy(Consts.Registration, httpContext =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: httpContext.Request.Headers["X-Forwarded-For"].ToString(),
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = int.MaxValue, // Effectively unlimited
+                    Window = TimeSpan.FromSeconds(1),
+                }));
+    }
+    else
+    {
+        // Actual rate limiting for production environment
+        options.AddPolicy(Consts.Registration, httpContext =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: httpContext.Request.Headers["X-Forwarded-For"].ToString(),
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 30,
+                    Window = TimeSpan.FromMinutes(1),
+                }));
+    }
 
     options.AddPolicy(Consts.VerifyEmail, httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
