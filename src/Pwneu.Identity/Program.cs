@@ -199,7 +199,7 @@ builder.Services.AddRateLimiter(options =>
             partitionKey: httpContext.Request.Headers["X-Forwarded-For"].ToString(),
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 10,
+                PermitLimit = 30,
                 Window = TimeSpan.FromMinutes(1),
             }));
 });
