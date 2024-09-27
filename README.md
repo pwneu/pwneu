@@ -44,6 +44,16 @@ SMTP_SENDER_ADDRESS=
 SMTP_SENDER_PASSWORD=
 ```
 
+- Or you can add a fake sender and disable emailing.
+
+```
+SMTP_SENDER_ADDRESS=pwneu@pwneu.pwneu
+SMTP_SENDER_PASSWORD=pwneupwneupwneu
+SMTP_NOTIFY_LOGIN_IS_ENABLED=false
+SMTP_SEND_EMAIL_CONFIRMATION_IS_ENABLED=false
+SMTP_SEND_PASSWORD_RESET_TOKEN_IS_ENABLED=false
+```
+
 - Build and run the container
 
 ```sh

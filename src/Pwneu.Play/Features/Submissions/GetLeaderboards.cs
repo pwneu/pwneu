@@ -2,6 +2,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
+using Pwneu.Play.Shared.Extensions;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 using Pwneu.Shared.Extensions;
@@ -10,9 +11,9 @@ using ZiggyCreatures.Caching.Fusion;
 namespace Pwneu.Play.Features.Submissions;
 
 /// <summary>
-/// Gets the leaderboards
+/// Gets the leaderboards.
 /// Shows full leaderboards if manager admin.
-/// Shows top 10 if member
+/// Shows top users if member.
 /// </summary>
 public static class GetLeaderboards
 {
@@ -71,7 +72,8 @@ public static class GetLeaderboards
                         Id = u.UserId,
                         UserName = u.UserName,
                         Position = index + 1,
-                        Points = u.FinalScore
+                        Points = u.FinalScore,
+                        LatestCorrectSubmission = u.EarliestNonZeroSubmission
                     })
                     .ToList();
 
@@ -80,15 +82,22 @@ public static class GetLeaderboards
 
             var requesterRank = userRanks.FirstOrDefault(u => u.Id == request.RequesterId);
 
-            // Only show top 10 if the requester is a member.
+            var publicLeaderboardCount = await cache.GetOrSetAsync(Keys.PublicLeaderboardCount(),
+                async _ => await context.GetPlayConfigurationValueAsync<int>(
+                    Consts.PublicLeaderboardCount,
+                    cancellationToken),
+                token: cancellationToken);
+
+            // Only show top users the requester is a member.
             if (request.IsMember)
-                userRanks = userRanks.Take(10).ToList();
+                userRanks = userRanks.Take(publicLeaderboardCount).ToList();
 
             return new LeaderboardsResponse
             {
                 RequesterRank = requesterRank,
                 UserRanks = userRanks,
-                RequesterIsMember = request.IsMember
+                RequesterIsMember = request.IsMember,
+                PublicLeaderboardCount = publicLeaderboardCount
             };
         }
     }

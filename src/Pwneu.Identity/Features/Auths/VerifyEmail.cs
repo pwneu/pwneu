@@ -47,6 +47,7 @@ public class VerifyEmail
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
                 })
+                .RequireRateLimiting(Consts.VerifyEmail)
                 .WithTags(nameof(Auths));
         }
     }

@@ -68,6 +68,7 @@ public record LeaderboardsResponse
     public UserRankResponse? RequesterRank { get; set; } = default!;
     public List<UserRankResponse> UserRanks { get; set; } = [];
     public bool RequesterIsMember { get; set; }
+    public int PublicLeaderboardCount { get; set; }
 }
 
 public record UserRankResponse
@@ -76,4 +77,5 @@ public record UserRankResponse
     public string? UserName { get; set; } = default!;
     public int Position { get; set; }
     public int Points { get; set; }
+    public DateTime LatestCorrectSubmission { get; set; }
 }
