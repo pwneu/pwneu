@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using FluentValidation;
+using MediatR;
 using Pwneu.Play.Shared.Data;
 using Pwneu.Play.Shared.Extensions;
 using Pwneu.Shared.Common;
@@ -10,12 +11,18 @@ public static class SetPublicLeaderboardCount
 {
     public record Command(int Count) : IRequest<Result>;
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, IValidator<Command> validator)
         : IRequestHandler<Command, Result>
     {
-        public async Task<Result> Handle(Command request,
-            CancellationToken cancellationToken)
+        public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
+            var validationResult = await validator.ValidateAsync(request, cancellationToken);
+
+            if (!validationResult.IsValid)
+                return Result.Failure<Guid>(new Error(
+                    "SetPublicLeaderboardCount.Validation",
+                    validationResult.ToString()));
+
             await context.SetPlayConfigurationValueAsync(
                 Consts.PublicLeaderboardCount,
                 request.Count,
@@ -36,10 +43,20 @@ public static class SetPublicLeaderboardCount
                     var query = new Command(count);
                     var result = await sender.Send(query);
 
-                    return result.IsFailure ? Results.BadRequest() : Results.NoContent();
+                    return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
                 })
                 .RequireAuthorization(Consts.AdminOnly)
                 .WithTags(nameof(PlayConfigurations));
+        }
+    }
+
+    public class Validator : AbstractValidator<Command>
+    {
+        public Validator()
+        {
+            RuleFor(c => c.Count)
+                .GreaterThanOrEqualTo(10)
+                .WithMessage("The count must be greater than or equal to 10.");
         }
     }
 }
