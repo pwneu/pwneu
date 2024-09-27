@@ -17,6 +17,9 @@ public static class DeleteUser
     private static readonly Error NotFound = new("DeleteUser.NotFound",
         "The user with the specified ID was not found");
 
+    private static readonly Error Failed = new("DeleteUser.Failed",
+        "Failed to delete user");
+
     private static readonly Error CannotSelfDelete = new("DeleteUser.CannotSelfDelete",
         "Cannot delete yourself");
 
@@ -45,7 +48,10 @@ public static class DeleteUser
             if (userIsAdmin)
                 return Result.Failure(CannotDeleteAdmin);
 
-            await userManager.DeleteAsync(user);
+            var deleteUser = await userManager.DeleteAsync(user);
+
+            if (!deleteUser.Succeeded) 
+                return Result.Failure(Failed);
 
             var invalidationTasks = new List<Task>
             {

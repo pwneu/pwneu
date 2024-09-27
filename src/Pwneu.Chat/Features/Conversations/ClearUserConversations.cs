@@ -27,7 +27,7 @@ public static class ClearUserConversations
     }
 }
 
-public class UserDeletedEventConsumer(ISender sender, ILogger<UserDeletedEventConsumer> logger)
+public class ChatUserDeletedEventConsumer(ISender sender, ILogger<ChatUserDeletedEventConsumer> logger)
     : IConsumer<UserDeletedEvent>
 {
     public async Task Consume(ConsumeContext<UserDeletedEvent> context)
