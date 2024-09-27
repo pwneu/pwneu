@@ -20,7 +20,7 @@ public static class PlaySeed
         if (submissionsAllowedConfig is null)
             await context.SetPlayConfigurationValueAsync(Consts.SubmissionsAllowed, false);
 
-        // Check if the SubmissionsAllowed row already exists
+        // Check if the PublicLeaderboardCount row already exists
         var publicLeaderboardCount = await context.PlayConfigurations
             .FirstOrDefaultAsync(c => c.Key == Consts.PublicLeaderboardCount);
 
