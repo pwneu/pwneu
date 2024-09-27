@@ -64,7 +64,7 @@ public static class GetChallenges
                 "description" => challenge => challenge.Description,
                 "points" => challenge => challenge.Points,
                 "deadline" => challenge => challenge.Deadline,
-                "solve" => challenge => challenge.SolveCount,
+                "solves" => challenge => challenge.SolveCount,
                 "solvecount" => challenge => challenge.SolveCount,
                 _ => challenge => challenge.Name
             };
