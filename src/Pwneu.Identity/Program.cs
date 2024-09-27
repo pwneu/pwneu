@@ -202,6 +202,15 @@ builder.Services.AddRateLimiter(options =>
                 PermitLimit = 30,
                 Window = TimeSpan.FromMinutes(1),
             }));
+
+    options.AddPolicy(Consts.VerifyEmail, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Request.Headers["X-Forwarded-For"].ToString(),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 3,
+                Window = TimeSpan.FromSeconds(10),
+            }));
 });
 
 builder.Services.AddScoped<IAccessControl, AccessControl>();

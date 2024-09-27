@@ -31,6 +31,7 @@ public static class Consts
     public const string AntiEmailAbuse = "antiEmailAbuse";
     public const string Fixed = "fixed";
     public const string Registration = "registration";
+    public const string VerifyEmail = "verifyEmail";
 
     public const string SubmissionsAllowed = "SubmissionsAllowed";
     public const string PublicLeaderboardCount = "PublicLeaderboardCount";
