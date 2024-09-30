@@ -40,7 +40,7 @@ public static class GetPlayConfigurations
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);
                 })
-                .RequireAuthorization(Consts.AdminOnly)
+                .RequireAuthorization(Consts.ManagerAdminOnly)
                 .WithTags(nameof(PlayConfigurations));
         }
     }

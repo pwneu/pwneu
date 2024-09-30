@@ -46,7 +46,7 @@ public static class GetAccessKeys
 
                     return result.IsFailure ? Results.StatusCode(500) : Results.Ok(result.Value);
                 })
-                .RequireAuthorization(Consts.AdminOnly)
+                .RequireAuthorization(Consts.ManagerAdminOnly)
                 .WithTags(nameof(AccessKeys));
         }
     }

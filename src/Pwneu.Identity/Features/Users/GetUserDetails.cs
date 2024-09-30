@@ -58,7 +58,7 @@ public static class GetUserDetails
 
                     return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(Consts.ManagerAdminOnly)
                 .WithTags(nameof(Users));
 
             app.MapGet("me/details", async (ClaimsPrincipal claims, ISender sender) =>
