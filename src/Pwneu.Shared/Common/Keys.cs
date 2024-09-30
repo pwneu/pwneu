@@ -51,8 +51,11 @@ public static class Keys
         string userId,
         Guid categoryId) => $"user:{userId}:category:{categoryId}:eval";
 
-    // Key for getting leaderboards.
+    // Key for caching leaderboards.
     public static string UserRanks() => "userRanks";
+
+    // Key for caching if there's a recent count of user ranks when saving a correct submission.
+    public static string HasRecentUserRankCount() => "hasRecentUserRankCount";
 
     // Key for caching challenge flags.
     public static string Flags(Guid challengeId) => $"challenge:{challengeId}:flag";
