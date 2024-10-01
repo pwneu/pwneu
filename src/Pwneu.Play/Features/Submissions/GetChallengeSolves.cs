@@ -30,7 +30,8 @@ public static class GetChallengeSolves
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
                 challengeSolvesQuery = challengeSolvesQuery.Where(s =>
-                    s.UserName.Contains(request.SearchTerm));
+                    s.UserName.Contains(request.SearchTerm) ||
+                    s.UserId.Contains(request.SearchTerm));
 
             Expression<Func<Submission, object>> keySelector = request.SortBy?.ToLower() switch
             {

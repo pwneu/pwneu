@@ -29,13 +29,15 @@ public static class GetChallengeHintUsages
                 .Where(hu => hu.Hint.ChallengeId == request.Id);
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
-                hintUsagesQuery = hintUsagesQuery.Where(hu => hu.Hint.Challenge.Name
-                    .Contains(request.SearchTerm));
+                hintUsagesQuery = hintUsagesQuery.Where(hu =>
+                    hu.UserName.Contains(request.SearchTerm) ||
+                    hu.UserId.Contains(request.SearchTerm) ||
+                    hu.HintId.ToString().Contains(request.SearchTerm));
 
             Expression<Func<HintUsage, object>> keySelector = request.SortBy?.ToLower() switch
             {
-                "name" => hintUsage => hintUsage.Hint.Challenge.Name,
-                "challengename" => hintUsage => hintUsage.Hint.Challenge.Name,
+                "name" => hintUsage => hintUsage.UserName,
+                "username" => hintUsage => hintUsage.UserName,
                 "deduction" => hintUsage => hintUsage.Hint.Deduction,
                 _ => hintUsage => hintUsage.UsedAt
             };

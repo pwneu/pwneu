@@ -38,8 +38,9 @@ public static class GetUserSolves
                 .Where(s => s.UserId == request.Id && s.IsCorrect == true);
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
-                userSolvesQuery = userSolvesQuery
-                    .Where(s => s.Challenge.Name.Contains(request.SearchTerm));
+                userSolvesQuery = userSolvesQuery.Where(s =>
+                    s.Challenge.Name.Contains(request.SearchTerm) ||
+                    s.ChallengeId.ToString().Contains(request.SearchTerm));
 
             Expression<Func<Submission, object>> keySelector = request.SortBy?.ToLower() switch
             {
@@ -82,6 +83,7 @@ public static class GetUserSolves
                     return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
                 })
                 .RequireAuthorization(Consts.ManagerAdminOnly)
+                .RequireRateLimiting(Consts.Fixed)
                 .WithTags(nameof(Submissions));
 
             app.MapGet("me/solves", async (string? searchTerm, string? sortBy, string? sortOrder, int? page,

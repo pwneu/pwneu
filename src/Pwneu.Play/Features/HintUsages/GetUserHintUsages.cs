@@ -30,7 +30,7 @@ public static class GetUserHintUsages
         public async Task<Result<PagedList<UserHintUsageResponse>>> Handle(Query request,
             CancellationToken cancellationToken)
         {
-            // Check if user exists.
+            // Check if member exists.
             if (!await memberAccess.MemberExistsAsync(request.Id, cancellationToken))
                 return Result.Failure<PagedList<UserHintUsageResponse>>(NotFound);
 
@@ -40,7 +40,9 @@ public static class GetUserHintUsages
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
                 hintUsagesQuery = hintUsagesQuery.Where(hu =>
-                    hu.Hint.Challenge.Name.Contains(request.SearchTerm));
+                    hu.Hint.Challenge.Name.Contains(request.SearchTerm) ||
+                    hu.Hint.ChallengeId.ToString().Contains(request.SearchTerm) ||
+                    hu.HintId.ToString().Contains(request.SearchTerm));
 
             Expression<Func<HintUsage, object>> keySelector = request.SortBy?.ToLower() switch
             {
