@@ -10,6 +10,7 @@ public record GetMemberRequest
 public record UserActivityResponse
 {
     public string UserId { get; set; } = default!;
+    public string UserName { get; set; } = default!;
     public DateTime ActivityDate { get; set; }
     public int Score { get; set; }
 }
@@ -67,6 +68,7 @@ public record LeaderboardsResponse
 {
     public UserRankResponse? RequesterRank { get; set; } = default!;
     public List<UserRankResponse> UserRanks { get; set; } = [];
+    public List<List<UserActivityResponse>> TopUsersGraph { get; set; } = [];
     public bool RequesterIsMember { get; set; }
     public int PublicLeaderboardCount { get; set; }
 }

@@ -115,7 +115,7 @@ public static class SaveSubmission
                 return submission.Id;
 
             var hasRecentRankRecount =
-                await cache.GetOrDefaultAsync<bool>(Keys.HasRecentUserRankCount(), token: cancellationToken);
+                await cache.GetOrDefaultAsync<bool>(Keys.HasRecentLeaderboardCount(), token: cancellationToken);
 
             // Querying user ranks takes a while, so we allow a slight delay of 5 seconds.
             // This gives time for the  submissions queue finish.
@@ -126,14 +126,25 @@ public static class SaveSubmission
 
             // Write user ranks to cache for faster retrieval.
             var userRanks = await context.GetUserRanks(cancellationToken);
+
             await cache.SetAsync(
                 Keys.UserRanks(),
                 userRanks,
                 new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(20) },
                 cancellationToken);
 
+            var topUsersGraph = await context.GetUsersGraph(
+                userRanks.Take(10).Select(u => u.Id).ToArray(),
+                cancellationToken);
+
             await cache.SetAsync(
-                Keys.HasRecentUserRankCount(),
+                Keys.TopUsersGraph(),
+                topUsersGraph,
+                new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(20) },
+                cancellationToken);
+
+            await cache.SetAsync(
+                Keys.HasRecentLeaderboardCount(),
                 true,
                 new FusionCacheEntryOptions { Duration = TimeSpan.FromSeconds(5) },
                 cancellationToken);

@@ -32,10 +32,11 @@ public static class GetUserGraph
                 // Get the list of correct submissions by the user.
                 var correctSubmissions = await context
                     .Submissions
-                    .Where(s => s.UserId == request.Id & s.IsCorrect)
+                    .Where(s => s.UserId == request.Id && s.IsCorrect)
                     .Select(s => new UserActivityResponse
                     {
                         UserId = s.UserId,
+                        UserName = s.UserName,
                         ActivityDate = s.SubmittedAt,
                         Score = s.Challenge.Points
                     })
@@ -48,6 +49,7 @@ public static class GetUserGraph
                     .Select(h => new UserActivityResponse
                     {
                         UserId = h.UserId,
+                        UserName = h.UserName,
                         ActivityDate = h.UsedAt,
                         Score = -h.Hint.Deduction
                     })

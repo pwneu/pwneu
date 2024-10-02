@@ -45,6 +45,7 @@ public static class DeleteChallenge
                 cache.InvalidateChallengeCacheAsync(challenge, cancellationToken),
                 cache.InvalidateUserGraphs(cancellationToken),
                 cache.RemoveAsync(Keys.UserRanks(), token: cancellationToken).AsTask(),
+                cache.RemoveAsync(Keys.TopUsersGraph(), token: cancellationToken).AsTask(),
                 cache.RemoveAsync(Keys.AllChallenges(), token: cancellationToken).AsTask()
             };
 

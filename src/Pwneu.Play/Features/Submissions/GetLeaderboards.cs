@@ -38,6 +38,12 @@ public static class GetLeaderboards
                     cancellationToken),
                 token: cancellationToken);
 
+            var topUsersGraph = await cache.GetOrSetAsync(Keys.TopUsersGraph(), async _ =>
+                    await context.GetUsersGraph(
+                        userRanks.Take(10).Select(u => u.Id).ToArray(),
+                        cancellationToken),
+                token: cancellationToken);
+
             // Only show top users the requester is a member.
             if (request.IsMember)
                 userRanks = userRanks.Take(publicLeaderboardCount).ToList();
@@ -46,6 +52,7 @@ public static class GetLeaderboards
             {
                 RequesterRank = requesterRank,
                 UserRanks = userRanks,
+                TopUsersGraph = topUsersGraph,
                 RequesterIsMember = request.IsMember,
                 PublicLeaderboardCount = publicLeaderboardCount
             };

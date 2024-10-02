@@ -54,8 +54,11 @@ public static class Keys
     // Key for caching leaderboards.
     public static string UserRanks() => "userRanks";
 
-    // Key for caching if there's a recent count of user ranks when saving a correct submission.
-    public static string HasRecentUserRankCount() => "hasRecentUserRankCount";
+    // Key for caching graph of top users.
+    public static string TopUsersGraph() => "topUserGraph";
+
+    // Key for caching if there's a recent calculation of leaderboard when saving a correct submission.
+    public static string HasRecentLeaderboardCount() => "hasRecentLeaderboardCount";
 
     // Key for caching challenge flags.
     public static string Flags(Guid challengeId) => $"challenge:{challengeId}:flag";
