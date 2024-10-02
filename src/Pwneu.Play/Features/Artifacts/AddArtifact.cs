@@ -12,16 +12,26 @@ public static class AddArtifact
     public record Command(
         Guid ChallengeId,
         string FileName,
+        long FileSize,
         string ContentType,
         byte[] Data) : IRequest<Result<Guid>>;
 
+    private const long MaxFileSize = 500 * 1024 * 1024;
+
     private static readonly Error NoChallenge = new("AddArtifact.NoChallenge", "No challenge found");
+
+    private static readonly Error FileSizeLimit = new(
+        "AddArtifact.FileSizeLimit",
+        $"File size exceeds the limit of {MaxFileSize} megabytes");
 
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
         : IRequestHandler<Command, Result<Guid>>
     {
         public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
         {
+            if (request.FileSize > MaxFileSize)
+                return Result.Failure<Guid>(FileSizeLimit);
+
             var challenge = await context
                 .Challenges
                 .Where(c => c.Id == request.ChallengeId)
@@ -59,7 +69,7 @@ public static class AddArtifact
                     using var memoryStream = new MemoryStream();
                     await file.CopyToAsync(memoryStream);
 
-                    var command = new Command(id, file.FileName, file.ContentType, memoryStream.ToArray());
+                    var command = new Command(id, file.FileName, file.Length, file.ContentType, memoryStream.ToArray());
 
                     var result = await sender.Send(command);
 
