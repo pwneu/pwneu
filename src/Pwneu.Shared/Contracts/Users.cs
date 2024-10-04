@@ -64,11 +64,17 @@ public record UserDeletedEvent
     public required string Id { get; init; } = default!;
 }
 
+public record UsersGraphResponse
+{
+    public List<List<UserActivityResponse>> UsersGraph { get; set; } = [];
+    public List<DateTime> GraphLabels { get; set; } = [];
+}
+
 public record LeaderboardsResponse
 {
     public UserRankResponse? RequesterRank { get; set; } = default!;
     public List<UserRankResponse> UserRanks { get; set; } = [];
-    public List<List<UserActivityResponse>> TopUsersGraph { get; set; } = [];
+    public UsersGraphResponse TopUsersGraph { get; set; } = default!;
     public bool RequesterIsMember { get; set; }
     public int PublicLeaderboardCount { get; set; }
 }

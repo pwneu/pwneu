@@ -7,7 +7,7 @@ namespace Pwneu.Play.Shared.Extensions;
 public static class ApplicationDbContextExtensions
 {
     /// <summary>
-    /// Gets the ranks of all members.
+    /// Gets the ranks of all members, tracking who reached the score first.
     /// </summary>
     /// <param name="context"></param>
     /// <param name="cancellationToken"></param>
@@ -16,7 +16,7 @@ public static class ApplicationDbContextExtensions
         this ApplicationDbContext context,
         CancellationToken cancellationToken = default)
     {
-        // Count all the user points and track the earliest submission time where the points are not zero
+        // Count all the user points and track the latest submission time where the points are not zero
         var userPoints = await context.Submissions
             .Where(s => s.IsCorrect)
             .GroupBy(s => new { s.UserId, s.UserName })
@@ -25,9 +25,9 @@ public static class ApplicationDbContextExtensions
                 g.Key.UserId,
                 g.Key.UserName,
                 TotalPoints = g.Sum(s => s.Challenge.Points),
-                EarliestNonZeroSubmission = g
+                LatestNonZeroSubmission = g
                     .Where(s => s.Challenge.Points > 0)
-                    .Min(s => s.SubmittedAt) // Track the earliest submission where points > 0
+                    .Max(s => s.SubmittedAt) // Track the latest submission where points > 0
             })
             .ToListAsync(cancellationToken);
 
@@ -41,7 +41,7 @@ public static class ApplicationDbContextExtensions
             })
             .ToListAsync(cancellationToken);
 
-        // Combine points and deductions, calculate final score, sort by points, then by earliest non-zero submission time, and assign ranks
+        // Combine points and deductions, calculate final score, sort by points, then by latest non-zero submission time, and assign ranks
         var userRanks = userPoints
             .GroupJoin(
                 userDeductions,
@@ -52,17 +52,17 @@ public static class ApplicationDbContextExtensions
                     up.UserId,
                     up.UserName,
                     FinalScore = up.TotalPoints - uds.Sum(ud => ud.TotalDeductions),
-                    up.EarliestNonZeroSubmission
+                    up.LatestNonZeroSubmission
                 })
             .OrderByDescending(u => u.FinalScore)
-            .ThenBy(u => u.EarliestNonZeroSubmission) // Break ties by earliest non-zero submission time
+            .ThenBy(u => u.LatestNonZeroSubmission) // Break ties by the earliest time the final score was reached
             .Select((u, index) => new UserRankResponse
             {
                 Id = u.UserId,
                 UserName = u.UserName,
                 Position = index + 1,
                 Points = u.FinalScore,
-                LatestCorrectSubmission = u.EarliestNonZeroSubmission
+                LatestCorrectSubmission = u.LatestNonZeroSubmission
             })
             .ToList();
 
@@ -76,7 +76,7 @@ public static class ApplicationDbContextExtensions
     /// <param name="userIds"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public static async Task<List<List<UserActivityResponse>>> GetUsersGraph(
+    public static async Task<UsersGraphResponse> GetUsersGraph(
         this ApplicationDbContext context,
         string[] userIds,
         CancellationToken cancellationToken = default)
@@ -107,10 +107,24 @@ public static class ApplicationDbContextExtensions
             })
             .ToListAsync(cancellationToken);
 
-        // Combine both lists.
-        var allActivities = correctSubmissions.Concat(hintUsages);
+        // Combine both lists into allActivities.
+        var allActivities = correctSubmissions.Concat(hintUsages).ToList();
 
-        // Group by UserId and calculate cumulative scores.
+        // If no activities exist, return empty response.
+        if (allActivities.Count == 0)
+        {
+            return new UsersGraphResponse
+            {
+                UsersGraph = [],
+                GraphLabels = []
+            };
+        }
+
+        // Find the earliest and latest submission dates from all activities.
+        var earliestSubmission = allActivities.Min(a => a.ActivityDate);
+        var latestSubmission = allActivities.Max(a => a.ActivityDate);
+
+        // Group activities by UserId and calculate cumulative scores.
         var usersGraph = allActivities
             .GroupBy(a => a.UserId)
             .Select(g =>
@@ -119,39 +133,55 @@ public static class ApplicationDbContextExtensions
                     g.OrderBy(a => a.ActivityDate)
                         .ToList(); // Order activities by date for cumulative score calculation.
 
-                // Initialize cumulative score and a list to keep track of the earliest date each score is reached.
+                // Initialize cumulative score.
                 var cumulativeScore = 0;
-                var scoreReachDates = new List<(int CumulativeScore, DateTime Date)>();
 
                 // Update the score in each activity to reflect the cumulative score.
                 foreach (var activity in activities)
                 {
                     cumulativeScore += activity.Score;
                     activity.Score = cumulativeScore; // Set the cumulative score in the activity.
-
-                    // Track when each cumulative score was reached.
-                    scoreReachDates.Add((cumulativeScore, activity.ActivityDate));
                 }
 
-                // Determine the earliest date when the final cumulative score was achieved.
-                var earliestDateForFinalScore = scoreReachDates
-                    .Where(s => s.CumulativeScore == cumulativeScore)
-                    .Min(s => s.Date);
-
-                // Return the activities along with the final cumulative score and the earliest date of that score.
-                return new
-                {
-                    UserId = g.Key,
-                    Activities = activities,
-                    FinalCumulativeScore = cumulativeScore,
-                    EarliestDateForFinalScore = earliestDateForFinalScore
-                };
+                return activities;
             })
-            .OrderByDescending(x => x.FinalCumulativeScore) // Sort by final cumulative score descending.
-            .ThenBy(x => x.EarliestDateForFinalScore) // If tied, sort by the earliest date the score was reached.
-            .Select(x => x.Activities) // Select only the activities for the final result.
+            .OrderByDescending(a => a.Last().Score) // Sort by final cumulative score descending.
+            .ThenBy(a => a.First().ActivityDate) // If tied, sort by the earliest date the score was reached.
             .ToList();
 
-        return usersGraph;
+        // Calculate the maximum number of activities for the graph labels.
+        var maxActivitiesCount = usersGraph.Max(g => g.Count);
+
+        // If there's only one activity for a user, create a single label.
+        // This avoids any potential errors when trying to calculate intervals 
+        // for graph labels since there's no range between earliest and latest 
+        // submission dates. Thus, we simply use the earliest date as the label.
+        if (maxActivitiesCount == 1)
+        {
+            return new UsersGraphResponse
+            {
+                UsersGraph = usersGraph,
+                GraphLabels = [earliestSubmission]
+            };
+        }
+
+        // Calculate equally spaced labels between the earliest and latest submission dates.
+        // The interval is determined by dividing the total time span by the 
+        // number of intervals needed (maxActivitiesCount - 1).
+        var interval = (latestSubmission - earliestSubmission).TotalMilliseconds / (maxActivitiesCount - 1);
+        var graphLabels = new List<DateTime>();
+
+        // Create labels for the graph based on the calculated interval.
+        for (var i = 0; i < maxActivitiesCount; i++)
+        {
+            var label = earliestSubmission.AddMilliseconds(interval * i);
+            graphLabels.Add(label);
+        }
+
+        return new UsersGraphResponse
+        {
+            UsersGraph = usersGraph,
+            GraphLabels = graphLabels
+        };
     }
 }

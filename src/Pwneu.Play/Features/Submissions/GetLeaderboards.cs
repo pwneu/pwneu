@@ -52,9 +52,9 @@ public static class GetLeaderboards
             {
                 RequesterRank = requesterRank,
                 UserRanks = userRanks,
-                TopUsersGraph = topUsersGraph,
                 RequesterIsMember = request.IsMember,
-                PublicLeaderboardCount = publicLeaderboardCount
+                PublicLeaderboardCount = publicLeaderboardCount,
+                TopUsersGraph = topUsersGraph,
             };
         }
     }
