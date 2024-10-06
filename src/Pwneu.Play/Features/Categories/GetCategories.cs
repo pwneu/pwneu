@@ -31,7 +31,8 @@ public static class GetCategories
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
                 categoriesQuery = categoriesQuery.Where(ctg =>
                     ctg.Name.Contains(request.SearchTerm) ||
-                    ctg.Description.Contains(request.SearchTerm));
+                    ctg.Description.Contains(request.SearchTerm) ||
+                    ctg.Id.ToString().Contains(request.SearchTerm));
 
             Expression<Func<Category, object>> keySelector = request.SortBy?.ToLower() switch
             {

@@ -37,7 +37,8 @@ public static class GetChallenges
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
                 challengesQuery = challengesQuery.Where(ch =>
                     ch.Name.Contains(request.SearchTerm) ||
-                    ch.Description.Contains(request.SearchTerm));
+                    ch.Description.Contains(request.SearchTerm) ||
+                    ch.Id.ToString().Contains(request.SearchTerm));
 
             if (request.CategoryId is not null)
                 challengesQuery = challengesQuery.Where(ch => ch.CategoryId == request.CategoryId);
@@ -61,7 +62,6 @@ public static class GetChallenges
 
             Expression<Func<Challenge, object>> keySelector = request.SortBy?.ToLower() switch
             {
-                "description" => challenge => challenge.Description,
                 "points" => challenge => challenge.Points,
                 "deadline" => challenge => challenge.Deadline,
                 "solves" => challenge => challenge.SolveCount,
@@ -118,7 +118,7 @@ public static class GetChallenges
                     return result.IsFailure ? Results.StatusCode(500) : Results.Ok(result.Value);
                 })
                 .RequireAuthorization()
-                .RequireRateLimiting(Consts.Fixed)
+                .RequireRateLimiting(Consts.Challenges)
                 .WithTags(nameof(Challenges));
         }
     }

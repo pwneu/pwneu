@@ -107,13 +107,47 @@ public static class SaveSubmission
                 invalidationTasks.Add(
                     cache.RemoveAsync(Keys.UserSolveIds(request.UserId), token: cancellationToken)
                         .AsTask());
-
-                invalidationTasks.Add(
-                    cache.RemoveAsync(Keys.UserRanks(), token: cancellationToken)
-                        .AsTask());
             }
 
             await Task.WhenAll(invalidationTasks);
+
+            if (!request.IsCorrect)
+                return submission.Id;
+
+            var hasRecentRankRecount =
+                await cache.GetOrDefaultAsync<bool>(Keys.HasRecentLeaderboardCount(), token: cancellationToken);
+
+            // Querying user ranks takes a while, so we allow a slight delay of 5 seconds.
+            // This gives time for the  submissions queue finish.
+            // If we immediately write through the cache, the queue may not be finished yet,
+            // which could result in an incorrect leaderboard.
+            if (hasRecentRankRecount)
+                return submission.Id;
+
+            // Write user ranks to cache for faster retrieval.
+            var userRanks = await context.GetUserRanks(cancellationToken);
+
+            await cache.SetAsync(
+                Keys.UserRanks(),
+                userRanks,
+                new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(20) },
+                cancellationToken);
+
+            var topUsersGraph = await context.GetUsersGraph(
+                userRanks.Take(10).Select(u => u.Id).ToArray(),
+                cancellationToken);
+
+            await cache.SetAsync(
+                Keys.TopUsersGraph(),
+                topUsersGraph,
+                new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(20) },
+                cancellationToken);
+
+            await cache.SetAsync(
+                Keys.HasRecentLeaderboardCount(),
+                true,
+                new FusionCacheEntryOptions { Duration = TimeSpan.FromSeconds(5) },
+                cancellationToken);
 
             return submission.Id;
         }

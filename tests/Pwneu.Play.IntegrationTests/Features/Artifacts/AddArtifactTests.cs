@@ -53,6 +53,7 @@ public class AddArtifactTests(IntegrationTestsWebAppFactory factory) : BaseInteg
         var addArtifact = await Sender.Send(new AddArtifact.Command(
             ChallengeId: challengeId,
             FileName: file.FileName,
+            FileSize: file.Length,
             ContentType: file.ContentType,
             Data: stream.ToArray()));
 

@@ -83,6 +83,7 @@ public class UseHint
                         token: cancellationToken)
                     .AsTask(),
                 cache.RemoveAsync(Keys.UserRanks(), token: cancellationToken).AsTask(),
+                cache.RemoveAsync(Keys.TopUsersGraph(), token: cancellationToken).AsTask(),
             };
 
             await Task.WhenAll(invalidationTasks);

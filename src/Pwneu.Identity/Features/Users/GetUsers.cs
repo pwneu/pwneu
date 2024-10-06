@@ -34,7 +34,8 @@ public static class GetUsers
                 usersQuery = usersQuery.Where(u =>
                     (u.UserName != null && u.UserName.Contains(request.SearchTerm)) ||
                     (u.Email != null && u.Email.Contains(request.SearchTerm)) ||
-                    u.FullName.Contains(request.SearchTerm));
+                    u.FullName.Contains(request.SearchTerm) ||
+                    u.Id.Contains(request.SearchTerm));
 
             if (request.ExcludeVerified is true)
                 usersQuery = usersQuery.Where(u => !u.EmailConfirmed);

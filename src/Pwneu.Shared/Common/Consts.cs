@@ -30,6 +30,7 @@ public static class Consts
     public const string RefreshToken = "refreshToken";
     public const string AntiEmailAbuse = "antiEmailAbuse";
     public const string Fixed = "fixed";
+    public const string Challenges = "challenges";
     public const string Registration = "registration";
     public const string VerifyEmail = "verifyEmail";
 

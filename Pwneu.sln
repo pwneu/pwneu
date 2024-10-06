@@ -37,6 +37,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.env = .env
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{FE3885CC-B8AB-430E-A5A8-014DF8B46628}"
+	ProjectSection(SolutionItems) = preProject
+		scripts\delete_challenges.py = scripts\delete_challenges.py
+		scripts\delete_members.py = scripts\delete_members.py
+		scripts\requirements.txt = scripts\requirements.txt
+		scripts\seed_challenges.py = scripts\seed_challenges.py
+		scripts\seed_hint_usages.py = scripts\seed_hint_usages.py
+		scripts\seed_leaderboards.py = scripts\seed_leaderboards.py
+		scripts\seed_users.py = scripts\seed_users.py
+		scripts\wait-for-it.sh = scripts\wait-for-it.sh
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
