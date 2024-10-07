@@ -40,8 +40,6 @@ app.UseCors(corsPolicy =>
         .AllowAnyHeader()
         .AllowCredentials());
 
-app.UseHttpsRedirection();
-
 app.UseStaticFiles();
 
 if (app.Environment.IsDevelopment())
