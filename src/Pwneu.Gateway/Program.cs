@@ -42,6 +42,8 @@ app.UseCors(corsPolicy =>
 
 app.UseHttpsRedirection();
 
+app.UseStaticFiles();
+
 if (app.Environment.IsDevelopment())
     app.MapGet("/", async context =>
     {
