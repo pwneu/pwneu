@@ -1,7 +1,6 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 USER app
 EXPOSE 8080
-EXPOSE 8081
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
@@ -22,8 +21,8 @@ WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["/bin/sh", "-c", "\
   wait-for-it.sh -t 0 pwneu.mq:5672 && \
-  wait-for-it.sh -t 0 pwneu.play:8081 && \
-  wait-for-it.sh -t 0 pwneu.identity:8081 && \
-  wait-for-it.sh -t 0 pwneu.chat:8081 && \
+  wait-for-it.sh -t 0 pwneu.play:8080 && \
+  wait-for-it.sh -t 0 pwneu.identity:8080 && \
+  wait-for-it.sh -t 0 pwneu.chat:8080 && \
   dotnet Pwneu.Gateway.dll \
 "]

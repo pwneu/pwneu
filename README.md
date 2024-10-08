@@ -18,12 +18,6 @@ git clone https://github.com/pwneu/pwneu.git
 cd pwneu
 ```
 
-- Create a self-signed certificate.
-
-```sh
-dotnet dev-certs https -ep ./.containers/certs/pwneu.pfx -p "YourSSLCertificatePassword"
-```
-
 - If on windows, make sure the line endings of `wait-for-it.sh` script is `LF`.
 
 ```sh

@@ -154,8 +154,6 @@ app.UseCors(corsPolicy =>
         .AllowAnyHeader()
         .AllowAnyOrigin());
 
-app.UseHttpsRedirection();
-
 app.UseAuthentication();
 app.UseAuthorization();
 

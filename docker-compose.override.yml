@@ -6,7 +6,6 @@ services:
   pwneu.identity:
     ports:
       - "37200:8080"
-      - "37201:8081"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
 
@@ -17,7 +16,6 @@ services:
   pwneu.play:
     ports:
       - "37300:8080"
-      - "37301:8081"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
 
@@ -28,7 +26,6 @@ services:
   pwneu.chat:
     ports:
       - "37400:8080"
-      - "37401:8081"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
 

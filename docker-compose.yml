@@ -11,15 +11,9 @@ services:
       dockerfile: src/Pwneu.Gateway/Dockerfile
     ports:
       - "37100:8080"
-      - "37101:8081"
     environment:
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
       - ASPNETCORE_HTTP_PORTS=8080
-      - ASPNETCORE_HTTPS_PORTS=8081
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://pwneu.dashboard:18889
-    volumes:
-      - ./.containers/certs:/home/app/.aspnet/https:ro
     networks:
       - pwneu
 
@@ -34,10 +28,7 @@ services:
       context: .
       dockerfile: src/Pwneu.Identity/Dockerfile
     environment:
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
       - ASPNETCORE_HTTP_PORTS=8080
-      - ASPNETCORE_HTTPS_PORTS=8081
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://pwneu.dashboard:18889
       - ConnectionStrings__Postgres=${IDENTITY_CONNECTION}
       - MessageBroker__Username=${RABBITMQ_DEFAULT_USER}
@@ -47,8 +38,6 @@ services:
       - JwtOptions__Issuer=${JWT_ISSUER}
       - JwtOptions__Audience=${JWT_AUDIENCE}
       - JwtOptions__SigningKey=${JWT_SIGNING_KEY}
-    volumes:
-      - ./.containers/certs:/home/app/.aspnet/https:ro
     networks:
       - pwneu
 
@@ -75,10 +64,7 @@ services:
       context: .
       dockerfile: src/Pwneu.Play/Dockerfile
     environment:
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
       - ASPNETCORE_HTTP_PORTS=8080
-      - ASPNETCORE_HTTPS_PORTS=8081
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://pwneu.dashboard:18889
       - ConnectionStrings__Postgres=${PLAY_CONNECTION}
       - MessageBroker__Username=${RABBITMQ_DEFAULT_USER}
@@ -86,8 +72,6 @@ services:
       - JwtOptions__Issuer=${JWT_ISSUER}
       - JwtOptions__Audience=${JWT_AUDIENCE}
       - JwtOptions__SigningKey=${JWT_SIGNING_KEY}
-    volumes:
-      - ./.containers/certs:/home/app/.aspnet/https:ro
     networks:
       - pwneu
 
@@ -113,10 +97,7 @@ services:
       context: .
       dockerfile: src/Pwneu.Chat/Dockerfile
     environment:
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
       - ASPNETCORE_HTTP_PORTS=8080
-      - ASPNETCORE_HTTPS_PORTS=8081
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://pwneu.dashboard:18889
       - MessageBroker__Username=${RABBITMQ_DEFAULT_USER}
       - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
@@ -126,13 +107,11 @@ services:
       - JwtOptions__Audience=${JWT_AUDIENCE}
       - JwtOptions__SigningKey=${JWT_SIGNING_KEY}
     volumes:
-      - ./.containers/certs:/home/app/.aspnet/https:ro
       - ./.containers/chat.db/:/db
     networks:
       - pwneu
 
   pwneu.smtp:
-    image: ${DOCKER_REGISTRY-}pwneu.smtp
     container_name: pwneu.smtp
     depends_on:
       - pwneu.identity
@@ -141,10 +120,7 @@ services:
       context: .
       dockerfile: src/Pwneu.Smtp/Dockerfile
     environment:
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/home/app/.aspnet/https/pwneu.pfx
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASSWORD}
       - ASPNETCORE_HTTP_PORTS=8080
-      - ASPNETCORE_HTTPS_PORTS=8081
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://pwneu.dashboard:18889
       - MessageBroker__Username=${RABBITMQ_DEFAULT_USER}
       - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
@@ -155,8 +131,6 @@ services:
       - SmtpOptions__SendPasswordResetTokenIsEnabled=${SMTP_SEND_PASSWORD_RESET_TOKEN_IS_ENABLED}
       - SmtpOptions__VerifyEmailUrl=${SMTP_VERIFY_EMAIL_URL}
       - SmtpOptions__ResetPasswordUrl=${SMTP_RESET_PASSWORD_URL}
-    volumes:
-      - ./.containers/certs:/home/app/.aspnet/https:ro
     networks:
       - pwneu
 
