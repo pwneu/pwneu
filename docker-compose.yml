@@ -112,7 +112,6 @@ services:
       - pwneu
 
   pwneu.smtp:
-    image: ${DOCKER_REGISTRY-}pwneu.smtp
     container_name: pwneu.smtp
     depends_on:
       - pwneu.identity
