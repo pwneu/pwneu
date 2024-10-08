@@ -1,8 +1,4 @@
 services:
-  pwneu.gateway:
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-
   pwneu.identity:
     ports:
       - "37200:8080"
