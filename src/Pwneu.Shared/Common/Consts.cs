@@ -36,4 +36,7 @@ public static class Consts
 
     public const string SubmissionsAllowed = "SubmissionsAllowed";
     public const string PublicLeaderboardCount = "PublicLeaderboardCount";
+
+    public const string IsTurnstileEnabled = "IsTurnstileEnabled";
+    public const string TurnstileChallengeUrl = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 }

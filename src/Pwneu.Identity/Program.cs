@@ -34,6 +34,8 @@ builder.Services
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+builder.Services.AddHttpClient();
+
 // JWT Options
 builder.Services
     .AddOptions<JwtOptions>()
@@ -258,6 +260,8 @@ app.UseCors(corsPolicy =>
 
 await app.Services.SeedRolesAsync();
 await app.Services.SeedAdminAsync();
+
+await app.Services.SeedIdentityConfigurationAsync();
 
 app.UseHttpsRedirection();
 

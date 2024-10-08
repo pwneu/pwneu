@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
+using Pwneu.Identity.Shared.Data;
 using Pwneu.Identity.Shared.Entities;
 using Pwneu.Identity.Shared.Options;
 using Pwneu.Shared.Common;
@@ -67,5 +68,15 @@ public static class IdentitySeed
             throw new InvalidOperationException(
                 "Failed to add admin role: " +
                 string.Join(", ", addManagerAdminRoles.Errors.Select(e => e.Description)));
+    }
+
+    public static async Task SeedIdentityConfigurationAsync(this IServiceProvider serviceProvider)
+    {
+        using var scope = serviceProvider.CreateScope();
+
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var appOptions = scope.ServiceProvider.GetRequiredService<IOptions<AppOptions>>().Value;
+
+        await context.SetIdentityConfigurationValueAsync(Consts.IsTurnstileEnabled, appOptions.IsTurnstileEnabled);
     }
 }

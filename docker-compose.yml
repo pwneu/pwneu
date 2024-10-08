@@ -33,6 +33,8 @@ services:
       - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
       - AppOptions__InitialAdminPassword=${ADMIN_PASSWORD}
       - AppOptions__ValidEmailDomain=${VALID_EMAIL_DOMAIN}
+      - AppOptions__TurnstileSecretKey=${TURNSTILE_SECRET_KEY}
+      - AppOptions__IsTurnstileEnabled=${IS_TURNSTILE_ENABLED}
       - JwtOptions__Issuer=${JWT_ISSUER}
       - JwtOptions__Audience=${JWT_AUDIENCE}
       - JwtOptions__SigningKey=${JWT_SIGNING_KEY}
