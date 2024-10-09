@@ -32,7 +32,7 @@ public static class Register
     private static readonly Error InvalidUserName = new("Register.InvalidUserName", "Invalid UserName");
 
     private static readonly Error InvalidAntiSpamToken = new("Register.InvalidAntiSpamToken",
-        "Invalid turnstileToken token. Rejecting Registration");
+        "Invalid turnstile token. Rejecting Registration");
 
     internal sealed class Handler(
         ApplicationDbContext context,

@@ -37,7 +37,7 @@ public static class Login
         "Ip address was locked. Please wait for a few minutes");
 
     private static readonly Error InvalidAntiSpamToken = new("Login.InvalidAntiSpamToken",
-        "Invalid turnstileToken token. Rejecting Login");
+        "Invalid turnstile token. Rejecting Login");
 
     internal sealed class Handler(
         UserManager<User> userManager,

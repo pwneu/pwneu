@@ -18,7 +18,7 @@ public static class ForgotPassword
     public record Command(string Email, string? TurnstileToken = null) : IRequest<Result>;
 
     private static readonly Error InvalidAntiSpamToken = new("ForgotPassword.InvalidAntiSpamToken",
-        "Invalid turnstileToken token. Rejecting request");
+        "Invalid turnstile token. Rejecting request");
 
     internal sealed class Handler(
         UserManager<User> userManager,
