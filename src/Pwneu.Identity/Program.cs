@@ -183,7 +183,7 @@ builder.Services.AddRateLimiter(options =>
             partitionKey: httpContext.Request.Headers["X-Forwarded-For"].ToString(),
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 2,
+                PermitLimit = 6,
                 Window = TimeSpan.FromDays(1),
             }));
 
@@ -241,6 +241,7 @@ builder.Services.AddRateLimiter(options =>
 });
 
 builder.Services.AddScoped<IAccessControl, AccessControl>();
+builder.Services.AddScoped<ITurnstileValidator, TurnstileValidator>();
 
 var app = builder.Build();
 

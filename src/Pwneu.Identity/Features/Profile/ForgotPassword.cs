@@ -3,6 +3,7 @@ using MassTransit;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Pwneu.Identity.Shared.Entities;
+using Pwneu.Identity.Shared.Services;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 
@@ -14,10 +15,14 @@ namespace Pwneu.Identity.Features.Profile;
 /// </summary>
 public static class ForgotPassword
 {
-    public record Command(string Email) : IRequest<Result>;
+    public record Command(string Email, string? TurnstileToken = null) : IRequest<Result>;
+
+    private static readonly Error InvalidAntiSpamToken = new("ForgotPassword.InvalidAntiSpamToken",
+        "Invalid turnstileToken token. Rejecting request");
 
     internal sealed class Handler(
         UserManager<User> userManager,
+        ITurnstileValidator turnstileValidator,
         IPublishEndpoint publishEndpoint,
         IValidator<Command> validator) : IRequestHandler<Command, Result>
     {
@@ -27,6 +32,13 @@ public static class ForgotPassword
 
             if (!validationResult.IsValid)
                 return Result.Failure<Guid>(new Error("ForgotPassword.Validation", validationResult.ToString()));
+
+            var isValidTurnstileToken = await turnstileValidator.IsValidTurnstileTokenAsync(
+                request.TurnstileToken,
+                cancellationToken);
+
+            if (!isValidTurnstileToken)
+                return Result.Failure(InvalidAntiSpamToken);
 
             var user = await userManager.FindByEmailAsync(request.Email);
 
@@ -51,9 +63,9 @@ public static class ForgotPassword
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("forgotPassword", async (string email, ISender sender) =>
+            app.MapPost("forgotPassword", async (string email, string? turnstileToken, ISender sender) =>
                 {
-                    var command = new Command(email);
+                    var command = new Command(email, turnstileToken);
 
                     var result = await sender.Send(command);
 

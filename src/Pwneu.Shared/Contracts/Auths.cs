@@ -9,6 +9,7 @@ public record RegisterRequest
     public string Password { get; set; } = default!;
     public string FullName { get; set; } = default!;
     public string AccessKey { get; set; } = default!;
+    public string? TurnstileToken { get; set; }
 }
 
 public record RegisteredEvent

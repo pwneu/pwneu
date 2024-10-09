@@ -1,7 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.Text.Json;
 using FluentValidation;
 using MassTransit;
 using MediatR;
@@ -9,10 +8,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Pwneu.Identity.Shared.Data;
 using Pwneu.Identity.Shared.Entities;
-using Pwneu.Identity.Shared.Extensions;
 using Pwneu.Identity.Shared.Options;
+using Pwneu.Identity.Shared.Services;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 using ZiggyCreatures.Caching.Fusion;
@@ -39,22 +37,19 @@ public static class Login
         "Ip address was locked. Please wait for a few minutes");
 
     private static readonly Error InvalidAntiSpamToken = new("Login.InvalidAntiSpamToken",
-        "Invalid turnstileToken token. Denying login");
+        "Invalid turnstileToken token. Rejecting Login");
 
     internal sealed class Handler(
         UserManager<User> userManager,
         SignInManager<User> signInManager,
-        ApplicationDbContext context,
+        ITurnstileValidator turnstileValidator,
         IOptions<JwtOptions> jwtOptions,
-        IOptions<AppOptions> appOptions,
         IPublishEndpoint publishEndpoint,
         IFusionCache cache,
-        HttpClient httpClient,
         IValidator<Command> validator)
         : IRequestHandler<Command, Result<LoginResponse>>
     {
         private readonly JwtOptions _jwtOptions = jwtOptions.Value;
-        private readonly AppOptions _appOptions = appOptions.Value;
 
         public async Task<Result<LoginResponse>> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -63,38 +58,13 @@ public static class Login
             if (!validationResult.IsValid)
                 return Result.Failure<LoginResponse>(new Error("Login.Validation", validationResult.ToString()));
 
-            var isTurnstileEnabled = await cache.GetOrSetAsync(Keys.IsTurnstileEnabled(), async _ =>
-                    await context.GetIdentityConfigurationValueAsync<bool>(
-                        Consts.IsTurnstileEnabled,
-                        cancellationToken),
-                token: cancellationToken);
-
             // Validate Turnstile from Cloudflare.
-            if (isTurnstileEnabled)
-            {
-                var validateTurnstileToken = await httpClient.PostAsync(
-                    Consts.TurnstileChallengeUrl,
-                    new StringContent(JsonSerializer.Serialize(new
-                        {
-                            secret = _appOptions.TurnstileSecretKey,
-                            response = request.TurnstileToken
-                        }),
-                        Encoding.UTF8,
-                        "application/json"
-                    ), cancellationToken);
+            var isValidTurnstile = await turnstileValidator.IsValidTurnstileTokenAsync(
+                request.TurnstileToken,
+                cancellationToken);
 
-                if (!validateTurnstileToken.IsSuccessStatusCode)
-                    return Result.Failure<LoginResponse>(InvalidAntiSpamToken);
-
-                var validationResponseBody = await validateTurnstileToken.Content.ReadAsStringAsync(cancellationToken);
-                var validationResponse = JsonSerializer.Deserialize<TurnstileResponse>(validationResponseBody);
-
-                if (validationResponse is null)
-                    return Result.Failure<LoginResponse>(InvalidAntiSpamToken);
-
-                if (!validationResponse.Success)
-                    return Result.Failure<LoginResponse>(InvalidAntiSpamToken);
-            }
+            if (!isValidTurnstile)
+                return Result.Failure<LoginResponse>(InvalidAntiSpamToken);
 
             // Validate IP Address.
             if (request.IpAddress is not null)
