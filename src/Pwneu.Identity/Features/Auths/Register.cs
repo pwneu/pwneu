@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using Pwneu.Identity.Shared.Data;
 using Pwneu.Identity.Shared.Entities;
 using Pwneu.Identity.Shared.Options;
+using Pwneu.Identity.Shared.Services;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 using ZiggyCreatures.Caching.Fusion;
@@ -15,7 +16,13 @@ namespace Pwneu.Identity.Features.Auths;
 
 public static class Register
 {
-    public record Command(string UserName, string Email, string Password, string FullName, string AccessKey)
+    public record Command(
+        string UserName,
+        string Email,
+        string Password,
+        string FullName,
+        string AccessKey,
+        string? TurnstileToken)
         : IRequest<Result>;
 
     private static readonly Error Failed = new("Register.Failed", "Unable to create user");
@@ -24,9 +31,13 @@ public static class Register
     private static readonly Error UserNameInUse = new("Register.UserNameInUse", "Username is already in use");
     private static readonly Error InvalidUserName = new("Register.InvalidUserName", "Invalid UserName");
 
+    private static readonly Error InvalidAntiSpamToken = new("Register.InvalidAntiSpamToken",
+        "Invalid turnstile token. Rejecting Registration");
+
     internal sealed class Handler(
         ApplicationDbContext context,
         UserManager<User> userManager,
+        ITurnstileValidator turnstileValidator,
         IFusionCache cache,
         IValidator<Command> validator,
         IPublishEndpoint publishEndpoint) : IRequestHandler<Command, Result>
@@ -37,6 +48,14 @@ public static class Register
 
             if (!validationResult.IsValid)
                 return Result.Failure(new Error("Register.Validation", validationResult.ToString()));
+
+            // Validate Turnstile from Cloudflare.
+            var isValidTurnstile = await turnstileValidator.IsValidTurnstileTokenAsync(
+                request.TurnstileToken,
+                cancellationToken);
+
+            if (!isValidTurnstile)
+                return Result.Failure<LoginResponse>(InvalidAntiSpamToken);
 
             // Set values of the variables above.
             var accessKeys = await cache.GetOrSetAsync(Keys.AccessKeys(), async _ =>
@@ -115,7 +134,7 @@ public static class Register
             app.MapPost("register", async (RegisterRequest request, ISender sender) =>
                 {
                     var command = new Command(request.UserName, request.Email, request.Password, request.FullName,
-                        request.AccessKey);
+                        request.AccessKey, request.TurnstileToken);
                     var result = await sender.Send(command);
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.Created();

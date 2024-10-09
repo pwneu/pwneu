@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Pwneu.Shared.Contracts;
 
 public record RegisterRequest
@@ -7,6 +9,7 @@ public record RegisterRequest
     public string Password { get; set; } = default!;
     public string FullName { get; set; } = default!;
     public string AccessKey { get; set; } = default!;
+    public string? TurnstileToken { get; set; }
 }
 
 public record RegisteredEvent
@@ -25,6 +28,7 @@ public record LoginRequest
 {
     public string UserName { get; set; } = default!;
     public string Password { get; set; } = default!;
+    public string? TurnstileToken { get; set; }
 }
 
 public record LoggedInEvent
@@ -51,4 +55,9 @@ public record TokenResponse
     public string? UserName { get; set; } = default!;
     public List<string> Roles { get; set; } = [];
     public string AccessToken { get; set; } = default!;
+}
+
+public class TurnstileResponse
+{
+    [JsonPropertyName("success")] public bool Success { get; set; }
 }

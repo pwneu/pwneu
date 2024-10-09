@@ -10,19 +10,19 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Pwneu.Identity.Shared.Entities;
 using Pwneu.Identity.Shared.Options;
+using Pwneu.Identity.Shared.Services;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Identity.Features.Auths;
 
-// TODO -- Fix login trace
-
 public static class Login
 {
     public record Command(
         string UserName,
         string Password,
+        string? TurnstileToken = null,
         string? IpAddress = null,
         string? UserAgent = null,
         string? Referer = null)
@@ -36,9 +36,13 @@ public static class Login
     private static readonly Error IpLocked = new("Login.IpLocked",
         "Ip address was locked. Please wait for a few minutes");
 
+    private static readonly Error InvalidAntiSpamToken = new("Login.InvalidAntiSpamToken",
+        "Invalid turnstile token. Rejecting Login");
+
     internal sealed class Handler(
         UserManager<User> userManager,
         SignInManager<User> signInManager,
+        ITurnstileValidator turnstileValidator,
         IOptions<JwtOptions> jwtOptions,
         IPublishEndpoint publishEndpoint,
         IFusionCache cache,
@@ -54,6 +58,15 @@ public static class Login
             if (!validationResult.IsValid)
                 return Result.Failure<LoginResponse>(new Error("Login.Validation", validationResult.ToString()));
 
+            // Validate Turnstile from Cloudflare.
+            var isValidTurnstile = await turnstileValidator.IsValidTurnstileTokenAsync(
+                request.TurnstileToken,
+                cancellationToken);
+
+            if (!isValidTurnstile)
+                return Result.Failure<LoginResponse>(InvalidAntiSpamToken);
+
+            // Validate IP Address.
             if (request.IpAddress is not null)
             {
                 var ipFailedLoginCount = await cache.GetOrDefaultAsync<int>(
@@ -143,9 +156,6 @@ public static class Login
                 Referer = request.Referer
             }, cancellationToken);
 
-            if (request.IpAddress is not null)
-                await cache.SetAsync(Keys.FailedLoginCount(request.IpAddress), 0, token: cancellationToken);
-
             await cache.RemoveAsync(Keys.UserToken(user.Id), token: cancellationToken);
 
             return new LoginResponse
@@ -170,7 +180,8 @@ public static class Login
                     var userAgent = httpContext.Request.Headers.UserAgent.ToString();
                     var referer = httpContext.Request.Headers.Referer.ToString();
 
-                    var command = new Command(request.UserName, request.Password, ipAddress, userAgent, referer);
+                    var command = new Command(request.UserName, request.Password, request.TurnstileToken, ipAddress,
+                        userAgent, referer);
                     var result = await sender.Send(command);
 
                     if (result.IsFailure)

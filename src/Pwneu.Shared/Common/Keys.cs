@@ -66,6 +66,9 @@ public static class Keys
     // Key for caching if submissions are allowed.
     public static string SubmissionsAllowed() => "submissionsAllowed";
 
+    // Key for caching if turnstile is enabled.
+    public static string IsTurnstileEnabled() => "isTurnstileEnabled";
+
     // Key for caching if how many users in leaderboards are visible.
     public static string PublicLeaderboardCount() => "publicLeaderboardCount";
 
