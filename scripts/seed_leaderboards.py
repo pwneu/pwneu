@@ -4,7 +4,7 @@ import argparse
 import random
 import concurrent.futures
 
-# Sample command: python seed_leaderboards.py --admin-password "PwneuPwneu!1"
+# Sample command: python seed_leaderboards.py --admin-password "PwneuPwneu!1" --api-url "http://localhost:37100"
 
 def login_admin(api_url, admin_password):
     login_payload = {
@@ -119,21 +119,21 @@ def process_user_submission(api_url, user_access_token, challenges):
 def main():
     parser = argparse.ArgumentParser(description="Seed submissions via API.")
     parser.add_argument("--admin-password", type=str, default="PwneuPwneu!1", help="Password for the admin user.")
+    parser.add_argument("--api-url", type=str, default="http://localhost:37100", help="Base URL of the API.")
     args = parser.parse_args()
 
-    api_url = "https://localhost:37101"
-    access_token = login_admin(api_url, args.admin_password)
+    access_token = login_admin(args.api_url, args.admin_password)
 
     if access_token:
-        allow_submissions(api_url, access_token)
-        challenges = fetch_all_challenges(api_url, access_token)
-        users = fetch_all_users(api_url, access_token)
+        allow_submissions(args.api_url, access_token)
+        challenges = fetch_all_challenges(args.api_url, access_token)
+        users = fetch_all_users(args.api_url, access_token)
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = []
             for user in users:
                 user_name = user['userName']
-                user_access_token = login_user(api_url, user_name, args.admin_password)
+                user_access_token = login_user(args.api_url, user_name, args.admin_password)
 
                 if user_access_token:
                     total_challenges = len(challenges)
@@ -142,7 +142,7 @@ def main():
                     num_challenges_to_submit = random.randint(min_challenges_to_submit, max_challenges_to_submit)
                     challenges_to_submit = random.sample(challenges, k=num_challenges_to_submit)
 
-                    futures.append(executor.submit(process_user_submission, api_url, user_access_token, challenges_to_submit))
+                    futures.append(executor.submit(process_user_submission, args.api_url, user_access_token, challenges_to_submit))
 
             for future in concurrent.futures.as_completed(futures):
                 future.result()

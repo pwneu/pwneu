@@ -2,7 +2,7 @@ import requests  # type: ignore
 import json
 import argparse
 
-# Sample command: python delete_members.py --admin-password "PwneuPwneu!1"
+# Sample command: python delete_members.py --admin-password "PwneuPwneu!1" --api-url "http://localhost:37100"
 
 def login_admin(api_url, admin_password):
     login_payload = {"userName": "admin", "password": admin_password}
@@ -63,9 +63,10 @@ def delete_user(api_url, access_token, user_id):
 def main():
     parser = argparse.ArgumentParser(description="Delete members via API.")
     parser.add_argument("--admin-password", type=str, default="PwneuPwneu!1", help="Password for the admin user.")
+    parser.add_argument("--api-url", type=str, default="http://localhost:37100", help="Base URL for the API.")
     args = parser.parse_args()
 
-    api_url = "https://localhost:37101"
+    api_url = args.api_url
 
     access_token = login_admin(api_url, args.admin_password)
 

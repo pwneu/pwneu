@@ -5,7 +5,7 @@ import random
 import concurrent.futures
 from faker import Faker  # type: ignore
 
-# Sample command: python seed_challenges.py --admin-password "PwneuPwneu!1" --categories-count 7 --challenges-count 20
+# Sample command: python seed_challenges.py --admin-password "PwneuPwneu!1" --categories-count 7 --challenges-count 20 --api-url "http://localhost:37100"
 
 def login_admin(api_url, admin_password):
     login_payload = {
@@ -76,10 +76,10 @@ def main():
     parser.add_argument("--admin-password", type=str, default="PwneuPwneu!1", help="Password for the admin user.")
     parser.add_argument("--categories-count", type=int, default=7, help="Number of categories to create.")
     parser.add_argument("--challenges-count", type=int, default=30, help="Number of challenges per category to create.")
-
+    parser.add_argument("--api-url", type=str, default="http://localhost:37100", help="Base URL for the API.")
     args = parser.parse_args()
 
-    api_url = "https://localhost:37101"
+    api_url = args.api_url
 
     access_token = login_admin(api_url, args.admin_password)
     
