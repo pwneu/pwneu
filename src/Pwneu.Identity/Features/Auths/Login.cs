@@ -156,6 +156,9 @@ public static class Login
                 Referer = request.Referer
             }, cancellationToken);
 
+            if (request.IpAddress is not null)
+                await cache.SetAsync(Keys.FailedLoginCount(request.IpAddress), 0, token: cancellationToken);
+
             await cache.RemoveAsync(Keys.UserToken(user.Id), token: cancellationToken);
 
             return new LoginResponse
