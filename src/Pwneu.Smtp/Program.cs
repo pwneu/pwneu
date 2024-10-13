@@ -1,8 +1,6 @@
 using MassTransit;
-using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using Pwneu.Shared.Common;
 using Pwneu.Smtp.Shared.Options;
 
@@ -13,7 +11,7 @@ builder.Services.AddOptions<SmtpOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
-// OpenTelemetry (for metrics, traces, and logs)
+// OpenTelemetry
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource.AddService(nameof(Pwneu.Smtp)))
     .WithMetrics(metrics =>
@@ -21,17 +19,10 @@ builder.Services.AddOpenTelemetry()
         metrics
             .AddAspNetCoreInstrumentation()
             .AddHttpClientInstrumentation()
-            .AddOtlpExporter();
-    })
-    .WithTracing(tracing =>
-    {
-        tracing
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddOtlpExporter();
+            .AddRuntimeInstrumentation()
+            .AddProcessInstrumentation()
+            .AddPrometheusExporter();
     });
-
-builder.Logging.AddOpenTelemetry(logging => logging.AddOtlpExporter());
 
 var assembly = typeof(Program).Assembly;
 
@@ -56,6 +47,6 @@ builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(assemb
 
 var app = builder.Build();
 
-app.UseHttpsRedirection();
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
 app.Run();

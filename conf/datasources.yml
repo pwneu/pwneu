@@ -1,0 +1,9 @@
+﻿apiVersion: 1
+
+datasources:
+  - name: Pwneu
+    type: prometheus
+    access: proxy
+    url: http://pwneu.monitoring:9090
+    isDefault: true
+    editable: false

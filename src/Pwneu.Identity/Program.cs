@@ -9,10 +9,8 @@ using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
-using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using Pwneu.Identity.Shared.Data;
 using Pwneu.Identity.Shared.Entities;
 using Pwneu.Identity.Shared.Extensions;
@@ -34,6 +32,19 @@ builder.Services
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+// OpenTelemetry
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService(nameof(Pwneu.Identity)))
+    .WithMetrics(metrics =>
+    {
+        metrics
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddRuntimeInstrumentation()
+            .AddProcessInstrumentation()
+            .AddPrometheusExporter();
+    });
+
 builder.Services.AddHttpClient();
 
 // JWT Options
@@ -42,26 +53,6 @@ builder.Services
     .BindConfiguration($"{nameof(JwtOptions)}")
     .ValidateDataAnnotations()
     .ValidateOnStart();
-
-// OpenTelemetry (for metrics, traces, and logs)
-builder.Services.AddOpenTelemetry()
-    .ConfigureResource(resource => resource.AddService(nameof(Pwneu.Identity)))
-    .WithMetrics(metrics =>
-    {
-        metrics
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddOtlpExporter();
-    })
-    .WithTracing(tracing =>
-    {
-        tracing
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddOtlpExporter();
-    });
-
-builder.Logging.AddOpenTelemetry(logging => logging.AddOtlpExporter());
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -268,6 +259,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
 app.ApplyMigrations();
 

@@ -6,10 +6,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using Pwneu.Chat.Shared.Data;
 using Pwneu.Chat.Shared.Extensions;
 using Pwneu.Chat.Shared.Options;
@@ -26,7 +24,7 @@ builder.Services
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
-// OpenTelemetry (for metrics, traces, and logs)
+// OpenTelemetry
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource.AddService(nameof(Pwneu.Chat)))
     .WithMetrics(metrics =>
@@ -34,17 +32,10 @@ builder.Services.AddOpenTelemetry()
         metrics
             .AddAspNetCoreInstrumentation()
             .AddHttpClientInstrumentation()
-            .AddOtlpExporter();
-    })
-    .WithTracing(tracing =>
-    {
-        tracing
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddOtlpExporter();
+            .AddRuntimeInstrumentation()
+            .AddProcessInstrumentation()
+            .AddPrometheusExporter();
     });
-
-builder.Logging.AddOpenTelemetry(logging => logging.AddOtlpExporter());
 
 // Swagger UI
 builder.Services.AddEndpointsApiExplorer();
@@ -145,6 +136,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
 app.ApplyMigrations();
 

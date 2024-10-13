@@ -1,29 +1,4 @@
-using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
-
 var builder = WebApplication.CreateBuilder(args);
-
-// OpenTelemetry (for metrics, traces, and logs)
-builder.Services.AddOpenTelemetry()
-    .ConfigureResource(resource => resource.AddService(nameof(Pwneu)))
-    .WithMetrics(metrics =>
-    {
-        metrics
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddOtlpExporter();
-    })
-    .WithTracing(tracing =>
-    {
-        tracing
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddOtlpExporter();
-    });
-
-builder.Logging.AddOpenTelemetry(logging => logging.AddOtlpExporter());
 
 // CORS (Cross-Origin Resource Sharing)
 builder.Services.AddCors();
