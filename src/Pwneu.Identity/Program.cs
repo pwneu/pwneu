@@ -216,6 +216,15 @@ builder.Services.AddRateLimiter(options =>
                     PermitLimit = int.MaxValue,
                     Window = TimeSpan.FromSeconds(1),
                 }));
+
+        options.AddPolicy(Consts.ResetPassword, httpContext =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: httpContext.Request.Headers["X-Forwarded-For"].ToString(),
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = int.MaxValue,
+                    Window = TimeSpan.FromSeconds(1),
+                }));
     }
     // Actual rate limiting for production environment
     else
@@ -235,6 +244,15 @@ builder.Services.AddRateLimiter(options =>
                 factory: _ => new FixedWindowRateLimiterOptions
                 {
                     PermitLimit = 30,
+                    Window = TimeSpan.FromMinutes(1),
+                }));
+
+        options.AddPolicy(Consts.ResetPassword, httpContext =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: httpContext.Request.Headers["X-Forwarded-For"].ToString(),
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 5,
                     Window = TimeSpan.FromMinutes(1),
                 }));
     }

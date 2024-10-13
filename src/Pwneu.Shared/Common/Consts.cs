@@ -33,6 +33,7 @@ public static class Consts
     public const string Challenges = "challenges";
     public const string Registration = "registration";
     public const string VerifyEmail = "verifyEmail";
+    public const string ResetPassword = "resetPassword";
 
     public const string SubmissionsAllowed = "SubmissionsAllowed";
     public const string PublicLeaderboardCount = "PublicLeaderboardCount";

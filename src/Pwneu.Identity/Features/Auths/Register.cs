@@ -26,6 +26,7 @@ public static class Register
         : IRequest<Result>;
 
     private static readonly Error Failed = new("Register.Failed", "Unable to create user");
+    private static readonly Error InvalidAccessKey = new("Register.InvalidAccessKey", "Invalid access key");
     private static readonly Error AddRoleFailed = new("Register.AddRoleFailed", "Unable to add role to user");
     private static readonly Error EmailInUse = new("Register.EmailInUse", "Email is already in use");
     private static readonly Error UserNameInUse = new("Register.UserNameInUse", "Username is already in use");
@@ -68,7 +69,7 @@ public static class Register
 
             // If no access key matched, don't register the user.
             if (accessKey is null)
-                return Result.Failure(Failed);
+                return Result.Failure(InvalidAccessKey);
 
             var user = new User
             {

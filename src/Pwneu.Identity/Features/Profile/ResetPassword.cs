@@ -66,6 +66,7 @@ public static class ResetPassword
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
                 })
+                .RequireRateLimiting(Consts.ResetPassword)
                 .WithTags(nameof(Profile));
         }
     }
