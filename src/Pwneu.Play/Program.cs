@@ -183,6 +183,7 @@ if (app.Environment.IsDevelopment())
         var forwardedForHeader = context.Request.Headers["X-Forwarded-For"].ToString();
         var forwardedProtoHeader = context.Request.Headers["X-Forwarded-Proto"].ToString();
         var forwardedHostHeader = context.Request.Headers["X-Forwarded-Host"].ToString();
+        var cfConnectingIp = context.Request.Headers[Consts.CfConnectingIp].ToString();
 
         var response = new
         {
@@ -190,7 +191,8 @@ if (app.Environment.IsDevelopment())
             ClientIp = clientIp,
             ForwardedFor = forwardedForHeader,
             ForwardedProto = forwardedProtoHeader,
-            ForwardedHost = forwardedHostHeader
+            ForwardedHost = forwardedHostHeader,
+            CfConnectingIp = cfConnectingIp
         };
 
         context.Response.ContentType = "application/json";

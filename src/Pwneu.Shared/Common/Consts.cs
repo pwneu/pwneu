@@ -40,4 +40,5 @@ public static class Consts
 
     public const string IsTurnstileEnabled = "IsTurnstileEnabled";
     public const string TurnstileChallengeUrl = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+    public const string CfConnectingIp = "Cf-Connecting-Ip";
 }

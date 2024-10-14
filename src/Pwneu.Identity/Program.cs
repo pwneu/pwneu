@@ -171,7 +171,7 @@ builder.Services.AddRateLimiter(options =>
 
     options.AddPolicy(Consts.AntiEmailAbuse, httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: httpContext.Request.Headers["X-Forwarded-For"].ToString(),
+            partitionKey: httpContext.Request.Headers[Consts.CfConnectingIp].ToString(),
             factory: _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 6,
@@ -180,7 +180,7 @@ builder.Services.AddRateLimiter(options =>
 
     options.AddPolicy(Consts.VerifyEmail, httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: httpContext.Request.Headers["X-Forwarded-For"].ToString(),
+            partitionKey: httpContext.Request.Headers[Consts.CfConnectingIp].ToString(),
             factory: _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 3,
@@ -201,7 +201,7 @@ builder.Services.AddRateLimiter(options =>
 
         options.AddPolicy(Consts.Registration, httpContext =>
             RateLimitPartition.GetFixedWindowLimiter(
-                partitionKey: httpContext.Request.Headers["X-Forwarded-For"].ToString(),
+                partitionKey: httpContext.Request.Headers[Consts.CfConnectingIp].ToString(),
                 factory: _ => new FixedWindowRateLimiterOptions
                 {
                     PermitLimit = int.MaxValue,
@@ -210,7 +210,7 @@ builder.Services.AddRateLimiter(options =>
 
         options.AddPolicy(Consts.ResetPassword, httpContext =>
             RateLimitPartition.GetFixedWindowLimiter(
-                partitionKey: httpContext.Request.Headers["X-Forwarded-For"].ToString(),
+                partitionKey: httpContext.Request.Headers[Consts.CfConnectingIp].ToString(),
                 factory: _ => new FixedWindowRateLimiterOptions
                 {
                     PermitLimit = int.MaxValue,
@@ -231,7 +231,7 @@ builder.Services.AddRateLimiter(options =>
 
         options.AddPolicy(Consts.Registration, httpContext =>
             RateLimitPartition.GetFixedWindowLimiter(
-                partitionKey: httpContext.Request.Headers["X-Forwarded-For"].ToString(),
+                partitionKey: httpContext.Request.Headers[Consts.CfConnectingIp].ToString(),
                 factory: _ => new FixedWindowRateLimiterOptions
                 {
                     PermitLimit = 30,
@@ -240,7 +240,7 @@ builder.Services.AddRateLimiter(options =>
 
         options.AddPolicy(Consts.ResetPassword, httpContext =>
             RateLimitPartition.GetFixedWindowLimiter(
-                partitionKey: httpContext.Request.Headers["X-Forwarded-For"].ToString(),
+                partitionKey: httpContext.Request.Headers[Consts.CfConnectingIp].ToString(),
                 factory: _ => new FixedWindowRateLimiterOptions
                 {
                     PermitLimit = 5,
@@ -289,6 +289,7 @@ if (app.Environment.IsDevelopment())
         var forwardedForHeader = context.Request.Headers["X-Forwarded-For"].ToString();
         var forwardedProtoHeader = context.Request.Headers["X-Forwarded-Proto"].ToString();
         var forwardedHostHeader = context.Request.Headers["X-Forwarded-Host"].ToString();
+        var cfConnectingIp = context.Request.Headers[Consts.CfConnectingIp].ToString();
 
         var response = new
         {
@@ -296,7 +297,8 @@ if (app.Environment.IsDevelopment())
             ClientIp = clientIp,
             ForwardedFor = forwardedForHeader,
             ForwardedProto = forwardedProtoHeader,
-            ForwardedHost = forwardedHostHeader
+            ForwardedHost = forwardedHostHeader,
+            CfConnectingIp = cfConnectingIp
         };
 
         context.Response.ContentType = "application/json";
