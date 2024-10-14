@@ -66,6 +66,12 @@ public static class Keys
     // Key for caching if submissions are allowed.
     public static string SubmissionsAllowed() => "submissionsAllowed";
 
+    // Key for caching if certification is enabled.
+    public static string IsCertificationEnabled() => "isCertificationEnabled";
+
+    // Key for caching the issuer of the certificate.
+    public static string CertificationIssuer() => "certificationIssuer";
+
     // Key for caching if turnstile is enabled.
     public static string IsTurnstileEnabled() => "isTurnstileEnabled";
 

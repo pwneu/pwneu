@@ -1,12 +1,15 @@
 ﻿using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Pwneu.Identity.Shared.Data;
 using Pwneu.Identity.Shared.Entities;
+using Pwneu.Identity.Shared.Extensions;
 using Pwneu.Identity.Views;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 using Pwneu.Shared.Extensions;
 using Razor.Templating.Core;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Identity.Features.Certificates;
 
@@ -27,11 +30,20 @@ public class GenerateCertificate
         "CreateCertificate.NotAllowed",
         "Not allowed to create certificate");
 
-    internal sealed class Handler(UserManager<User> userManager)
+    internal sealed class Handler(ApplicationDbContext context, UserManager<User> userManager, IFusionCache cache)
         : IRequestHandler<Command, Result<string>>
     {
         public async Task<Result<string>> Handle(Command request, CancellationToken cancellationToken)
         {
+            // Check if the submissions are allowed.
+            var isCertificationEnabled = await cache.GetOrSetAsync(Keys.IsCertificationEnabled(), async _ =>
+                    await context.GetIdentityConfigurationValueAsync<bool>(Consts.IsCertificationEnabled,
+                        cancellationToken),
+                token: cancellationToken);
+
+            if (!isCertificationEnabled)
+                return Result.Failure<string>(NotAllowed);
+
             var user = userManager.Users.SingleOrDefault(u => u.Id == request.UserId);
 
             if (user is null)
@@ -43,16 +55,19 @@ public class GenerateCertificate
                 return Result.Failure<string>(NotAllowed);
 
             // TODO -- Design certificate
-            // TODO -- Enable/Disable certifications
-            // TODO -- Certificate issuer and signature
+
+            var certificationIssuer = await cache.GetOrSetAsync(Keys.CertificationIssuer(),
+                async _ => await context.GetIdentityConfigurationValueAsync<string>(
+                    Consts.CertificationIssuer,
+                    cancellationToken),
+                token: cancellationToken);
 
             var certificate = new Certificate
             {
                 UserId = user.Id,
                 FullName = request.CustomName ?? user.FullName,
                 IssuedAt = request.CustomIssueDate ?? DateTime.UtcNow,
-                AuthorizedSignatureSvg = string.Empty,
-                EventOrganizer = string.Empty
+                CertificationIssuer = certificationIssuer ?? string.Empty,
             };
 
             var (success, certificateHtml) = await RazorTemplateEngine.TryRenderPartialAsync(
