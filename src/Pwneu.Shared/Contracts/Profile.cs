@@ -12,6 +12,7 @@ public record PasswordResetRequest
     public string PasswordResetToken { get; init; } = default!;
     public string NewPassword { get; init; } = default!;
     public string RepeatPassword { get; init; } = default!;
+    public string? TurnstileToken { get; set; }
 }
 
 public record PasswordResetEvent
