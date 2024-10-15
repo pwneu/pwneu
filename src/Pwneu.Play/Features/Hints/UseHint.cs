@@ -17,7 +17,7 @@ public class UseHint
         "The hint with the specified ID was not found");
 
     private static readonly Error ChallengeAlreadySolved = new("UseHint.ChallengeAlreadySolved",
-        "The challenge has already solved by the user");
+        "Challenge already solved");
 
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
         : IRequestHandler<Command, Result<string>>
@@ -110,6 +110,7 @@ public class UseHint
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);
                 })
                 .RequireAuthorization(Consts.MemberOnly)
+                .RequireRateLimiting(Consts.Fixed)
                 .WithTags(nameof(Hints));
         }
     }
