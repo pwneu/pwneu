@@ -5,7 +5,7 @@ import argparse
 from datetime import datetime, timedelta
 from faker import Faker  # type: ignore
 
-# Sample command: python seed_users.py --admin-password "PwneuPwneu!1" --users-count 10 --api-url "http://localhost:37100"
+# Sample command: python seed_users.py --admin-password "PwneuPwneu!1" --users-count 10 --api-url "http://localhost:37100" --email-domain "example.com"
 
 def login_admin(api_url, admin_password):
     login_payload = {
@@ -43,12 +43,12 @@ def create_access_key(api_url, access_token):
         print(f"Failed to create access key. Status code: {response.status_code}, Response: {response.text}")
         return None
 
-def register_users(api_url, call_count, access_key_guid):
+def register_users(api_url, call_count, access_key_guid, email_domain):
     timestamp = int(time.time())
     fake = Faker()
     for i in range(call_count):
         unique_username = f"{fake.user_name()}_{timestamp}_{i}"
-        unique_email = fake.unique.email()
+        unique_email = f"{fake.user_name()}_{timestamp}_{i}@{email_domain}"
         unique_full_name = fake.name()
         payload = {
             "userName": unique_username,
@@ -92,13 +92,14 @@ def main():
     parser.add_argument("--admin-password", type=str, default="PwneuPwneu!1", help="Password for the admin user.")
     parser.add_argument("--users-count", type=int, default=30, help="Number of users to register.")
     parser.add_argument("--api-url", type=str, default="http://localhost:37100", help="Base URL of the API.")
+    parser.add_argument("--email-domain", type=str, default="example.com", help="Email domain for the registered users.")
     args = parser.parse_args()
 
     access_token = login_admin(args.api_url, args.admin_password)
     if access_token:
         access_key_guid = create_access_key(args.api_url, access_token)
         if access_key_guid:
-            register_users(args.api_url, args.users_count, access_key_guid)
+            register_users(args.api_url, args.users_count, access_key_guid, args.email_domain)
             verify_users(args.api_url, access_token)
 
 if __name__ == "__main__":
