@@ -51,6 +51,6 @@ SMTP_SEND_PASSWORD_RESET_TOKEN_IS_ENABLED=false
 - Build and run the container
 
 ```sh
-docker-compose build --no-cache
+docker-compose build
 docker-compose up -d
 ```

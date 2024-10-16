@@ -1,16 +1,15 @@
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER app
-EXPOSE 8080
-
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS publish
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY "src/" .
-RUN dotnet build "./Pwneu.Play/Pwneu.Play.csproj" -c $BUILD_CONFIGURATION -o /app/build
+COPY "src/Pwneu.Play/Pwneu.Play.csproj" "./Pwneu.Play/"
+COPY "src/Pwneu.Shared/Pwneu.Shared.csproj" "./Pwneu.Shared/"
+RUN dotnet restore "./Pwneu.Play/Pwneu.Play.csproj"
+COPY "src/Pwneu.Play" "./Pwneu.Play"
+COPY "src/Pwneu.Shared" "./Pwneu.Shared"
+RUN dotnet publish "./Pwneu.Play/Pwneu.Play.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false --no-restore
 
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Pwneu.Play/Pwneu.Play.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+EXPOSE 8080
 
 FROM base AS final
 COPY ["scripts/wait-for-it.sh", "/usr/bin/wait-for-it.sh"]
