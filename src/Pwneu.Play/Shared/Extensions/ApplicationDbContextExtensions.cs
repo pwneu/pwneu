@@ -12,7 +12,7 @@ public static class ApplicationDbContextExtensions
     /// <param name="context"></param>
     /// <param name="cancellationToken"></param>
     /// <returns>List of user rankings</returns>
-    public static async Task<List<UserRankResponse>> GetUserRanks(
+    public static async Task<List<UserRankResponse>> GetUserRanksAsync(
         this ApplicationDbContext context,
         CancellationToken cancellationToken = default)
     {
@@ -76,7 +76,7 @@ public static class ApplicationDbContextExtensions
     /// <param name="userIds"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public static async Task<UsersGraphResponse> GetUsersGraph(
+    public static async Task<UsersGraphResponse> GetUsersGraphAsync(
         this ApplicationDbContext context,
         string[] userIds,
         CancellationToken cancellationToken = default)
@@ -183,5 +183,60 @@ public static class ApplicationDbContextExtensions
             UsersGraph = usersGraph,
             GraphLabels = graphLabels
         };
+    }
+
+    /// <summary>
+    /// Returns the activity graph of a user.
+    /// </summary>
+    /// <param name="context">The database context.</param>
+    /// <param name="userId">The id of user.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns></returns>
+    public static async Task<List<UserActivityResponse>> GetUserGraphAsync(
+        this ApplicationDbContext context,
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        // Get the list of correct submissions by the user.
+        var correctSubmissions = await context
+            .Submissions
+            .Where(s => s.UserId == userId && s.IsCorrect)
+            .Select(s => new UserActivityResponse
+            {
+                UserId = s.UserId,
+                UserName = s.UserName,
+                ActivityDate = s.SubmittedAt,
+                Score = s.Challenge.Points
+            })
+            .ToListAsync(cancellationToken);
+
+        // Get the list of hint usages by the user but store the score in negative form.
+        var hintUsages = await context
+            .HintUsages
+            .Where(h => h.UserId == userId)
+            .Select(h => new UserActivityResponse
+            {
+                UserId = h.UserId,
+                UserName = h.UserName,
+                ActivityDate = h.UsedAt,
+                Score = -h.Hint.Deduction
+            })
+            .ToListAsync(cancellationToken);
+
+        // Combine correct submissions and hint usages.
+        var userGraph = correctSubmissions
+            .Concat(hintUsages)
+            .OrderBy(a => a.ActivityDate)
+            .ToList();
+
+        // Store the cumulative score and update the score of each item in the list.
+        var cumulativeScore = 0;
+        foreach (var userActivity in userGraph)
+        {
+            cumulativeScore += userActivity.Score;
+            userActivity.Score = cumulativeScore;
+        }
+
+        return userGraph;
     }
 }

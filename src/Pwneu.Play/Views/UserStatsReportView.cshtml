@@ -1,0 +1,161 @@
+﻿@model Pwneu.Play.Views.UserStatsReport
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/charts.css/dist/charts.min.css">
+
+<style>
+    body {
+        font-family: 'Varela Round', sans-serif;
+    }
+    h2 {
+        text-align: center;
+    }
+</style>
+
+<!-- User Info -->
+<div class="user-info">
+    <h2>User Stats Report</h2>
+    <p>
+        <strong>User ID:</strong> @Model.Id
+    </p>
+    <p>
+        <strong>Username:</strong> @Model.UserName
+    </p>
+    <p>
+        <strong>Full Name:</strong> @Model.FullName
+    </p>
+    <p>
+        <strong>Position:</strong> @(Model.Position.HasValue ? Model.Position.Value.ToString() : "N/A")
+    </p>
+    <p>
+        <strong>Points:</strong> @(Model.Points.HasValue ? Model.Points.Value.ToString() : "N/A")
+    </p>
+</div>
+
+<!-- Category Evaluations -->
+@foreach (var category in Model.CategoryEvaluations)
+{
+    var totalChallenges = category.TotalChallenges;
+    var totalSolves = category.TotalSolves;
+    var unsolvedChallenges = totalChallenges - totalSolves;
+
+    var solvePercentage = (double)totalSolves / totalChallenges;
+    var unsolvedPercentage = (double)unsolvedChallenges / totalChallenges;
+
+    <h2>@category.Name Evaluation</h2>
+
+    <!-- Pie Chart for Solved/Unsolved -->
+    <div id="pie-@category.CategoryId">
+        <p>
+            <strong>Solved:</strong> @totalSolves
+        </p>
+        <p>
+            <strong>Unsolved:</strong> @unsolvedChallenges
+        </p>
+
+        <table class="charts-css pie show-primary-axis hide-data">
+            <caption>Category: @category.Name</caption>
+            <tbody>
+            <tr>
+                <td style="--start: 0.0; --end: @solvePercentage;">
+                    <span class="data">Solved: @totalSolves</span>
+                </td>
+            </tr>
+            <tr>
+                <td style="--start: @solvePercentage; --end: @(solvePercentage + unsolvedPercentage);">
+                    <span class="data">Unsolved: @unsolvedChallenges</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Bar Chart for Total Solves, Incorrect Attempts, and Hints Used -->
+    <div id="bar-@category.CategoryId">
+        <p>
+            <strong>Correct:</strong> @category.TotalSolves
+        </p>
+        <p>
+            <strong>Incorrect:</strong> @category.IncorrectAttempts
+        </p>
+        <p>
+            <strong>Hints Used:</strong> @category.HintsUsed
+        </p>
+
+        <table class="charts-css bar data-spacing-10 show-primary-axis show-labels">
+            <caption>Category Stats for @category.Name</caption>
+            <thead>
+            <tr>
+                <th scope="col"> Metric </th>
+                <th scope="col"> Value </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <th scope="row">Correct</th>
+                <td style="--size: @(category.TotalSolves / (double)category.TotalChallenges);"></td>
+            </tr>
+            <tr>
+                <th scope="row">Incorrect</th>
+                <td style="--size: @(category.IncorrectAttempts / (double)category.TotalChallenges);"></td>
+            </tr>
+            <tr>
+                <th scope="row">Hints</th>
+                <td style="--size: @(category.HintsUsed / (double)category.TotalChallenges);"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+}
+
+@{
+    // Find the minimum and maximum score to normalize the Y-axis for the UserGraph
+    var minScore = Model.UserGraph.Min(ug => ug.Score);
+    var maxScore = Model.UserGraph.Max(ug => ug.Score);
+
+    // Normalize score function (to a 0-1 range)
+    double NormalizeScore(int score) => (double)(score - minScore) / (maxScore - minScore);
+}
+
+<p style="text-align: center;">
+    <strong>Activity Graph</strong>
+</p>
+
+<!-- User Graph Line Chart -->
+<div id="user-graph-line-chart">
+    <table class="charts-css line hide-data show-primary-axis show-labels show-4-secondary-axes">
+        <caption> User Activity Over Time </caption>
+        <thead>
+        <tr>
+            <th scope="col"> Date </th>
+            <th scope="col"> Score </th>
+        </tr>
+        </thead>
+        <tbody>
+        @for (var i = 0; i < Model.UserGraph.Count - 1; i++)
+        {
+            var currentScore = Model.UserGraph[i].Score;
+            var nextScore = Model.UserGraph[i + 1].Score;
+
+            // Normalize the scores between 0 and 1 for Chart CSS
+            var start = NormalizeScore(currentScore);
+            var end = NormalizeScore(nextScore);
+
+            <tr>
+                <td style="--start: @start; --end: @end;">
+                    <span class="data">@Model.UserGraph[i].ActivityDate.ToString("MMM dd") - @Model.UserGraph[i].Score pts</span>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+<!-- Report Issued At -->
+<div class="report-issued">
+    <p>
+        <strong>Report Issued At:</strong> @Model.IssuedAt.ToString("MMMM dd, yyyy HH:mm")
+    </p>
+</div>

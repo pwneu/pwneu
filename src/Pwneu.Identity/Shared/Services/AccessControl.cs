@@ -8,6 +8,7 @@ namespace Pwneu.Identity.Shared.Services;
 public class AccessControl(ApplicationDbContext context, IFusionCache cache) : IAccessControl
 {
     public async Task<IEnumerable<string>> GetManagerIdsAsync(CancellationToken cancellationToken = default) =>
+        // No need to invalidate cache when deleting managers since Guids are always unique.
         await cache.GetOrSetAsync("managerIds", async _ =>
             await context
                 .UserRoles

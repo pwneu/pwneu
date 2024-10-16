@@ -29,7 +29,7 @@ public class GetUserRank
 
             var userRanks = await cache.GetOrSetAsync(
                 Keys.UserRanks(),
-                async _ => await context.GetUserRanks(cancellationToken),
+                async _ => await context.GetUserRanksAsync(cancellationToken),
                 new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(20) },
                 cancellationToken);
 

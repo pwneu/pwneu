@@ -19,15 +19,15 @@ public class GenerateCertificate
         : IRequest<Result<string>>;
 
     private static readonly Error UserNotFound = new(
-        "CreateCertificate.UserNotFound",
+        "GenerateCertificate.UserNotFound",
         "User with the specified ID was not found");
 
     private static readonly Error Failed = new(
-        "CreateCertificate.Failed",
+        "GenerateCertificate.Failed",
         "Failed to create certificate");
 
     private static readonly Error NotAllowed = new(
-        "CreateCertificate.NotAllowed",
+        "GenerateCertificate.NotAllowed",
         "Not allowed to create certificate");
 
     internal sealed class Handler(ApplicationDbContext context, UserManager<User> userManager, IFusionCache cache)
@@ -109,7 +109,7 @@ public class GenerateCertificate
                         : Results.Content(result.Value, "text/html");
                 })
                 .RequireAuthorization(Consts.MemberOnly)
-                .RequireRateLimiting(Consts.Certify)
+                .RequireRateLimiting(Consts.Generate)
                 .WithTags(nameof(Certificates));
         }
     }

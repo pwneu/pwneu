@@ -26,7 +26,7 @@ public static class GetLeaderboards
         {
             var userRanks = await cache.GetOrSetAsync(
                 Keys.UserRanks(),
-                async _ => await context.GetUserRanks(cancellationToken),
+                async _ => await context.GetUserRanksAsync(cancellationToken),
                 new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(20) },
                 cancellationToken);
 
@@ -39,7 +39,7 @@ public static class GetLeaderboards
                 token: cancellationToken);
 
             var topUsersGraph = await cache.GetOrSetAsync(Keys.TopUsersGraph(), async _ =>
-                    await context.GetUsersGraph(
+                    await context.GetUsersGraphAsync(
                         userRanks.Take(10).Select(u => u.Id).ToArray(),
                         cancellationToken),
                 token: cancellationToken);

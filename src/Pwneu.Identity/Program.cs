@@ -190,7 +190,7 @@ builder.Services.AddRateLimiter(options =>
     // In development, set very high limits to effectively disable rate limiting
     if (builder.Environment.IsDevelopment())
     {
-        options.AddPolicy(Consts.Certify, httpContext =>
+        options.AddPolicy(Consts.Generate, httpContext =>
             RateLimitPartition.GetFixedWindowLimiter(
                 partitionKey: httpContext.User.GetLoggedInUserId<string>(),
                 factory: _ => new FixedWindowRateLimiterOptions
@@ -229,13 +229,13 @@ builder.Services.AddRateLimiter(options =>
     // Actual rate limiting for production environment
     else
     {
-        options.AddPolicy(Consts.Certify, httpContext =>
+        options.AddPolicy(Consts.Generate, httpContext =>
             RateLimitPartition.GetFixedWindowLimiter(
                 partitionKey: httpContext.User.GetLoggedInUserId<string>(),
                 factory: _ => new FixedWindowRateLimiterOptions
                 {
-                    PermitLimit = 2,
-                    Window = TimeSpan.FromSeconds(10),
+                    PermitLimit = 5,
+                    Window = TimeSpan.FromMinutes(1),
                 }));
 
         options.AddPolicy(Consts.Fixed, httpContext =>

@@ -14,4 +14,9 @@ public class MockMemberAccess : IMemberAccess
     {
         return Task.FromResult(new UserResponse { Id = Guid.NewGuid().ToString(), UserName = "test" })!;
     }
+
+    public Task<UserDetailsResponse?> GetMemberDetailsAsync(string id, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(new UserDetailsResponse { Id = Guid.NewGuid().ToString(), UserName = "test" })!;
+    }
 }
