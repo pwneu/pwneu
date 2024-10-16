@@ -178,7 +178,7 @@ public static class Login
         {
             app.MapPost("login", async (LoginRequest request, HttpContext httpContext, ISender sender) =>
                 {
-                    var ipAddress = httpContext.Request.Headers["X-Forwarded-For"].ToString();
+                    var ipAddress = httpContext.Request.Headers[Consts.CfConnectingIp].ToString();
                     // var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString();
                     var userAgent = httpContext.Request.Headers.UserAgent.ToString();
                     var referer = httpContext.Request.Headers.Referer.ToString();

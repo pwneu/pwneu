@@ -8,10 +8,8 @@ using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
-using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using Pwneu.Play.Shared.Data;
 using Pwneu.Play.Shared.Extensions;
 using Pwneu.Play.Shared.Services;
@@ -23,7 +21,14 @@ using ZiggyCreatures.Caching.Fusion.Serialization.NewtonsoftJson;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// OpenTelemetry (for metrics, traces, and logs)
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(2);
+    options.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(2);
+    options.Limits.MaxRequestBodySize = 50_000_000;
+});
+
+// OpenTelemetry
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource.AddService(nameof(Pwneu.Play)))
     .WithMetrics(metrics =>
@@ -31,17 +36,10 @@ builder.Services.AddOpenTelemetry()
         metrics
             .AddAspNetCoreInstrumentation()
             .AddHttpClientInstrumentation()
-            .AddOtlpExporter();
-    })
-    .WithTracing(tracing =>
-    {
-        tracing
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddOtlpExporter();
+            .AddRuntimeInstrumentation()
+            .AddProcessInstrumentation()
+            .AddPrometheusExporter();
     });
-
-builder.Logging.AddOpenTelemetry(logging => logging.AddOtlpExporter());
 
 // Swagger UI
 builder.Services.AddEndpointsApiExplorer();
@@ -166,6 +164,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
+
 app.ApplyMigrations();
 
 app.UseCors(corsPolicy =>
@@ -190,6 +190,7 @@ if (app.Environment.IsDevelopment())
         var forwardedForHeader = context.Request.Headers["X-Forwarded-For"].ToString();
         var forwardedProtoHeader = context.Request.Headers["X-Forwarded-Proto"].ToString();
         var forwardedHostHeader = context.Request.Headers["X-Forwarded-Host"].ToString();
+        var cfConnectingIp = context.Request.Headers[Consts.CfConnectingIp].ToString();
 
         var response = new
         {
@@ -197,7 +198,8 @@ if (app.Environment.IsDevelopment())
             ClientIp = clientIp,
             ForwardedFor = forwardedForHeader,
             ForwardedProto = forwardedProtoHeader,
-            ForwardedHost = forwardedHostHeader
+            ForwardedHost = forwardedHostHeader,
+            CfConnectingIp = cfConnectingIp
         };
 
         context.Response.ContentType = "application/json";

@@ -7,9 +7,12 @@ public interface IMemberAccess
 {
     Task<bool> MemberExistsAsync(string id, CancellationToken cancellationToken = default);
     Task<UserResponse?> GetMemberAsync(string id, CancellationToken cancellationToken = default);
+    Task<UserDetailsResponse?> GetMemberDetailsAsync(string id, CancellationToken cancellationToken = default);
 }
 
-public class MemberAccess(IRequestClient<GetMemberRequest> client) : IMemberAccess
+public class MemberAccess(
+    IRequestClient<GetMemberRequest> memberClient,
+    IRequestClient<GetMemberDetailsRequest> memberDetailsClient) : IMemberAccess
 {
     public async Task<bool> MemberExistsAsync(string id, CancellationToken cancellationToken = default)
     {
@@ -18,13 +21,27 @@ public class MemberAccess(IRequestClient<GetMemberRequest> client) : IMemberAcce
 
     public async Task<UserResponse?> GetMemberAsync(string id, CancellationToken cancellationToken = default)
     {
-        var response = await client.GetResponse<UserResponse, UserNotFoundResponse>(
+        var response = await memberClient.GetResponse<UserResponse, UserNotFoundResponse>(
             new GetMemberRequest { Id = id }, cancellationToken);
 
         if (response.Is(out Response<UserResponse>? userResponse))
             return userResponse.Message;
 
         response.Is(out Response<UserNotFoundResponse>? _);
+        return null;
+    }
+
+    public async Task<UserDetailsResponse?> GetMemberDetailsAsync(
+        string id,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await memberDetailsClient.GetResponse<UserDetailsResponse, UserDetailsNotFoundResponse>(
+            new GetMemberDetailsRequest { Id = id }, cancellationToken);
+
+        if (response.Is(out Response<UserDetailsResponse>? userResponse))
+            return userResponse.Message;
+
+        response.Is(out Response<UserDetailsNotFoundResponse>? _);
         return null;
     }
 }

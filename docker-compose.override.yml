@@ -37,3 +37,7 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+
+  pwneu.monitoring:
+    ports:
+      - "37003:9090"

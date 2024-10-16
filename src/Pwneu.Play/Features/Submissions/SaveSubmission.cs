@@ -125,7 +125,7 @@ public static class SaveSubmission
                 return submission.Id;
 
             // Write user ranks to cache for faster retrieval.
-            var userRanks = await context.GetUserRanks(cancellationToken);
+            var userRanks = await context.GetUserRanksAsync(cancellationToken);
 
             await cache.SetAsync(
                 Keys.UserRanks(),
@@ -133,7 +133,7 @@ public static class SaveSubmission
                 new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(20) },
                 cancellationToken);
 
-            var topUsersGraph = await context.GetUsersGraph(
+            var topUsersGraph = await context.GetUsersGraphAsync(
                 userRanks.Take(10).Select(u => u.Id).ToArray(),
                 cancellationToken);
 

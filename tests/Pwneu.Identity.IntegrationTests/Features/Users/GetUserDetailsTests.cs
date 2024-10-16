@@ -5,8 +5,6 @@ using Pwneu.Shared.Contracts;
 
 namespace Pwneu.Identity.IntegrationTests.Features.Users;
 
-// TODO -- Add more tests
-
 [Collection(nameof(IntegrationTestCollection))]
 public class GetUserDetailsTests(IntegrationTestsWebAppFactory factory) : BaseIntegrationTest(factory)
 {

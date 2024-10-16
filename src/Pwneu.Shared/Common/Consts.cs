@@ -33,10 +33,16 @@ public static class Consts
     public const string Challenges = "challenges";
     public const string Registration = "registration";
     public const string VerifyEmail = "verifyEmail";
+    public const string ResetPassword = "resetPassword";
+    public const string Generate = "generate";
 
     public const string SubmissionsAllowed = "SubmissionsAllowed";
     public const string PublicLeaderboardCount = "PublicLeaderboardCount";
 
+    public const string IsCertificationEnabled = "isCertificationEnabled";
+    public const string CertificationIssuer = "certificationIssuer";
     public const string IsTurnstileEnabled = "IsTurnstileEnabled";
+
     public const string TurnstileChallengeUrl = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+    public const string CfConnectingIp = "Cf-Connecting-Ip";
 }

@@ -3,6 +3,7 @@ using MassTransit;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Pwneu.Identity.Shared.Entities;
+using Pwneu.Identity.Shared.Services;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 
@@ -10,16 +11,26 @@ namespace Pwneu.Identity.Features.Profile;
 
 public static class ResetPassword
 {
-    public record Command(string Email, string PasswordResetToken, string NewPassword, string RepeatPassword)
+    public record Command(
+        string Email,
+        string PasswordResetToken,
+        string NewPassword,
+        string RepeatPassword,
+        string? TurnstileToken = null)
         : IRequest<Result>;
 
     private static readonly Error Failed = new(
         "ResetPassword.Failed",
         "Unable to change password");
 
+    private static readonly Error InvalidAntiSpamToken = new(
+        "ResetPassword.InvalidAntiSpamToken",
+        "Invalid turnstile token. Rejecting reset password");
+
     internal sealed class Handler(
         UserManager<User> userManager,
         IPublishEndpoint publishEndpoint,
+        ITurnstileValidator turnstileValidator,
         IValidator<Command> validator) : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
@@ -28,6 +39,14 @@ public static class ResetPassword
 
             if (!validationResult.IsValid)
                 return Result.Failure<Guid>(new Error("ResetPassword.Validation", validationResult.ToString()));
+
+            // Validate Turnstile from Cloudflare.
+            var isValidTurnstile = await turnstileValidator.IsValidTurnstileTokenAsync(
+                request.TurnstileToken,
+                cancellationToken);
+
+            if (!isValidTurnstile)
+                return Result.Failure(InvalidAntiSpamToken);
 
             var user = await userManager.FindByEmailAsync(request.Email);
 
@@ -60,12 +79,14 @@ public static class ResetPassword
                         Email: request.Email,
                         PasswordResetToken: request.PasswordResetToken,
                         NewPassword: request.NewPassword,
-                        RepeatPassword: request.RepeatPassword);
+                        RepeatPassword: request.RepeatPassword,
+                        TurnstileToken: request.TurnstileToken);
 
                     var result = await sender.Send(command);
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
                 })
+                .RequireRateLimiting(Consts.ResetPassword)
                 .WithTags(nameof(Profile));
         }
     }

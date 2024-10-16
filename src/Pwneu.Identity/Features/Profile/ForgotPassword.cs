@@ -46,6 +46,11 @@ public static class ForgotPassword
             if (user?.Email is null || !user.EmailConfirmed)
                 return Result.Success();
 
+            // Admin doesn't have an email.
+            var userIsAdmin = await userManager.IsInRoleAsync(user, Consts.Admin);
+            if (userIsAdmin)
+                return Result.Success();
+
             var token = await userManager.GeneratePasswordResetTokenAsync(user);
 
             await publishEndpoint.Publish(new ForgotPasswordEvent

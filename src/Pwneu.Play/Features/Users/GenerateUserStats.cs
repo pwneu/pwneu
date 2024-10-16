@@ -1,31 +1,40 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
 using Pwneu.Play.Shared.Extensions;
 using Pwneu.Play.Shared.Services;
+using Pwneu.Play.Views;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 using Pwneu.Shared.Extensions;
+using Razor.Templating.Core;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.Users;
 
-public static class EvaluateUser
+public static class GenerateUserStats
 {
-    public record Query(string Id) : IRequest<Result<UserEvalResponse>>;
+    public record Query(string Id) : IRequest<Result<string>>;
 
-    private static readonly Error NotFound = new("EvaluateUser.NotFound",
+    private static readonly Error NotFound = new(
+        "GenerateUserStats.NotFound",
         "The user with the specified ID was not found");
 
+    private static readonly Error Failed = new(
+        "GenerateUserStats.Failed",
+        "Failed to create certificate");
+
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, IMemberAccess memberAccess)
-        : IRequestHandler<Query, Result<UserEvalResponse>>
+        : IRequestHandler<Query, Result<string>>
     {
-        public async Task<Result<UserEvalResponse>> Handle(Query request, CancellationToken cancellationToken)
+        public async Task<Result<string>> Handle(Query request, CancellationToken cancellationToken)
         {
             // Check if user exists.
-            if (!await memberAccess.MemberExistsAsync(request.Id, cancellationToken))
-                return Result.Failure<UserEvalResponse>(NotFound);
+            var user = await memberAccess.GetMemberDetailsAsync(request.Id, cancellationToken);
+
+            if (user is null)
+                return Result.Failure<string>(NotFound);
 
             // Get all the categories first.
             var categoryIds = await cache.GetOrSetAsync(Keys.CategoryIds(), async _ =>
@@ -50,6 +59,22 @@ public static class EvaluateUser
                     userCategoryEvaluations.Add(userCategoryEvaluation);
             }
 
+            var userGraph = await cache.GetOrSetAsync(Keys.UserGraph(request.Id),
+                async _ =>
+                {
+                    var userGraph = await context.GetUserGraphAsync(request.Id, cancellationToken);
+                    return userGraph;
+                },
+                token: cancellationToken);
+
+            var userRanks = await cache.GetOrSetAsync(
+                Keys.UserRanks(),
+                async _ => await context.GetUserRanksAsync(cancellationToken),
+                new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(20) },
+                cancellationToken);
+
+            var userRank = userRanks.FirstOrDefault(u => u.Id == request.Id);
+
             var activeUserIds = await cache.GetOrDefaultAsync<List<string>>(
                 Keys.ActiveUserIds(),
                 token: cancellationToken) ?? [];
@@ -62,11 +87,23 @@ public static class EvaluateUser
                 Keys.ActiveUserIds(),
                 activeUserIds, token: cancellationToken);
 
-            return new UserEvalResponse
+            var userStatsReport = new UserStatsReport
             {
-                Id = request.Id,
-                CategoryEvaluations = userCategoryEvaluations
+                Id = user.Id,
+                UserName = user.UserName,
+                FullName = user.FullName,
+                Position = userRank?.Position ?? null,
+                Points = userRank?.Points ?? null,
+                CategoryEvaluations = userCategoryEvaluations,
+                UserGraph = userGraph,
+                IssuedAt = DateTime.UtcNow
             };
+
+            var (success, userStatsReportHtml) = await RazorTemplateEngine.TryRenderPartialAsync(
+                "Views/UserStatsReportView.cshtml",
+                userStatsReport);
+
+            return success ? userStatsReportHtml : Result.Failure<string>(Failed);
         }
     }
 
@@ -74,17 +111,19 @@ public static class EvaluateUser
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("users/{id:Guid}/evaluate", async (Guid id, ISender sender) =>
+            app.MapGet("users/{id:Guid}/stats", async (Guid id, ISender sender) =>
                 {
                     var query = new Query(id.ToString());
                     var result = await sender.Send(query);
 
-                    return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
+                    return result.IsFailure
+                        ? Results.NotFound(result.Error)
+                        : Results.Content(result.Value, "text/html");
                 })
                 .RequireAuthorization(Consts.ManagerAdminOnly)
                 .WithTags(nameof(Users));
 
-            app.MapGet("me/evaluate", async (ClaimsPrincipal claims, ISender sender) =>
+            app.MapGet("me/stats", async (ClaimsPrincipal claims, ISender sender) =>
                 {
                     var id = claims.GetLoggedInUserId<string>();
                     if (id is null) return Results.BadRequest();
@@ -92,9 +131,12 @@ public static class EvaluateUser
                     var query = new Query(id);
                     var result = await sender.Send(query);
 
-                    return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value);
+                    return result.IsFailure
+                        ? Results.NotFound(result.Error)
+                        : Results.Content(result.Value, "text/html");
                 })
                 .RequireAuthorization()
+                .RequireRateLimiting(Consts.Generate)
                 .WithTags(nameof(Users));
         }
     }

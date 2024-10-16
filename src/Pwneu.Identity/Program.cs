@@ -9,10 +9,8 @@ using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
-using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using Pwneu.Identity.Shared.Data;
 using Pwneu.Identity.Shared.Entities;
 using Pwneu.Identity.Shared.Extensions;
@@ -34,6 +32,19 @@ builder.Services
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+// OpenTelemetry
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService(nameof(Pwneu.Identity)))
+    .WithMetrics(metrics =>
+    {
+        metrics
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddRuntimeInstrumentation()
+            .AddProcessInstrumentation()
+            .AddPrometheusExporter();
+    });
+
 builder.Services.AddHttpClient();
 
 // JWT Options
@@ -42,26 +53,6 @@ builder.Services
     .BindConfiguration($"{nameof(JwtOptions)}")
     .ValidateDataAnnotations()
     .ValidateOnStart();
-
-// OpenTelemetry (for metrics, traces, and logs)
-builder.Services.AddOpenTelemetry()
-    .ConfigureResource(resource => resource.AddService(nameof(Pwneu.Identity)))
-    .WithMetrics(metrics =>
-    {
-        metrics
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddOtlpExporter();
-    })
-    .WithTracing(tracing =>
-    {
-        tracing
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddOtlpExporter();
-    });
-
-builder.Logging.AddOpenTelemetry(logging => logging.AddOtlpExporter());
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -180,7 +171,7 @@ builder.Services.AddRateLimiter(options =>
 
     options.AddPolicy(Consts.AntiEmailAbuse, httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: httpContext.Request.Headers["X-Forwarded-For"].ToString(),
+            partitionKey: httpContext.Request.Headers[Consts.CfConnectingIp].ToString(),
             factory: _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 6,
@@ -189,7 +180,7 @@ builder.Services.AddRateLimiter(options =>
 
     options.AddPolicy(Consts.VerifyEmail, httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: httpContext.Request.Headers["X-Forwarded-For"].ToString(),
+            partitionKey: httpContext.Request.Headers[Consts.CfConnectingIp].ToString(),
             factory: _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 3,
@@ -199,6 +190,15 @@ builder.Services.AddRateLimiter(options =>
     // In development, set very high limits to effectively disable rate limiting
     if (builder.Environment.IsDevelopment())
     {
+        options.AddPolicy(Consts.Generate, httpContext =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: httpContext.User.GetLoggedInUserId<string>(),
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = int.MaxValue,
+                    Window = TimeSpan.FromSeconds(1),
+                }));
+
         options.AddPolicy(Consts.Fixed, httpContext =>
             RateLimitPartition.GetFixedWindowLimiter(
                 partitionKey: httpContext.User.GetLoggedInUserId<string>(),
@@ -210,7 +210,16 @@ builder.Services.AddRateLimiter(options =>
 
         options.AddPolicy(Consts.Registration, httpContext =>
             RateLimitPartition.GetFixedWindowLimiter(
-                partitionKey: httpContext.Request.Headers["X-Forwarded-For"].ToString(),
+                partitionKey: httpContext.Request.Headers[Consts.CfConnectingIp].ToString(),
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = int.MaxValue,
+                    Window = TimeSpan.FromSeconds(1),
+                }));
+
+        options.AddPolicy(Consts.ResetPassword, httpContext =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: httpContext.Request.Headers[Consts.CfConnectingIp].ToString(),
                 factory: _ => new FixedWindowRateLimiterOptions
                 {
                     PermitLimit = int.MaxValue,
@@ -220,6 +229,15 @@ builder.Services.AddRateLimiter(options =>
     // Actual rate limiting for production environment
     else
     {
+        options.AddPolicy(Consts.Generate, httpContext =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: httpContext.User.GetLoggedInUserId<string>(),
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 5,
+                    Window = TimeSpan.FromMinutes(1),
+                }));
+
         options.AddPolicy(Consts.Fixed, httpContext =>
             RateLimitPartition.GetFixedWindowLimiter(
                 partitionKey: httpContext.User.GetLoggedInUserId<string>(),
@@ -231,10 +249,19 @@ builder.Services.AddRateLimiter(options =>
 
         options.AddPolicy(Consts.Registration, httpContext =>
             RateLimitPartition.GetFixedWindowLimiter(
-                partitionKey: httpContext.Request.Headers["X-Forwarded-For"].ToString(),
+                partitionKey: httpContext.Request.Headers[Consts.CfConnectingIp].ToString(),
                 factory: _ => new FixedWindowRateLimiterOptions
                 {
                     PermitLimit = 30,
+                    Window = TimeSpan.FromMinutes(1),
+                }));
+
+        options.AddPolicy(Consts.ResetPassword, httpContext =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: httpContext.Request.Headers[Consts.CfConnectingIp].ToString(),
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 5,
                     Window = TimeSpan.FromMinutes(1),
                 }));
     }
@@ -250,6 +277,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
 app.ApplyMigrations();
 
@@ -278,6 +307,7 @@ if (app.Environment.IsDevelopment())
         var forwardedForHeader = context.Request.Headers["X-Forwarded-For"].ToString();
         var forwardedProtoHeader = context.Request.Headers["X-Forwarded-Proto"].ToString();
         var forwardedHostHeader = context.Request.Headers["X-Forwarded-Host"].ToString();
+        var cfConnectingIp = context.Request.Headers[Consts.CfConnectingIp].ToString();
 
         var response = new
         {
@@ -285,7 +315,8 @@ if (app.Environment.IsDevelopment())
             ClientIp = clientIp,
             ForwardedFor = forwardedForHeader,
             ForwardedProto = forwardedProtoHeader,
-            ForwardedHost = forwardedHostHeader
+            ForwardedHost = forwardedHostHeader,
+            CfConnectingIp = cfConnectingIp
         };
 
         context.Response.ContentType = "application/json";
