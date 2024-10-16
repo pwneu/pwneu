@@ -21,6 +21,13 @@ using ZiggyCreatures.Caching.Fusion.Serialization.NewtonsoftJson;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(2);
+    options.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(2);
+    options.Limits.MaxRequestBodySize = 50_000_000;
+});
+
 // OpenTelemetry
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource.AddService(nameof(Pwneu.Play)))

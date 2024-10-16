@@ -16,7 +16,7 @@ public static class AddArtifact
         string ContentType,
         byte[] Data) : IRequest<Result<Guid>>;
 
-    private const long MaxFileSize = 100 * 1024 * 1024;
+    private const long MaxFileSize = 30 * 1024 * 1024;
 
     private static readonly Error NoChallenge = new("AddArtifact.NoChallenge", "No challenge found");
 
@@ -75,7 +75,7 @@ public static class AddArtifact
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);
                 })
-                .DisableAntiforgery() // TODO -- Check for better ways to fix anti-forgery exception
+                .DisableAntiforgery()
                 .RequireAuthorization(Consts.ManagerAdminOnly)
                 .WithTags(nameof(Artifacts));
         }
