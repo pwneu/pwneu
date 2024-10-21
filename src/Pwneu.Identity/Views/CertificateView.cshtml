@@ -1,8 +1,27 @@
 ﻿@model Pwneu.Identity.Views.Certificate
 
 <html lang="en">
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        width: 2480px;
+        height: 3508px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+    h6 {
+        margin: 10px 0;
+    }
+</style>
+<body>
 <h1>Certificate of Participation</h1>
-<h1>@Model.FullName</h1>
-<h1>Issued at: @Model.IssuedAt</h1>
-<h1>Issuer: @Model.CertificationIssuer</h1>
+<h2>@Model.FullName</h2>
+<h3>Issued at: @Model.IssuedAt</h3>
+<h3>Issuer: @Model.CertificationIssuer</h3>
+</body>
 </html>

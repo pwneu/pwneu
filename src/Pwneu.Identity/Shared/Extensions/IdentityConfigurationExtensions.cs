@@ -41,6 +41,16 @@ public static class IdentityConfigurationExtensions
             return default;
 
         var value = config.Value;
+
+        // Return directly if it requests a string.
+        if (typeof(T) == typeof(string))
+            return (T)(object)value;
+
+        if (typeof(T).IsValueType)
+            return string.IsNullOrEmpty(value)
+                ? default
+                : JsonConvert.DeserializeObject<T>(value);
+
         return string.IsNullOrEmpty(value) ? default : JsonConvert.DeserializeObject<T>(value);
     }
 }

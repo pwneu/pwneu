@@ -152,6 +152,29 @@ builder.Services.AddRateLimiter(options =>
                 PermitLimit = 10,
                 Window = TimeSpan.FromSeconds(5),
             }));
+
+    if (builder.Environment.IsDevelopment())
+    {
+        options.AddPolicy(Consts.Generate, httpContext =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: httpContext.User.GetLoggedInUserId<string>(),
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = int.MaxValue,
+                    Window = TimeSpan.FromSeconds(1),
+                }));
+    }
+    else
+    {
+        options.AddPolicy(Consts.Generate, httpContext =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: httpContext.User.GetLoggedInUserId<string>(),
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 5,
+                    Window = TimeSpan.FromMinutes(1),
+                }));
+    }
 });
 
 builder.Services.AddScoped<IMemberAccess, MemberAccess>();
