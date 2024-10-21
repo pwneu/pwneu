@@ -12,7 +12,14 @@ public static class PlayConfigurationExtensions
         T value,
         CancellationToken cancellationToken = default)
     {
-        var valueString = value is not null ? JsonConvert.SerializeObject(value) : string.Empty;
+        string valueString;
+
+        // Store string as-is without wrapping quotes.
+        if (value is string stringValue)
+            valueString = stringValue;
+        else
+            valueString = value is not null ? JsonConvert.SerializeObject(value) : string.Empty;
+
         var config = await context.PlayConfigurations.FindAsync([key], cancellationToken);
 
         if (config is not null)
