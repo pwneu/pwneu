@@ -70,10 +70,10 @@ def fetch_all_users(api_url, access_token):
     print(f"Total users retrieved: {len(users)}")
     return users
 
-def login_user(api_url, user_name, password):
+def login_user(api_url, user_name):
     login_payload = {
         "userName": user_name,
-        "password": password
+        "password": "PwneuPwneu!1"
     }
     headers = {'Content-Type': 'application/json'}
     response = requests.post(f"{api_url}/identity/login", data=json.dumps(login_payload), headers=headers, verify=False)
@@ -133,7 +133,7 @@ def main():
             futures = []
             for user in users:
                 user_name = user['userName']
-                user_access_token = login_user(args.api_url, user_name, args.admin_password)
+                user_access_token = login_user(args.api_url, user_name)
 
                 if user_access_token:
                     total_challenges = len(challenges)
