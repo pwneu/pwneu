@@ -40,8 +40,8 @@
     </div>
 
     @{
-        var minScore = Model.UserGraph.Min(ug => ug.Score);
-        var maxScore = Model.UserGraph.Max(ug => ug.Score);
+        var minScore = Model.UserGraph.Any() ? Model.UserGraph.Min(ug => ug.Score) : 0;
+        var maxScore = Model.UserGraph.Any() ? Model.UserGraph.Max(ug => ug.Score) : 0;
 
         double NormalizeScore(int score) => (double)(score - minScore) / (maxScore - minScore);
     }
@@ -50,31 +50,37 @@
     <div style="flex: 1;">
         <h2>Score Graph</h2>
 
-        <!-- User Graph Line Chart -->
-        <div style="display: flex; flex-direction: row; gap: 40px; width: 100%; max-width: 600px; margin: 0 auto;">
-            <table class="charts-css line hide-data show-primary-axis show-labels show-4-secondary-axes">
-                <thead>
-                <tr>
-                    <th scope="col">Date</th>
-                    <th scope="col">Score</th>
-                </tr>
-                </thead>
-                <tbody>
-                @for (var i = 0; i < Model.UserGraph.Count - 1; i++)
-                {
-                    var currentScore = Model.UserGraph[i].Score;
-                    var nextScore = Model.UserGraph[i + 1].Score;
-
-                    var start = NormalizeScore(currentScore);
-                    var end = NormalizeScore(nextScore);
-
+        @if (Model.UserGraph.Any())
+        {
+            <div style="display: flex; flex-direction: row; gap: 40px; width: 100%; max-width: 600px; margin: 0 auto;">
+                <table class="charts-css line hide-data show-primary-axis show-labels show-4-secondary-axes">
+                    <thead>
                     <tr>
-                        <td style="--start: @start; --end: @end;"></td>
+                        <th scope="col">Date</th>
+                        <th scope="col">Score</th>
                     </tr>
-                }
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                    @for (var i = 0; i < Model.UserGraph.Count - 1; i++)
+                    {
+                        var currentScore = Model.UserGraph[i].Score;
+                        var nextScore = Model.UserGraph[i + 1].Score;
+
+                        var start = NormalizeScore(currentScore);
+                        var end = NormalizeScore(nextScore);
+
+                        <tr>
+                            <td style="--start: @start; --end: @end;"></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <p style="text-align: center">No data available for the score graph.</p>
+        }
     </div>
 </div>
 
