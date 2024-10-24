@@ -56,7 +56,7 @@ public static class Register
                 cancellationToken);
 
             if (!isValidTurnstile)
-                return Result.Failure<LoginResponse>(InvalidAntiSpamToken);
+                return Result.Failure(InvalidAntiSpamToken);
 
             // Set values of the variables above.
             var accessKeys = await cache.GetOrSetAsync(Keys.AccessKeys(), async _ =>

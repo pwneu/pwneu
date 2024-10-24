@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using System.Collections.Concurrent;
+using System.Security.Claims;
 using FluentValidation;
 using MassTransit;
 using MediatR;
@@ -177,6 +178,8 @@ public static class SubmitFlag
 
     public class Endpoint : IEndpoint
     {
+        private static readonly ConcurrentDictionary<string, SemaphoreSlim> UserLocks = new();
+
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             app.MapPost("challenges/{challengeId:Guid}/submit",
@@ -185,10 +188,27 @@ public static class SubmitFlag
                         var userId = claims.GetLoggedInUserId<string>();
                         if (userId is null) return Results.BadRequest();
 
-                        var command = new Command(userId, challengeId, flag);
-                        var result = await sender.Send(command);
+                        // Get or create a semaphore for the userId.
+                        var userLock = UserLocks.GetOrAdd(userId, _ => new SemaphoreSlim(1, 1));
 
-                        return result.IsFailure ? Results.NotFound(result.Error) : Results.Ok(result.Value.ToString());
+                        try
+                        {
+                            // Wait for the lock with a timeout to avoid deadlocks or excessive waiting.
+                            if (!await userLock.WaitAsync(TimeSpan.FromSeconds(10)))
+                                return Results.StatusCode(StatusCodes.Status429TooManyRequests);
+
+                            // Proceed with the command after acquiring the lock.
+                            var command = new Command(userId, challengeId, flag);
+                            var result = await sender.Send(command);
+
+                            return result.IsFailure
+                                ? Results.NotFound(result.Error)
+                                : Results.Ok(result.Value.ToString());
+                        }
+                        finally
+                        {
+                            userLock.Release();
+                        }
                     })
                 .RequireAuthorization(Consts.MemberOnly)
                 .WithTags(nameof(Submissions));

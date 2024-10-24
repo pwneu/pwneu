@@ -55,8 +55,6 @@ public static class SaveSubmission
 
             if (request.IsCorrect)
             {
-                // TODO -- Ensure uniqueness in a race condition
-
                 var alreadySolved = await context
                     .Submissions
                     .AnyAsync(s =>
@@ -65,8 +63,6 @@ public static class SaveSubmission
                         s.IsCorrect, cancellationToken);
 
                 // Prevent double correct submissions.
-                // We're checking this because just in case the message queue
-                // was late enough that the "already solved" cache is gone.
                 if (alreadySolved)
                     return Result.Failure<Guid>(AlreadySolved);
             }
