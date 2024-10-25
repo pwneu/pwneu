@@ -75,6 +75,7 @@ public record LeaderboardsResponse
     public UsersGraphResponse TopUsersGraph { get; set; } = default!;
     public bool RequesterIsMember { get; set; }
     public int PublicLeaderboardCount { get; set; }
+    public int TotalLeaderboardCount { get; set; }
 }
 
 public record UserRankResponse

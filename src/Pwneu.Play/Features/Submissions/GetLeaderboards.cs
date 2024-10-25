@@ -44,6 +44,8 @@ public static class GetLeaderboards
                         cancellationToken),
                 token: cancellationToken);
 
+            var totalLeaderboardCount = userRanks.Count;
+
             // Only show top users the requester is a member.
             if (request.IsMember)
                 userRanks = userRanks.Take(publicLeaderboardCount).ToList();
@@ -55,6 +57,7 @@ public static class GetLeaderboards
                 RequesterIsMember = request.IsMember,
                 PublicLeaderboardCount = publicLeaderboardCount,
                 TopUsersGraph = topUsersGraph,
+                TotalLeaderboardCount = totalLeaderboardCount
             };
         }
     }
