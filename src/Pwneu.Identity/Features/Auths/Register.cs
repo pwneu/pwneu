@@ -27,13 +27,18 @@ public static class Register
 
     private static readonly Error Failed = new("Register.Failed", "Unable to create user");
     private static readonly Error InvalidAccessKey = new("Register.InvalidAccessKey", "Invalid access key");
-    private static readonly Error AddRoleFailed = new("Register.AddRoleFailed", "Unable to add role to user");
+
+    private static readonly Error AddRoleFailed = new(
+        "Register.AddRoleFailed",
+        "Unable to add role to user. Please contact the administrator");
+
     private static readonly Error EmailInUse = new("Register.EmailInUse", "Email is already in use");
     private static readonly Error UserNameInUse = new("Register.UserNameInUse", "Username is already in use");
     private static readonly Error InvalidUserName = new("Register.InvalidUserName", "Invalid UserName");
 
-    private static readonly Error InvalidAntiSpamToken = new("Register.InvalidAntiSpamToken",
-        "Invalid turnstile token. Rejecting Registration");
+    private static readonly Error InvalidAntiSpamToken = new(
+        "Register.InvalidAntiSpamToken",
+        "Verification failed. Please refresh the page and try again");
 
     internal sealed class Handler(
         ApplicationDbContext context,

@@ -25,7 +25,7 @@ public static class ResetPassword
 
     private static readonly Error InvalidAntiSpamToken = new(
         "ResetPassword.InvalidAntiSpamToken",
-        "Invalid turnstile token. Rejecting reset password");
+        "Verification failed. Please refresh the page and try again");
 
     internal sealed class Handler(
         UserManager<User> userManager,
