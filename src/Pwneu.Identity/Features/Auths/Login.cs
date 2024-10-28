@@ -75,12 +75,6 @@ public static class Login
 
                 if (ipFailedLoginCount > 5)
                     return Result.Failure<LoginResponse>(IpLocked);
-
-                await cache.SetAsync(
-                    Keys.FailedLoginCount(request.IpAddress),
-                    ipFailedLoginCount + 1,
-                    new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(5) },
-                    cancellationToken);
             }
 
             var user = await userManager
@@ -88,7 +82,10 @@ public static class Login
                 .FirstOrDefaultAsync(u => u.UserName == request.UserName, cancellationToken);
 
             if (user is null)
+            {
+                await IncrementFailedLoginCountAsync();
                 return Result.Failure<LoginResponse>(Invalid);
+            }
 
             var signIn = await signInManager.CheckPasswordSignInAsync(user, request.Password, false);
 
@@ -97,6 +94,7 @@ public static class Login
                 if (!await userManager.IsEmailConfirmedAsync(user))
                     return Result.Failure<LoginResponse>(EmailNotConfirmed);
 
+                await IncrementFailedLoginCountAsync();
                 return Result.Failure<LoginResponse>(Invalid);
             }
 
@@ -169,6 +167,22 @@ public static class Login
                 AccessToken = new JwtSecurityTokenHandler().WriteToken(accessToken),
                 RefreshToken = refreshToken
             };
+
+            async Task IncrementFailedLoginCountAsync()
+            {
+                if (request.IpAddress is null)
+                    return;
+
+                var ipFailedLoginCount = await cache.GetOrDefaultAsync<int>(
+                    Keys.FailedLoginCount(request.IpAddress),
+                    token: cancellationToken);
+
+                await cache.SetAsync(
+                    Keys.FailedLoginCount(request.IpAddress),
+                    ipFailedLoginCount + 1,
+                    new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(5) },
+                    cancellationToken);
+            }
         }
     }
 
