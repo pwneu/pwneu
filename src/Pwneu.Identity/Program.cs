@@ -293,8 +293,6 @@ await app.Services.SeedAdminAsync();
 
 await app.Services.SeedIdentityConfigurationAsync();
 
-app.UseHttpsRedirection();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
