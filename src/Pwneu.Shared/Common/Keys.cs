@@ -17,8 +17,8 @@ public static class Keys
     // Key for caching a single CategoryResponse.
     public static string Category(Guid id) => $"category:{id}";
 
-    // Key for caching a LIST of CategoryDetailsResponse.
-    public static string AllChallenges() => "challenge:all";
+    // Key for caching a list of all challenge ids.
+    public static string ChallengeIds() => "challengeIds";
 
     // Key for caching ChallengeDetailsResponse.
     public static string ChallengeDetails(Guid id) => $"challenge:{id}:details";
@@ -41,7 +41,8 @@ public static class Keys
     // Key for storing cache of user graph.
     public static string UserSolveIds(string id) => $"user:{id}:solves";
 
-    public static string Members() => "members";
+    // Keys for caching a list of all member ids.
+    public static string MemberIds() => "memberIds";
 
     // Key for storing cache of active user ids.
     public static string ActiveUserIds() => "user:ids:active";

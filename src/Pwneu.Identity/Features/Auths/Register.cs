@@ -129,6 +129,8 @@ public static class Register
             await cache.SetAsync(Keys.AccessKeys(), accessKeys.Where(a => a.Id != accessKey.Id).ToList(),
                 token: cancellationToken);
 
+            await cache.RemoveAsync(Keys.MemberIds(), token: cancellationToken);
+
             return Result.Success();
         }
     }

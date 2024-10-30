@@ -10,6 +10,7 @@ using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
+using Pwneu.Play.Features.Submissions;
 using Pwneu.Play.Shared.Data;
 using Pwneu.Play.Shared.Extensions;
 using Pwneu.Play.Shared.Services;
@@ -75,6 +76,25 @@ builder.Services.AddMassTransit(busConfigurator =>
 {
     busConfigurator.SetKebabCaseEndpointNameFormatter();
     busConfigurator.AddConsumers(assembly);
+
+    busConfigurator.AddConsumer<SubmittedEventsConsumer>(cfg =>
+    {
+        cfg.Options<BatchOptions>(options => options
+            .SetMessageLimit(10_000)
+            .SetTimeLimit(s: 1)
+            .SetTimeLimitStart(BatchTimeLimitStart.FromLast)
+            .SetConcurrencyLimit(1));
+    });
+
+    busConfigurator.AddConsumer<SolvedEventsConsumer>(cfg =>
+    {
+        cfg.Options<BatchOptions>(options => options
+            .SetMessageLimit(10_000)
+            .SetTimeLimit(s: 1)
+            .SetTimeLimitStart(BatchTimeLimitStart.FromLast)
+            .SetConcurrencyLimit(1));
+    });
+
     busConfigurator.UsingRabbitMq((context, configurator) =>
     {
         configurator.Host(new Uri(builder.Configuration[Consts.MessageBrokerHost]!), h =>
@@ -82,6 +102,7 @@ builder.Services.AddMassTransit(busConfigurator =>
             h.Username(builder.Configuration[Consts.MessageBrokerUsername]!);
             h.Password(builder.Configuration[Consts.MessageBrokerPassword]!);
         });
+
         configurator.ConfigureEndpoints(context);
     });
 });

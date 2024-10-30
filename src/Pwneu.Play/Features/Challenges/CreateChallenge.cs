@@ -67,7 +67,7 @@ public static class CreateChallenge
             await context.SaveChangesAsync(cancellationToken);
 
             await cache.InvalidateCategoryCacheAsync(request.CategoryId, cancellationToken);
-            await cache.RemoveAsync(Keys.AllChallenges(), token: cancellationToken);
+            await cache.RemoveAsync(Keys.ChallengeIds(), token: cancellationToken);
 
             return challenge.Id;
         }
