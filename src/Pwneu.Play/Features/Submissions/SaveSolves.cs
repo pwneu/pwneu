@@ -35,7 +35,7 @@ public static class SaveSolves
 
             // Fetch the existing submissions that match the solves.
             var existingCorrectSubmissions = await context.Submissions
-                .Where(s => s.IsCorrect && memberIds.Contains(s.UserId) && challengeIds.Contains(s.ChallengeId))
+                .Where(s => memberIds.Contains(s.UserId) && challengeIds.Contains(s.ChallengeId))
                 .Select(s => new { s.UserId, s.ChallengeId })
                 .ToListAsync(cancellationToken)
                 .ContinueWith(t => t.Result.ToHashSet(), cancellationToken);
@@ -44,20 +44,19 @@ public static class SaveSolves
             var validSolves = request
                 .SolvedEvents
                 .Where(se => memberIds.Contains(se.UserId) && challengeIds.Contains(se.ChallengeId))
-                .Select(se => new Submission
+                .Select(se => new Solve
                 {
                     Id = Guid.NewGuid(),
                     UserId = se.UserId,
                     UserName = se.UserName,
                     ChallengeId = se.ChallengeId,
                     Flag = se.Flag,
-                    SubmittedAt = se.SubmittedAt,
-                    IsCorrect = true
+                    SolvedAt = se.SolvedAt
                 })
                 // Filter out existing correct submissions.
                 .Where(se => !existingCorrectSubmissions.Contains(new { se.UserId, se.ChallengeId }))
-                .GroupBy(se => new { se.UserId, se.ChallengeId, se.IsCorrect })
-                .Select(g => g.OrderBy(se => se.SubmittedAt).First())
+                .GroupBy(se => new { se.UserId, se.ChallengeId })
+                .Select(g => g.OrderBy(se => se.SolvedAt).First())
                 .ToList();
 
             context.AddRange(validSolves);

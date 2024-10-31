@@ -19,4 +19,5 @@ public class Challenge
     public List<Hint> Hints { get; init; } = [];
     public ICollection<Artifact> Artifacts { get; init; } = [];
     public ICollection<Submission> Submissions { get; init; } = [];
+    public ICollection<Solve> Solves { get; init; } = [];
 }

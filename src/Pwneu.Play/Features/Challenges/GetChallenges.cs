@@ -48,16 +48,12 @@ public static class GetChallenges
                 var userSolveIds = await cache.GetOrSetAsync(
                     Keys.UserSolveIds(request.UserId), async _ =>
                         await context
-                            .Submissions
-                            .Where(s => s.UserId == request.UserId && s.IsCorrect)
+                            .Solves
+                            .Where(s => s.UserId == request.UserId)
                             .Select(s => s.ChallengeId)
                             .ToListAsync(cancellationToken), token: cancellationToken);
 
                 challengesQuery = challengesQuery.Where(ch => !userSolveIds.Contains(ch.Id));
-
-                // Use LINQ if the current approach is slower.
-                // challengesQuery = challengesQuery.Where(ch =>
-                //     !ch.Submissions.Any(s => s.UserId == request.UserId && s.IsCorrect));
             }
 
             Expression<Func<Challenge, object>> keySelector = request.SortBy?.ToLower() switch

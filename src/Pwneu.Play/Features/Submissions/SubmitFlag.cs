@@ -73,11 +73,10 @@ public static class SubmitFlag
             var hasSolved = await cache.GetOrSetAsync(
                 Keys.HasSolved(request.UserId, request.ChallengeId),
                 async _ => await context
-                    .Submissions
+                    .Solves
                     .AnyAsync(s =>
                         s.UserId == request.UserId &&
-                        s.ChallengeId == request.ChallengeId &&
-                        s.IsCorrect == true, cancellationToken), token: cancellationToken);
+                        s.ChallengeId == request.ChallengeId, cancellationToken), token: cancellationToken);
 
             if (hasSolved)
                 return FlagStatus.AlreadySolved;
@@ -159,7 +158,7 @@ public static class SubmitFlag
                         UserName = request.UserName,
                         ChallengeId = request.ChallengeId,
                         Flag = request.Flag,
-                        SubmittedAt = DateTime.UtcNow,
+                        SolvedAt = DateTime.UtcNow,
                     },
                     cancellationToken);
 

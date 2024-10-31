@@ -20,7 +20,7 @@ public record SolvedEvent
     public string UserName { get; set; } = default!;
     public Guid ChallengeId { get; set; }
     public string Flag { get; set; } = default!;
-    public DateTime SubmittedAt { get; set; }
+    public DateTime SolvedAt { get; set; }
 }
 
 public record SubmittedEvent

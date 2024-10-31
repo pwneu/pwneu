@@ -45,11 +45,10 @@ public class CheckIfHintUsed
             var hasSolved = await cache.GetOrSetAsync(
                 Keys.HasSolved(request.UserId, hintDetails.ChallengeId),
                 async _ => await context
-                    .Submissions
+                    .Solves
                     .AnyAsync(s =>
                         s.UserId == request.UserId &&
-                        s.ChallengeId == hintDetails.ChallengeId &&
-                        s.IsCorrect == true, cancellationToken), token: cancellationToken);
+                        s.ChallengeId == hintDetails.ChallengeId, cancellationToken), token: cancellationToken);
 
             if (hasSolved)
                 return Result.Failure<bool>(ChallengeAlreadySolved);

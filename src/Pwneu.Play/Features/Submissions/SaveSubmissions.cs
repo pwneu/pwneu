@@ -47,7 +47,6 @@ public static class SaveSubmissions
                     ChallengeId = se.ChallengeId,
                     Flag = se.Flag,
                     SubmittedAt = se.SubmittedAt,
-                    IsCorrect = false
                 })
                 .ToList();
 
