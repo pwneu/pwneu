@@ -11,6 +11,7 @@ using Newtonsoft.Json;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using Pwneu.Play.Features.Submissions;
+using Pwneu.Play.Features.Users;
 using Pwneu.Play.Shared.Data;
 using Pwneu.Play.Shared.Extensions;
 using Pwneu.Play.Shared.Services;
@@ -69,14 +70,11 @@ builder.Services.AddFusionCache()
     }))
     .WithDistributedCache(new RedisCache(new RedisCacheOptions { Configuration = redis }));
 
-var assembly = typeof(Program).Assembly;
-
 // RabbitMQ
 builder.Services.AddMassTransit(busConfigurator =>
 {
     busConfigurator.SetKebabCaseEndpointNameFormatter();
-    busConfigurator.AddConsumers(assembly);
-
+    busConfigurator.AddConsumer<UserDeletedEventConsumer>();
     busConfigurator.AddConsumer<SubmittedEventsConsumer>(cfg =>
     {
         cfg.Options<BatchOptions>(options => options
@@ -85,7 +83,6 @@ builder.Services.AddMassTransit(busConfigurator =>
             .SetTimeLimitStart(BatchTimeLimitStart.FromLast)
             .SetConcurrencyLimit(1));
     });
-
     busConfigurator.AddConsumer<SolvedEventsConsumer>(cfg =>
     {
         cfg.Options<BatchOptions>(options => options
@@ -106,6 +103,8 @@ builder.Services.AddMassTransit(busConfigurator =>
         configurator.ConfigureEndpoints(context);
     });
 });
+
+var assembly = typeof(Program).Assembly;
 
 // Assembly scanning of Mediator and Fluent Validations
 builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(assembly));
