@@ -34,7 +34,8 @@ public static class SaveSolves
                 cancellationToken);
 
             // Fetch the existing submissions that match the solves.
-            var existingCorrectSubmissions = await context.Submissions
+            var existingCorrectSubmissions = await context
+                .Solves
                 .Where(s => memberIds.Contains(s.UserId) && challengeIds.Contains(s.ChallengeId))
                 .Select(s => new { s.UserId, s.ChallengeId })
                 .ToListAsync(cancellationToken)
@@ -63,49 +64,52 @@ public static class SaveSolves
 
             await context.SaveChangesAsync(cancellationToken);
 
-            var solvedChallengeIds = validSolves
-                .Select(s => s.ChallengeId)
-                .Distinct()
-                .ToList();
-
-            // Increase the solve count in the database.
-            await context
-                .Challenges
-                .Where(ch => solvedChallengeIds.Contains(ch.Id))
-                .ExecuteUpdateAsync(s =>
-                        s.SetProperty(ch => ch.SolveCount, ch => ch.SolveCount + 1),
-                    cancellationToken);
-
             var hasRecentRankRecount =
                 await cache.GetOrDefaultAsync<bool>(Keys.HasRecentLeaderboardCount(), token: cancellationToken);
 
             // Caching user ranks takes a while, so we allow a slight delay of 5 seconds.
-            if (hasRecentRankRecount)
-                return Result.Success();
+            if (!hasRecentRankRecount)
+            {
+                var userRanks = await context.GetUserRanksAsync(cancellationToken);
 
-            var userRanks = await context.GetUserRanksAsync(cancellationToken);
+                await cache.SetAsync(
+                    Keys.UserRanks(),
+                    userRanks,
+                    new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(20) },
+                    cancellationToken);
 
-            await cache.SetAsync(
-                Keys.UserRanks(),
-                userRanks,
-                new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(20) },
-                cancellationToken);
+                var topUsersGraph = await context.GetUsersGraphAsync(
+                    userRanks.Take(10).Select(u => u.Id).ToArray(),
+                    cancellationToken);
 
-            var topUsersGraph = await context.GetUsersGraphAsync(
-                userRanks.Take(10).Select(u => u.Id).ToArray(),
-                cancellationToken);
+                await cache.SetAsync(
+                    Keys.TopUsersGraph(),
+                    topUsersGraph,
+                    new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(20) },
+                    cancellationToken);
 
-            await cache.SetAsync(
-                Keys.TopUsersGraph(),
-                topUsersGraph,
-                new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(20) },
-                cancellationToken);
+                await cache.SetAsync(
+                    Keys.HasRecentLeaderboardCount(),
+                    true,
+                    new FusionCacheEntryOptions { Duration = TimeSpan.FromSeconds(5) },
+                    cancellationToken);
+            }
 
-            await cache.SetAsync(
-                Keys.HasRecentLeaderboardCount(),
-                true,
-                new FusionCacheEntryOptions { Duration = TimeSpan.FromSeconds(5) },
-                cancellationToken);
+            var challengeSolveCounts = validSolves
+                .GroupBy(s => s.ChallengeId)
+                .Select(g => new { ChallengeId = g.Key, Count = g.Count() })
+                .ToList();
+
+            foreach (var challengeSolveCount in challengeSolveCounts)
+            {
+                await context.Challenges
+                    .Where(ch => ch.Id == challengeSolveCount.ChallengeId)
+                    .ExecuteUpdateAsync(s =>
+                            s.SetProperty(
+                                ch => ch.SolveCount,
+                                ch => ch.SolveCount + challengeSolveCount.Count),
+                        cancellationToken);
+            }
 
             return Result.Success();
         }

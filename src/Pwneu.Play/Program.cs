@@ -80,7 +80,7 @@ builder.Services.AddMassTransit(busConfigurator =>
         cfg.Options<BatchOptions>(options => options
             .SetMessageLimit(10_000)
             .SetTimeLimit(s: 1)
-            .SetTimeLimitStart(BatchTimeLimitStart.FromLast)
+            .SetTimeLimitStart(BatchTimeLimitStart.FromFirst)
             .SetConcurrencyLimit(1));
     });
     busConfigurator.AddConsumer<SolvedEventsConsumer>(cfg =>
@@ -88,7 +88,7 @@ builder.Services.AddMassTransit(busConfigurator =>
         cfg.Options<BatchOptions>(options => options
             .SetMessageLimit(10_000)
             .SetTimeLimit(s: 1)
-            .SetTimeLimitStart(BatchTimeLimitStart.FromLast)
+            .SetTimeLimitStart(BatchTimeLimitStart.FromFirst)
             .SetConcurrencyLimit(1));
     });
 
