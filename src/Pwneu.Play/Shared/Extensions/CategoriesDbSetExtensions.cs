@@ -20,11 +20,11 @@ public static class CategoriesDbSetExtensions
                 Name = c.Name,
                 TotalChallenges = c.Challenges.Count,
                 TotalSolves = c.Challenges
-                    .SelectMany(ch => ch.Submissions)
-                    .Count(s => s.UserId == userId && s.IsCorrect == true),
+                    .SelectMany(ch => ch.Solves)
+                    .Count(s => s.UserId == userId),
                 IncorrectAttempts = c.Challenges
                     .SelectMany(ch => ch.Submissions)
-                    .Count(s => s.UserId == userId && s.IsCorrect == false),
+                    .Count(s => s.UserId == userId),
                 HintsUsed = c.Challenges
                     .SelectMany(ch => ch.Hints)
                     .SelectMany(h => h.HintUsages)

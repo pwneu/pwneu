@@ -20,7 +20,7 @@ namespace Pwneu.Play.Features.Submissions;
 /// </summary>
 public static class SubmitFlag
 {
-    public record Command(string UserId, Guid ChallengeId, string Flag) : IRequest<Result<FlagStatus>>;
+    public record Command(string UserId, string UserName, Guid ChallengeId, string Flag) : IRequest<Result<FlagStatus>>;
 
     private static readonly Error ChallengeNotFound = new("SubmitFlag.ChallengeNotFound",
         "The challenge with the specified ID was not found");
@@ -73,11 +73,10 @@ public static class SubmitFlag
             var hasSolved = await cache.GetOrSetAsync(
                 Keys.HasSolved(request.UserId, request.ChallengeId),
                 async _ => await context
-                    .Submissions
+                    .Solves
                     .AnyAsync(s =>
                         s.UserId == request.UserId &&
-                        s.ChallengeId == request.ChallengeId &&
-                        s.IsCorrect == true, cancellationToken), token: cancellationToken);
+                        s.ChallengeId == request.ChallengeId, cancellationToken), token: cancellationToken);
 
             if (hasSolved)
                 return FlagStatus.AlreadySolved;
@@ -128,51 +127,75 @@ public static class SubmitFlag
             if (recentSubmits > 5)
                 return FlagStatus.SubmittingTooOften;
 
-            var flagStatus = FlagStatus.Incorrect;
-
             // Check if the submission is correct.
             if (challengeFlags.Any(f => f.Equals(request.Flag)))
             {
-                flagStatus = FlagStatus.Correct;
+                var cachingTasks = new List<Task>
+                {
+                    cache.SetAsync(
+                        Keys.HasSolved(request.UserId, request.ChallengeId),
+                        true,
+                        token: cancellationToken).AsTask(),
+                    cache.SetAsync(
+                        Keys.ChallengeDetails(request.ChallengeId),
+                        challenge with { SolveCount = challenge.SolveCount + 1 },
+                        token: cancellationToken).AsTask(),
+                    cache.RemoveAsync(
+                        Keys.UserSolveIds(request.UserId), token: cancellationToken).AsTask(),
+                    cache.RemoveAsync(
+                        Keys.UserGraph(request.UserId), token: cancellationToken).AsTask(),
+                    cache.RemoveAsync(
+                        Keys.UserCategoryEval(request.UserId, challenge.CategoryId), token: cancellationToken).AsTask()
+                };
 
-                // Since the user has solved the challenge, update the cache of checking if already solved to true.
-                await cache.SetAsync(
-                    Keys.HasSolved(request.UserId, request.ChallengeId),
-                    true,
-                    token: cancellationToken);
+                // Update user's cache.
+                await Task.WhenAll(cachingTasks);
 
-                // Increase the count of users who have solved the challenge in the cache.
-                await cache.SetAsync(Keys.ChallengeDetails(request.ChallengeId),
-                    challenge with { SolveCount = challenge.SolveCount + 1 }, token: cancellationToken);
-            }
-            else // Condition if the submission is not correct.
-            {
-                // Reduce the attempt count in the cache.
-                await cache.SetAsync(
-                    Keys.AttemptsLeft(request.UserId, request.ChallengeId),
-                    attemptsLeft - 1,
-                    token: cancellationToken);
-
-                // Increment the count of recent submissions in the cache
-                // but only store the recent submissions count for 20 seconds.
-                await cache.SetAsync(
-                    Keys.RecentSubmits(request.UserId, request.ChallengeId),
-                    recentSubmits + 1,
-                    new FusionCacheEntryOptions { Duration = TimeSpan.FromSeconds(20) },
+                // Publish the solved event.
+                await publishEndpoint.Publish(new SolvedEvent
+                    {
+                        UserId = request.UserId,
+                        UserName = request.UserName,
+                        ChallengeId = request.ChallengeId,
+                        Flag = request.Flag,
+                        SolvedAt = DateTime.UtcNow,
+                    },
                     cancellationToken);
+
+                return FlagStatus.Correct;
             }
+
+            // Condition if the submission is not correct.
+
+            // Reduce the attempt count in the cache.
+            await cache.SetAsync(
+                Keys.AttemptsLeft(request.UserId, request.ChallengeId),
+                attemptsLeft - 1,
+                token: cancellationToken);
+
+            // Increment the count of recent submissions in the cache
+            // but only store the recent submissions count for 30 seconds.
+            await cache.SetAsync(
+                Keys.RecentSubmits(request.UserId, request.ChallengeId),
+                recentSubmits + 1,
+                new FusionCacheEntryOptions { Duration = TimeSpan.FromSeconds(30) },
+                cancellationToken);
+
+            await cache.RemoveAsync(
+                Keys.UserCategoryEval(request.UserId, challenge.CategoryId),
+                token: cancellationToken);
 
             // Create a queue on for storing the submission on the database.
             await publishEndpoint.Publish(new SubmittedEvent
             {
                 UserId = request.UserId,
+                UserName = request.UserName,
                 ChallengeId = request.ChallengeId,
                 Flag = request.Flag,
                 SubmittedAt = DateTime.UtcNow,
-                IsCorrect = flagStatus == FlagStatus.Correct,
             }, cancellationToken);
 
-            return flagStatus;
+            return FlagStatus.Incorrect;
         }
     }
 
@@ -188,17 +211,20 @@ public static class SubmitFlag
                         var userId = claims.GetLoggedInUserId<string>();
                         if (userId is null) return Results.BadRequest();
 
+                        var userName = claims.GetLoggedInUserName();
+                        if (userName is null) return Results.BadRequest();
+
                         // Get or create a semaphore for the userId.
                         var userLock = UserLocks.GetOrAdd(userId, _ => new SemaphoreSlim(1, 1));
 
+                        // Try to acquire the lock without waiting.
+                        if (!await userLock.WaitAsync(0))
+                            return Results.StatusCode(StatusCodes.Status429TooManyRequests);
+
                         try
                         {
-                            // Wait for the lock with a timeout to avoid deadlocks or excessive waiting.
-                            if (!await userLock.WaitAsync(TimeSpan.FromSeconds(10)))
-                                return Results.StatusCode(StatusCodes.Status429TooManyRequests);
-
                             // Proceed with the command after acquiring the lock.
-                            var command = new Command(userId, challengeId, flag);
+                            var command = new Command(userId, userName, challengeId, flag);
                             var result = await sender.Send(command);
 
                             return result.IsFailure

@@ -16,9 +16,8 @@ public static class ApplicationDbContextExtensions
         this ApplicationDbContext context,
         CancellationToken cancellationToken = default)
     {
-        // Count all the user points and track the latest submission time where the points are not zero
-        var userPoints = await context.Submissions
-            .Where(s => s.IsCorrect)
+        // Count all the user points and track the latest solve time where the points are not zero
+        var userPoints = await context.Solves
             .GroupBy(s => new { s.UserId, s.UserName })
             .Select(g => new
             {
@@ -27,7 +26,7 @@ public static class ApplicationDbContextExtensions
                 TotalPoints = g.Sum(s => s.Challenge.Points),
                 LatestNonZeroSubmission = g
                     .Where(s => s.Challenge.Points > 0)
-                    .Max(s => s.SubmittedAt) // Track the latest submission where points > 0
+                    .Max(s => s.SolvedAt) // Track the latest solve where points > 0
             })
             .ToListAsync(cancellationToken);
 
@@ -41,7 +40,7 @@ public static class ApplicationDbContextExtensions
             })
             .ToListAsync(cancellationToken);
 
-        // Combine points and deductions, calculate final score, sort by points, then by latest non-zero submission time, and assign ranks
+        // Combine points and deductions, calculate final score, sort by points, then by latest non-zero solve time, and assign ranks
         var userRanks = userPoints
             .GroupJoin(
                 userDeductions,
@@ -83,13 +82,13 @@ public static class ApplicationDbContextExtensions
     {
         // Get the list of correct submissions of the users.
         var correctSubmissions = await context
-            .Submissions
-            .Where(s => userIds.Contains(s.UserId) && s.IsCorrect)
+            .Solves
+            .Where(s => userIds.Contains(s.UserId))
             .Select(s => new UserActivityResponse
             {
                 UserId = s.UserId,
                 UserName = s.UserName,
-                ActivityDate = s.SubmittedAt,
+                ActivityDate = s.SolvedAt,
                 Score = s.Challenge.Points
             })
             .ToListAsync(cancellationToken);
@@ -199,13 +198,13 @@ public static class ApplicationDbContextExtensions
     {
         // Get the list of correct submissions by the user.
         var correctSubmissions = await context
-            .Submissions
-            .Where(s => s.UserId == userId && s.IsCorrect)
+            .Solves
+            .Where(s => s.UserId == userId)
             .Select(s => new UserActivityResponse
             {
                 UserId = s.UserId,
                 UserName = s.UserName,
-                ActivityDate = s.SubmittedAt,
+                ActivityDate = s.SolvedAt,
                 Score = s.Challenge.Points
             })
             .ToListAsync(cancellationToken);

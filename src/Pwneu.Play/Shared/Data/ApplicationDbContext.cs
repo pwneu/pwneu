@@ -41,6 +41,13 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
         builder
             .Entity<Challenge>()
+            .HasMany(ch => ch.Solves)
+            .WithOne(s => s.Challenge)
+            .HasForeignKey(s => s.ChallengeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder
+            .Entity<Challenge>()
             .HasMany(ch => ch.Hints)
             .WithOne(h => h.Challenge)
             .HasForeignKey(h => h.ChallengeId)
@@ -65,6 +72,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public virtual DbSet<Challenge> Challenges { get; init; } = null!;
     public virtual DbSet<Artifact> Artifacts { get; init; } = null!;
     public virtual DbSet<Submission> Submissions { get; init; } = null!;
+    public virtual DbSet<Solve> Solves { get; init; } = null!;
     public virtual DbSet<Hint> Hints { get; init; } = null!;
     public virtual DbSet<HintUsage> HintUsages { get; init; } = null!;
 }

@@ -4,6 +4,13 @@ public record UserNotFoundResponse;
 
 public record UserDetailsNotFoundResponse;
 
+public record GetMemberIdsRequest;
+
+public record MemberIdsResponse
+{
+    public List<string> MemberIds { get; set; } = [];
+}
+
 public record GetMemberRequest
 {
     public string Id { get; set; } = default!;

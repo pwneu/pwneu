@@ -34,19 +34,19 @@ public static class GetUserSolves
                 return Result.Failure<PagedList<UserSolveResponse>>(NotFound);
 
             var userSolvesQuery = context
-                .Submissions
-                .Where(s => s.UserId == request.Id && s.IsCorrect == true);
+                .Solves
+                .Where(s => s.UserId == request.Id);
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
                 userSolvesQuery = userSolvesQuery.Where(s =>
                     s.Challenge.Name.Contains(request.SearchTerm) ||
                     s.ChallengeId.ToString().Contains(request.SearchTerm));
 
-            Expression<Func<Submission, object>> keySelector = request.SortBy?.ToLower() switch
+            Expression<Func<Solve, object>> keySelector = request.SortBy?.ToLower() switch
             {
-                "name" => submission => submission.Challenge.Name,
-                "challengename" => submission => submission.Challenge.Name,
-                _ => submission => submission.SubmittedAt
+                "name" => solve => solve.Challenge.Name,
+                "challengename" => solve => solve.Challenge.Name,
+                _ => solve => solve.SolvedAt
             };
 
             userSolvesQuery = request.SortOrder?.ToLower() == "desc"
@@ -58,7 +58,7 @@ public static class GetUserSolves
                 {
                     ChallengeId = s.ChallengeId,
                     ChallengeName = s.Challenge.Name,
-                    SolvedAt = s.SubmittedAt
+                    SolvedAt = s.SolvedAt
                 });
 
             var userSolves = await PagedList<UserSolveResponse>.CreateAsync(

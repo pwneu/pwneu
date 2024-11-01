@@ -74,9 +74,15 @@ public class ClearUserPlayDataTests(IntegrationTestsWebAppFactory factory) : Bas
 
         // Add submissions and hint usages
         DbContext.Submissions.AddRange(
-            new Submission { UserId = testUserId, ChallengeId = challengeId1, IsCorrect = true },
-            new Submission { UserId = testUserId, ChallengeId = challengeId2, IsCorrect = true },
-            new Submission { UserId = testUserId, ChallengeId = challengeId2, IsCorrect = false }
+            new Submission { UserId = testUserId, ChallengeId = challengeId1 },
+            new Submission { UserId = testUserId, ChallengeId = challengeId2 },
+            new Submission { UserId = testUserId, ChallengeId = challengeId2 }
+        );
+
+        DbContext.Solves.AddRange(
+            new Solve { UserId = testUserId, ChallengeId = challengeId1 },
+            new Solve { UserId = testUserId, ChallengeId = challengeId2 },
+            new Solve { UserId = testUserId, ChallengeId = challengeId2 }
         );
 
         DbContext.HintUsages.Add(new HintUsage
@@ -96,11 +102,16 @@ public class ClearUserPlayDataTests(IntegrationTestsWebAppFactory factory) : Bas
         // Assert
         result.IsSuccess.Should().BeTrue();
 
-        // Verify submissions and hint usages were deleted
+        // Verify if submissions, solves and hint usages were deleted
         var remainingSubmissions = await DbContext.Submissions
             .Where(s => s.UserId == testUserId)
             .ToListAsync();
         remainingSubmissions.Should().BeEmpty();
+
+        var remainingSolves = await DbContext.Solves
+            .Where(s => s.UserId == testUserId)
+            .ToListAsync();
+        remainingSolves.Should().BeEmpty();
 
         var remainingHintUsages = await DbContext.HintUsages
             .Where(hu => hu.UserId == testUserId)

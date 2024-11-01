@@ -25,19 +25,19 @@ public static class GetChallengeSolves
             CancellationToken cancellationToken)
         {
             var challengeSolvesQuery = context
-                .Submissions
-                .Where(s => s.ChallengeId == request.Id && s.IsCorrect == true);
+                .Solves
+                .Where(s => s.ChallengeId == request.Id);
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
                 challengeSolvesQuery = challengeSolvesQuery.Where(s =>
                     s.UserName.Contains(request.SearchTerm) ||
                     s.UserId.Contains(request.SearchTerm));
 
-            Expression<Func<Submission, object>> keySelector = request.SortBy?.ToLower() switch
+            Expression<Func<Solve, object>> keySelector = request.SortBy?.ToLower() switch
             {
-                "name" => submission => submission.UserName,
-                "username" => submission => submission.UserName,
-                _ => submission => submission.SubmittedAt
+                "name" => solve => solve.UserName,
+                "username" => solve => solve.UserName,
+                _ => solve => solve.SolvedAt
             };
 
             challengeSolvesQuery = request.SortOrder?.ToLower() == "desc"
@@ -49,7 +49,7 @@ public static class GetChallengeSolves
                 {
                     UserId = s.UserId,
                     UserName = s.UserName,
-                    SolvedAt = s.SubmittedAt
+                    SolvedAt = s.SolvedAt
                 });
 
             var challengeSolves = await PagedList<ChallengeSolveResponse>.CreateAsync(

@@ -28,11 +28,13 @@ public static class DeleteChallenge
                 .Include(ch => ch.Artifacts)
                 .Include(ch => ch.Hints)
                 .Include(ch => ch.Submissions)
+                .Include(ch => ch.Solves)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (challenge is null) return Result.Failure(NotFound);
 
             context.Submissions.RemoveRange(challenge.Submissions);
+            context.Solves.RemoveRange(challenge.Solves);
             context.Artifacts.RemoveRange(challenge.Artifacts);
             context.Hints.RemoveRange(challenge.Hints);
             context.Challenges.Remove(challenge);
@@ -46,7 +48,7 @@ public static class DeleteChallenge
                 cache.InvalidateUserGraphs(cancellationToken),
                 cache.RemoveAsync(Keys.UserRanks(), token: cancellationToken).AsTask(),
                 cache.RemoveAsync(Keys.TopUsersGraph(), token: cancellationToken).AsTask(),
-                cache.RemoveAsync(Keys.AllChallenges(), token: cancellationToken).AsTask()
+                cache.RemoveAsync(Keys.ChallengeIds(), token: cancellationToken).AsTask()
             };
 
             await Task.WhenAll(invalidationTasks);

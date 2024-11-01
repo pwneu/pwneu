@@ -17,8 +17,8 @@ public static class ClearUserPlayData
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
             var userSolvedChallengeIds = await context
-                .Submissions
-                .Where(s => s.UserId == request.UserId && s.IsCorrect)
+                .Solves
+                .Where(s => s.UserId == request.UserId)
                 .Select(s => s.ChallengeId)
                 .Distinct()
                 .ToListAsync(cancellationToken);
@@ -32,6 +32,11 @@ public static class ClearUserPlayData
 
             await context
                 .Submissions
+                .Where(s => s.UserId == request.UserId)
+                .ExecuteDeleteAsync(cancellationToken);
+
+            await context
+                .Solves
                 .Where(s => s.UserId == request.UserId)
                 .ExecuteDeleteAsync(cancellationToken);
 

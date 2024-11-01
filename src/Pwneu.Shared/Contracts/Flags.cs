@@ -10,12 +10,3 @@ public enum FlagStatus
     SubmittingTooOften,
     SubmissionsNotAllowed
 }
-
-public record SubmittedEvent
-{
-    public string UserId { get; set; } = default!;
-    public Guid ChallengeId { get; set; }
-    public string Flag { get; set; } = default!;
-    public DateTime SubmittedAt { get; set; }
-    public bool IsCorrect { get; set; }
-}

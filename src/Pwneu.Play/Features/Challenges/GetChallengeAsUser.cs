@@ -45,11 +45,10 @@ public static class GetChallengeAsUser
             var hasSolved = await cache.GetOrSetAsync(
                 Keys.HasSolved(request.UserId, request.ChallengeId),
                 async _ => await context
-                    .Submissions
+                    .Solves
                     .AnyAsync(s =>
                         s.UserId == request.UserId &&
-                        s.ChallengeId == request.ChallengeId &&
-                        s.IsCorrect == true, cancellationToken), token: cancellationToken);
+                        s.ChallengeId == request.ChallengeId, cancellationToken), token: cancellationToken);
 
             int attemptsLeft;
             if (challenge.MaxAttempts > 0)

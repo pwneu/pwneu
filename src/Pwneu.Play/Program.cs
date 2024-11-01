@@ -10,6 +10,8 @@ using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
+using Pwneu.Play.Features.Submissions;
+using Pwneu.Play.Features.Users;
 using Pwneu.Play.Shared.Data;
 using Pwneu.Play.Shared.Extensions;
 using Pwneu.Play.Shared.Services;
@@ -20,13 +22,6 @@ using ZiggyCreatures.Caching.Fusion;
 using ZiggyCreatures.Caching.Fusion.Serialization.NewtonsoftJson;
 
 var builder = WebApplication.CreateBuilder(args);
-
-builder.WebHost.ConfigureKestrel(options =>
-{
-    options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(2);
-    options.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(2);
-    options.Limits.MaxRequestBodySize = 50_000_000;
-});
 
 // OpenTelemetry
 builder.Services.AddOpenTelemetry()
@@ -75,13 +70,28 @@ builder.Services.AddFusionCache()
     }))
     .WithDistributedCache(new RedisCache(new RedisCacheOptions { Configuration = redis }));
 
-var assembly = typeof(Program).Assembly;
-
 // RabbitMQ
 builder.Services.AddMassTransit(busConfigurator =>
 {
     busConfigurator.SetKebabCaseEndpointNameFormatter();
-    busConfigurator.AddConsumers(assembly);
+    busConfigurator.AddConsumer<UserDeletedEventConsumer>();
+    busConfigurator.AddConsumer<SubmittedEventsConsumer>(cfg =>
+    {
+        cfg.Options<BatchOptions>(options => options
+            .SetMessageLimit(10_000)
+            .SetTimeLimit(s: 1)
+            .SetTimeLimitStart(BatchTimeLimitStart.FromFirst)
+            .SetConcurrencyLimit(1));
+    });
+    busConfigurator.AddConsumer<SolvedEventsConsumer>(cfg =>
+    {
+        cfg.Options<BatchOptions>(options => options
+            .SetMessageLimit(10_000)
+            .SetTimeLimit(s: 1)
+            .SetTimeLimitStart(BatchTimeLimitStart.FromFirst)
+            .SetConcurrencyLimit(1));
+    });
+
     busConfigurator.UsingRabbitMq((context, configurator) =>
     {
         configurator.Host(new Uri(builder.Configuration[Consts.MessageBrokerHost]!), h =>
@@ -89,9 +99,12 @@ builder.Services.AddMassTransit(busConfigurator =>
             h.Username(builder.Configuration[Consts.MessageBrokerUsername]!);
             h.Password(builder.Configuration[Consts.MessageBrokerPassword]!);
         });
+
         configurator.ConfigureEndpoints(context);
     });
 });
+
+var assembly = typeof(Program).Assembly;
 
 // Assembly scanning of Mediator and Fluent Validations
 builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(assembly));
@@ -198,8 +211,6 @@ app.UseCors(corsPolicy =>
         .AllowAnyOrigin());
 
 await app.Services.SeedPlayConfigurationAsync();
-
-app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();

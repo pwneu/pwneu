@@ -50,13 +50,14 @@ public static class DeleteUser
 
             var deleteUser = await userManager.DeleteAsync(user);
 
-            if (!deleteUser.Succeeded) 
+            if (!deleteUser.Succeeded)
                 return Result.Failure(Failed);
 
             var invalidationTasks = new List<Task>
             {
                 cache.RemoveAsync(Keys.User(request.Id), token: cancellationToken).AsTask(),
                 cache.RemoveAsync(Keys.UserDetails(request.Id), token: cancellationToken).AsTask(),
+                cache.RemoveAsync(Keys.MemberIds(), token: cancellationToken).AsTask()
             };
 
             await Task.WhenAll(invalidationTasks);
