@@ -21,6 +21,8 @@ public static class Consts
     public const string JwtOptionsAudience = "JwtOptions:Audience";
     public const string JwtOptionsSigningKey = "JwtOptions:SigningKey";
 
+    public const string ChatOptionsOpenAiApiKey = "ChatOptions:OpenAiApiKey";
+
     public const string Postgres = "Postgres";
     public const string Redis = "Redis";
     public const string Sqlite = "Sqlite";

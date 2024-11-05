@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Microsoft.SemanticKernel;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using Pwneu.Chat.Shared.Data;
@@ -36,6 +37,8 @@ builder.Services.AddOpenTelemetry()
             .AddProcessInstrumentation()
             .AddPrometheusExporter();
     });
+
+builder.Services.AddOpenAIChatCompletion("gpt-4o-mini", builder.Configuration[Consts.ChatOptionsOpenAiApiKey]!);
 
 // Swagger UI
 builder.Services.AddEndpointsApiExplorer();
@@ -124,8 +127,8 @@ builder.Services.AddRateLimiter(options =>
             partitionKey: httpContext.User.GetLoggedInUserId<string>(),
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 10,
-                Window = TimeSpan.FromSeconds(10),
+                PermitLimit = 1,
+                Window = TimeSpan.FromSeconds(7),
             }));
 });
 

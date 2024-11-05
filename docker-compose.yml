@@ -98,6 +98,7 @@ services:
       - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
       - ChatOptions__ConversationIsEnabled=${CHAT_CONVERSATION_IS_ENABLED}
       - ChatOptions__MaxConversationsPerDay=${CHAT_MAX_CONVERSATIONS_PER_DAY}
+      - ChatOptions__OpenAiApiKey=${CHAT_OPENAI_API_KEY}
       - JwtOptions__Issuer=${JWT_ISSUER}
       - JwtOptions__Audience=${JWT_AUDIENCE}
       - JwtOptions__SigningKey=${JWT_SIGNING_KEY}

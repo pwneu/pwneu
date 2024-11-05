@@ -8,8 +8,6 @@ using Pwneu.Shared.Extensions;
 
 namespace Pwneu.Chat.Features.Conversations;
 
-// TODO -- Test
-
 public static class GetConversations
 {
     public record Query(

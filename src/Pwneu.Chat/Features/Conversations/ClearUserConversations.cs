@@ -7,8 +7,6 @@ using Pwneu.Shared.Contracts;
 
 namespace Pwneu.Chat.Features.Conversations;
 
-// TODO -- Test
-
 public static class ClearUserConversations
 {
     public record Command(string UserId) : IRequest<Result>;
