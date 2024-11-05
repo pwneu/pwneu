@@ -34,7 +34,7 @@ public static class Login
         "Email is not confirmed");
 
     private static readonly Error IpLocked = new("Login.IpLocked",
-        "Ip address was locked. Please wait for a few minutes");
+        "IP address was locked. Please wait for a few minutes");
 
     private static readonly Error InvalidAntiSpamToken = new("Login.InvalidAntiSpamToken",
         "Invalid turnstile token. Rejecting Login");
