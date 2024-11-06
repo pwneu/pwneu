@@ -16,5 +16,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     }
 
     public virtual DbSet<AccessKey> AccessKeys { get; init; } = null!;
+    public virtual DbSet<Certificate> Certificates { get; init; } = null!;
     public virtual DbSet<IdentityConfiguration> IdentityConfigurations { get; init; } = null!;
 }

@@ -1,10 +1,10 @@
 ﻿using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Pwneu.Identity.Shared.Data;
 using Pwneu.Identity.Shared.Entities;
 using Pwneu.Identity.Shared.Extensions;
-using Pwneu.Identity.Views;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
 using Pwneu.Shared.Extensions;
@@ -49,32 +49,55 @@ public class GenerateCertificate
             if (user is null)
                 return Result.Failure<string>(UserNotFound);
 
+            // The admin and the managers are not allowed to receive a certificate.
             var userIsManager = await userManager.IsInRoleAsync(user, Consts.Manager);
 
             if (userIsManager)
                 return Result.Failure<string>(NotAllowed);
 
-            // TODO -- Design certificate
+            var existingCertificate = await context
+                .Certificates
+                .Where(c => c.UserId == request.UserId)
+                .FirstOrDefaultAsync(cancellationToken);
 
-            var certificationIssuer = await cache.GetOrSetAsync(Keys.CertificationIssuer(),
-                async _ => await context.GetIdentityConfigurationValueAsync<string>(
-                    Consts.CertificationIssuer,
-                    cancellationToken),
-                token: cancellationToken);
-
-            var certificate = new Certificate
+            if (existingCertificate is not null)
             {
-                UserId = user.Id,
-                FullName = request.CustomName ?? user.FullName,
-                IssuedAt = request.CustomIssueDate ?? DateTime.UtcNow,
-                CertificationIssuer = certificationIssuer ?? string.Empty,
-            };
+                var (success, certificateHtml) = await RazorTemplateEngine.TryRenderPartialAsync(
+                    "Views/CertificateView.cshtml",
+                    existingCertificate);
 
-            var (success, certificateHtml) = await RazorTemplateEngine.TryRenderPartialAsync(
-                "Views/CertificateView.cshtml",
-                certificate);
+                return success ? certificateHtml : Result.Failure<string>(Failed);
+            }
+            else
+            {
+                var certificationIssuer = await cache.GetOrSetAsync(Keys.CertificationIssuer(),
+                    async _ => await context.GetIdentityConfigurationValueAsync<string>(
+                        Consts.CertificationIssuer,
+                        cancellationToken),
+                    token: cancellationToken);
 
-            return success ? certificateHtml : Result.Failure<string>(Failed);
+                var certificate = new Certificate
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = user.Id,
+                    FullName = request.CustomName ?? user.FullName,
+                    Issuer = certificationIssuer ?? "PWNEU",
+                    IssuedAt = request.CustomIssueDate ?? DateTime.UtcNow,
+                };
+
+                var (success, certificateHtml) = await RazorTemplateEngine.TryRenderPartialAsync(
+                    "Views/CertificateView.cshtml",
+                    certificate);
+
+                if (!success)
+                    return Result.Failure<string>(Failed);
+
+                context.Add(certificate);
+
+                await context.SaveChangesAsync(cancellationToken);
+
+                return certificateHtml;
+            }
         }
     }
 

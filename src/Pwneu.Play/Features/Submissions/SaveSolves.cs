@@ -67,7 +67,7 @@ public static class SaveSolves
             var hasRecentRankRecount =
                 await cache.GetOrDefaultAsync<bool>(Keys.HasRecentLeaderboardCount(), token: cancellationToken);
 
-            // Caching user ranks takes a while, so we allow a slight delay of 5 seconds.
+            // Caching user ranks takes a while, so we allow a slight delay of 5 seconds (IGNORE THIS COMMENT).
             if (!hasRecentRankRecount)
             {
                 var userRanks = await context.GetUserRanksAsync(cancellationToken);
@@ -75,7 +75,7 @@ public static class SaveSolves
                 await cache.SetAsync(
                     Keys.UserRanks(),
                     userRanks,
-                    new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(20) },
+                    new FusionCacheEntryOptions { Duration = TimeSpan.FromHours(3) },
                     cancellationToken);
 
                 var topUsersGraph = await context.GetUsersGraphAsync(
@@ -88,11 +88,11 @@ public static class SaveSolves
                     new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(20) },
                     cancellationToken);
 
-                await cache.SetAsync(
-                    Keys.HasRecentLeaderboardCount(),
-                    true,
-                    new FusionCacheEntryOptions { Duration = TimeSpan.FromSeconds(5) },
-                    cancellationToken);
+                // await cache.SetAsync(
+                //     Keys.HasRecentLeaderboardCount(),
+                //     true,
+                //     new FusionCacheEntryOptions { Duration = TimeSpan.FromSeconds(5) },
+                //     cancellationToken);
             }
 
             var challengeSolveCounts = validSolves

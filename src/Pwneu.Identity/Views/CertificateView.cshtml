@@ -1,4 +1,4 @@
-﻿@model Pwneu.Identity.Views.Certificate
+﻿@model Pwneu.Identity.Shared.Entities.Certificate
 
 <html lang="en">
 <style>
@@ -21,7 +21,8 @@
 <body>
 <h1>Certificate of Participation</h1>
 <h2>@Model.FullName</h2>
+<h3>Certificate Id: @Model.Id</h3>
 <h3>Issued at: @Model.IssuedAt</h3>
-<h3>Issuer: @Model.CertificationIssuer</h3>
+<h3>Issued by: @Model.Issuer</h3>
 </body>
 </html>

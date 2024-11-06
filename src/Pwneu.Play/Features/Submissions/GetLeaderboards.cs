@@ -27,7 +27,7 @@ public static class GetLeaderboards
             var userRanks = await cache.GetOrSetAsync(
                 Keys.UserRanks(),
                 async _ => await context.GetUserRanksAsync(cancellationToken),
-                new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(20) },
+                new FusionCacheEntryOptions { Duration = TimeSpan.FromHours(3) },
                 cancellationToken);
 
             var requesterRank = userRanks.FirstOrDefault(u => u.Id == request.RequesterId);
