@@ -148,7 +148,7 @@ services:
       - pwneu
 
   pwneu.monitoring:
-    image: prom/prometheus
+    image: prom/prometheus:latest
     container_name: pwneu.monitoring
     depends_on:
       - pwneu.identity
