@@ -18,7 +18,7 @@ public static class CreateConversation
     public record Command(string UserId, string Input) : IRequest<Result<string>>;
 
     private static readonly Error Disabled = new("Chat.Disabled",
-        "Chat currently disabled");
+        "Chat is currently disabled");
 
     private static readonly Error Failed = new("Chat.Failed",
         "Failed to generate output");
