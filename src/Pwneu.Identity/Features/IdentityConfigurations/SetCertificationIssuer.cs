@@ -56,7 +56,9 @@ public class SetCertificationIssuer
         {
             RuleFor(c => c.IssuerName)
                 .NotEmpty()
-                .WithMessage("Issuer name is required.");
+                .WithMessage("Issuer name is required.")
+                .MaximumLength(20)
+                .WithMessage("Issuer name must be 20 characters or less.");
         }
     }
 }
