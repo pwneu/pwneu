@@ -14,9 +14,16 @@ using Pwneu.Chat.Shared.Extensions;
 using Pwneu.Chat.Shared.Options;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Extensions;
+using Serilog;
 using Swashbuckle.AspNetCore.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
+
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 // App options
 builder.Services

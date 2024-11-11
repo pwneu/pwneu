@@ -19,11 +19,18 @@ using Pwneu.Identity.Shared.Services;
 using Pwneu.Identity.Workers;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Extensions;
+using Serilog;
 using Swashbuckle.AspNetCore.Filters;
 using ZiggyCreatures.Caching.Fusion;
 using ZiggyCreatures.Caching.Fusion.Serialization.NewtonsoftJson;
 
 var builder = WebApplication.CreateBuilder(args);
+
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 // App options
 builder.Services
