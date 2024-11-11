@@ -11,7 +11,11 @@ public class SetCertificationIssuer
 {
     public record Command(string IssuerName) : IRequest<Result>;
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, IValidator<Command> validator)
+    internal sealed class Handler(
+        ApplicationDbContext context,
+        IFusionCache cache,
+        IValidator<Command> validator,
+        ILogger<Handler> logger)
         : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
@@ -29,6 +33,8 @@ public class SetCertificationIssuer
                 cancellationToken);
 
             await cache.RemoveAsync(Keys.CertificationIssuer(), token: cancellationToken);
+
+            logger.LogInformation("Certification Issuer has been set: {IssuerName}", request.IssuerName);
 
             return Result.Success();
         }

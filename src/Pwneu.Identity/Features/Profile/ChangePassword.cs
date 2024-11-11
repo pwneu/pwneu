@@ -23,7 +23,8 @@ public static class ChangePassword
 
     internal sealed class Handler(
         UserManager<User> userManager,
-        IValidator<Command> validator) : IRequestHandler<Command, Result>
+        IValidator<Command> validator,
+        ILogger<Handler> logger) : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -42,9 +43,12 @@ public static class ChangePassword
                 request.CurrentPassword,
                 request.NewPassword);
 
-            return !updatePassword.Succeeded
-                ? Result.Failure(Failed)
-                : Result.Success();
+            if (!updatePassword.Succeeded)
+                return Result.Failure(Failed);
+
+            logger.LogInformation("Password changed: {UserId}, User: {UserName}", request.UserId, user.UserName);
+
+            return Result.Success();
         }
     }
 

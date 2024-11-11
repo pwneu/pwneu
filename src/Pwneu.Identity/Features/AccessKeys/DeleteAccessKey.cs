@@ -13,7 +13,8 @@ public static class DeleteAccessKey
 
     public record Command(Guid Id) : IRequest<Result>;
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache) : IRequestHandler<Command, Result>
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, ILogger<Handler> logger)
+        : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -29,6 +30,8 @@ public static class DeleteAccessKey
             await context.SaveChangesAsync(cancellationToken);
 
             await cache.RemoveAsync(Keys.AccessKeys(), token: cancellationToken);
+
+            logger.LogInformation("Access Key deleted: {Id}", request.Id);
 
             return Result.Success();
         }
