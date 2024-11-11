@@ -13,7 +13,8 @@ public static class DeleteArtifact
     private static readonly Error NotFound = new("DeleteArtifact.NotFound",
         "The artifact with the specified ID was not found");
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache) : IRequestHandler<Command, Result>
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, ILogger<Handler> logger)
+        : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -41,6 +42,8 @@ public static class DeleteArtifact
             };
 
             await Task.WhenAll(invalidationTasks);
+
+            logger.LogInformation("Artifact deleted: {Id}", request.Id);
 
             return Result.Success();
         }

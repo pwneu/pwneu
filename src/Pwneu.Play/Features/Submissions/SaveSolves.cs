@@ -18,7 +18,11 @@ public static class SaveSolves
 {
     public record Command(List<SolvedEvent> SolvedEvents) : IRequest<Result>;
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, IMemberAccess memberAccess)
+    internal sealed class Handler(
+        ApplicationDbContext context,
+        IFusionCache cache,
+        IMemberAccess memberAccess,
+        ILogger<Handler> logger)
         : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
@@ -64,8 +68,12 @@ public static class SaveSolves
 
             await context.SaveChangesAsync(cancellationToken);
 
+            logger.LogInformation("Saved {Count} solves", validSolves.Count);
+
             var hasRecentRankRecount =
                 await cache.GetOrDefaultAsync<bool>(Keys.HasRecentLeaderboardCount(), token: cancellationToken);
+
+            logger.LogInformation("Recalculating leaderboards");
 
             // Caching user ranks takes a while, so we allow a slight delay of 5 seconds (IGNORE THIS COMMENT).
             if (!hasRecentRankRecount)
@@ -95,6 +103,8 @@ public static class SaveSolves
                 //     cancellationToken);
             }
 
+            logger.LogInformation("Leaderboards recalculated");
+
             var challengeSolveCounts = validSolves
                 .GroupBy(s => s.ChallengeId)
                 .Select(g => new { ChallengeId = g.Key, Count = g.Count() })
@@ -110,6 +120,8 @@ public static class SaveSolves
                                 ch => ch.SolveCount + challengeSolveCount.Count),
                         cancellationToken);
             }
+
+            logger.LogInformation("Solve count of challenges has been updated");
 
             return Result.Success();
         }

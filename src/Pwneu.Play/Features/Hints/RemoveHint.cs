@@ -14,7 +14,8 @@ public static class RemoveHint
     private static readonly Error NotFound = new("DeleteHint.NotFound",
         "The hint with the specified ID was not found");
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache) : IRequestHandler<Command, Result>
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, ILogger<Handler> logger)
+        : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -46,6 +47,8 @@ public static class RemoveHint
             };
 
             await Task.WhenAll(invalidationTasks);
+
+            logger.LogInformation("Hint removed: {Id}", request.Id);
 
             return Result.Success();
         }

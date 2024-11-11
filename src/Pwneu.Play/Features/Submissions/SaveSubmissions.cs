@@ -20,7 +20,8 @@ public static class SaveSubmissions
     internal sealed class Handler(
         ApplicationDbContext context,
         IFusionCache cache,
-        IMemberAccess memberAccess)
+        IMemberAccess memberAccess,
+        ILogger<Handler> logger)
         : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
@@ -53,6 +54,8 @@ public static class SaveSubmissions
             context.AddRange(validSubmissions);
 
             await context.SaveChangesAsync(cancellationToken);
+
+            logger.LogInformation("Saved {Count} submissions", validSubmissions.Count);
 
             return Result.Success();
         }

@@ -77,7 +77,7 @@ public static class GetChallengeAsUser
         }
     }
 
-    public class Endpoint : IEndpoint
+    public class Endpoint // : IEndpoint
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {

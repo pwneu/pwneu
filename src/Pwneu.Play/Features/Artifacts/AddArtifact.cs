@@ -24,7 +24,7 @@ public static class AddArtifact
         "AddArtifact.FileSizeLimit",
         $"File size exceeds the limit of {MaxFileSize} megabytes");
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, ILogger<Handler> logger)
         : IRequestHandler<Command, Result<Guid>>
     {
         public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
@@ -55,6 +55,11 @@ public static class AddArtifact
 
             await context.SaveChangesAsync(cancellationToken);
             await cache.RemoveAsync(Keys.ChallengeDetails(artifact.ChallengeId), token: cancellationToken);
+
+            logger.LogInformation(
+                "Artifact added: {ArtifactId}, Challenge: {ChallengeId}",
+                artifact.Id,
+                request.ChallengeId);
 
             return artifact.Id;
         }

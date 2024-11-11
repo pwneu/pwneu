@@ -19,6 +19,7 @@ public static class CreateCategory
     internal sealed class Handler(
         ApplicationDbContext context,
         IFusionCache cache,
+        ILogger<Handler> logger,
         IValidator<Command> validator) : IRequestHandler<Command, Result<Guid>>
     {
         public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
@@ -44,6 +45,8 @@ public static class CreateCategory
                 cache.RemoveAsync(Keys.Categories(), token: cancellationToken).AsTask(),
                 cache.RemoveAsync(Keys.CategoryIds(), token: cancellationToken).AsTask()
             );
+
+            logger.LogInformation("Category created: {CategoryId}", category.Id);
 
             return category.Id;
         }

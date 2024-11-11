@@ -32,7 +32,8 @@ public static class UpdateChallenge
     internal sealed class Handler(
         ApplicationDbContext context,
         IValidator<Command> validator,
-        IFusionCache cache) : IRequestHandler<Command, Result>
+        IFusionCache cache,
+        ILogger<Handler> logger) : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -80,6 +81,8 @@ public static class UpdateChallenge
             }
 
             await Task.WhenAll(invalidationTasks);
+
+            logger.LogInformation("Challenge updated: {Id}", request.Id);
 
             return Result.Success();
         }

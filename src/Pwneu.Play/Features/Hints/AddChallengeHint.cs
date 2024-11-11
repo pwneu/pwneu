@@ -19,7 +19,7 @@ public static class AddChallengeHint
 
     private static readonly Error NoChallenge = new("AddHint.NoChallenge", "No challenge found");
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, ILogger<Handler> logger)
         : IRequestHandler<Command, Result<Guid>>
     {
         public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
@@ -47,6 +47,8 @@ public static class AddChallengeHint
             await context.SaveChangesAsync(cancellationToken);
 
             await cache.RemoveAsync(Keys.ChallengeDetails(challenge.Id), token: cancellationToken);
+
+            logger.LogInformation("Hint added: {HintId}, Challenge: {ChallengeId}", hint.Id, request.ChallengeId);
 
             return hint.Id;
         }

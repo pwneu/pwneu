@@ -18,7 +18,11 @@ public static class UpdateCategory
     private static readonly Error NotFound = new("UpdateCategory.NotFound",
         "The category with the specified ID was not found");
 
-    internal sealed class Handler(ApplicationDbContext context, IValidator<Command> validator, IFusionCache cache)
+    internal sealed class Handler(
+        ApplicationDbContext context,
+        IValidator<Command> validator,
+        IFusionCache cache,
+        ILogger<Handler> logger)
         : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
@@ -43,6 +47,8 @@ public static class UpdateCategory
             await context.SaveChangesAsync(cancellationToken);
 
             await cache.RemoveAsync(Keys.Category(request.Id), token: cancellationToken);
+
+            logger.LogInformation("Category updated: {Id}", request.Id);
 
             return Result.Success();
         }

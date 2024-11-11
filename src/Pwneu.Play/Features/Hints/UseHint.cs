@@ -19,7 +19,7 @@ public class UseHint
     private static readonly Error ChallengeAlreadySolved = new("UseHint.ChallengeAlreadySolved",
         "Challenge already solved");
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, ILogger<Handler> logger)
         : IRequestHandler<Command, Result<string>>
     {
         public async Task<Result<string>> Handle(Command request, CancellationToken cancellationToken)
@@ -86,6 +86,8 @@ public class UseHint
             };
 
             await Task.WhenAll(invalidationTasks);
+
+            logger.LogInformation("Hint used: {HintId}, User: {UserId}", request.HintId, request.UserId);
 
             return hintDetails.Content;
         }
