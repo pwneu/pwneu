@@ -18,7 +18,8 @@ public static class DeleteChallenge
     private static readonly Error NotFound = new("DeleteChallenge.NotFound",
         "The challenge with the specified ID was not found");
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache) : IRequestHandler<Command, Result>
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, ILogger<Handler> logger)
+        : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -52,6 +53,8 @@ public static class DeleteChallenge
             };
 
             await Task.WhenAll(invalidationTasks);
+
+            logger.LogInformation("Challenge deleted: {Id}", request.Id);
 
             return Result.Success();
         }

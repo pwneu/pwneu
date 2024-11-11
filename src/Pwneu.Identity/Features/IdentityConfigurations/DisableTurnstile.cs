@@ -10,7 +10,7 @@ public class DisableTurnstile
 {
     public record Query : IRequest<Result>;
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, ILogger<Handler> logger)
         : IRequestHandler<Query, Result>
     {
         public async Task<Result> Handle(Query request,
@@ -18,6 +18,8 @@ public class DisableTurnstile
         {
             await context.SetIdentityConfigurationValueAsync(Consts.IsTurnstileEnabled, false, cancellationToken);
             await cache.RemoveAsync(Keys.IsTurnstileEnabled(), token: cancellationToken);
+
+            logger.LogInformation("Turnstile disabled");
 
             return Result.Success();
         }

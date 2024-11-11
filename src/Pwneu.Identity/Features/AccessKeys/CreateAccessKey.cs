@@ -12,7 +12,11 @@ public static class CreateAccessKey
 {
     public record Command(bool ForManager, bool CanBeReused, DateTime Expiration) : IRequest<Result<Guid>>;
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, IValidator<Command> validator)
+    internal sealed class Handler(
+        ApplicationDbContext context,
+        IFusionCache cache,
+        IValidator<Command> validator,
+        ILogger<Handler> logger)
         : IRequestHandler<Command, Result<Guid>>
     {
         public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
@@ -35,6 +39,8 @@ public static class CreateAccessKey
             await context.SaveChangesAsync(cancellationToken);
 
             await cache.RemoveAsync(Keys.AccessKeys(), token: cancellationToken);
+
+            logger.LogInformation("Access Key created: {Id}", accessKey.Id);
 
             return accessKey.Id;
         }

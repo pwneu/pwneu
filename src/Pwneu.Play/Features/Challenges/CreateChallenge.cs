@@ -30,7 +30,11 @@ public static class CreateChallenge
     private static readonly Error CategoryNotFound = new("CreateCategory.CategoryNotFound",
         "The category with the specified ID was not found");
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, IValidator<Command> validator)
+    internal sealed class Handler(
+        ApplicationDbContext context,
+        IFusionCache cache,
+        IValidator<Command> validator,
+        ILogger<Handler> logger)
         : IRequestHandler<Command, Result<Guid>>
     {
         public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
@@ -68,6 +72,11 @@ public static class CreateChallenge
 
             await cache.InvalidateCategoryCacheAsync(request.CategoryId, cancellationToken);
             await cache.RemoveAsync(Keys.ChallengeIds(), token: cancellationToken);
+
+            logger.LogInformation(
+                "Challenge created: {ChallengeId}, Category: {CategoryId}",
+                challenge.Id,
+                request.CategoryId);
 
             return challenge.Id;
         }

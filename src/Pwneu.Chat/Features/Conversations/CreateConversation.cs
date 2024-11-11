@@ -30,7 +30,8 @@ public static class CreateConversation
         ApplicationDbContext context,
         IChatCompletionService chat,
         IValidator<Command> validator,
-        IOptions<ChatOptions> chatOptions)
+        IOptions<ChatOptions> chatOptions,
+        ILogger<Handler> logger)
         : IRequestHandler<Command, Result<string>>
     {
         private readonly ChatOptions _chatOptions = chatOptions.Value;
@@ -90,6 +91,11 @@ public static class CreateConversation
             context.Add(conversation);
 
             await context.SaveChangesAsync(cancellationToken);
+
+            logger.LogInformation(
+                "Conversation created: {ConversationId}, User: {UserId}",
+                conversation.Id,
+                request.UserId);
 
             return conversation.Output;
         }

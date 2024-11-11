@@ -46,7 +46,8 @@ public static class Login
         IOptions<JwtOptions> jwtOptions,
         IPublishEndpoint publishEndpoint,
         IFusionCache cache,
-        IValidator<Command> validator)
+        IValidator<Command> validator,
+        ILogger<Handler> logger)
         : IRequestHandler<Command, Result<LoginResponse>>
     {
         private readonly JwtOptions _jwtOptions = jwtOptions.Value;
@@ -158,6 +159,11 @@ public static class Login
                 await cache.SetAsync(Keys.FailedLoginCount(request.IpAddress), 0, token: cancellationToken);
 
             await cache.RemoveAsync(Keys.UserToken(user.Id), token: cancellationToken);
+
+            logger.LogInformation(
+                "User logged in: {UserName}, IP Address: {IpAddress}",
+                request.UserName,
+                request.IpAddress);
 
             return new LoginResponse
             {

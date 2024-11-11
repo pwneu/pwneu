@@ -46,7 +46,8 @@ public static class Register
         ITurnstileValidator turnstileValidator,
         IFusionCache cache,
         IValidator<Command> validator,
-        IPublishEndpoint publishEndpoint) : IRequestHandler<Command, Result>
+        IPublishEndpoint publishEndpoint,
+        ILogger<Handler> logger) : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -130,6 +131,8 @@ public static class Register
                 token: cancellationToken);
 
             await cache.RemoveAsync(Keys.MemberIds(), token: cancellationToken);
+
+            logger.LogInformation("User registered: {UserName}, Email: {Email}", request.UserName, request.Email);
 
             return Result.Success();
         }

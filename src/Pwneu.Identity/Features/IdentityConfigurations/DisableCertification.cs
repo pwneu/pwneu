@@ -10,7 +10,7 @@ public class DisableCertification
 {
     public record Query : IRequest<Result>;
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, ILogger<Handler> logger)
         : IRequestHandler<Query, Result>
     {
         public async Task<Result> Handle(Query request,
@@ -18,6 +18,8 @@ public class DisableCertification
         {
             await context.SetIdentityConfigurationValueAsync(Consts.IsCertificationEnabled, false, cancellationToken);
             await cache.RemoveAsync(Keys.IsCertificationEnabled(), token: cancellationToken);
+
+            logger.LogInformation("Certification disabled");
 
             return Result.Success();
         }

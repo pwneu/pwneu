@@ -10,7 +10,7 @@ public class DenySubmissions
 {
     public record Query : IRequest<Result>;
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache)
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, ILogger<Handler> logger)
         : IRequestHandler<Query, Result>
     {
         public async Task<Result> Handle(Query request,
@@ -18,6 +18,8 @@ public class DenySubmissions
         {
             await context.SetPlayConfigurationValueAsync(Consts.SubmissionsAllowed, false, cancellationToken);
             await cache.RemoveAsync(Keys.SubmissionsAllowed(), token: cancellationToken);
+
+            logger.LogInformation("Submissions denied");
 
             return Result.Success();
         }

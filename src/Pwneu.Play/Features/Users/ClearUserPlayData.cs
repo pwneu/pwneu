@@ -12,7 +12,8 @@ public static class ClearUserPlayData
 {
     public record Command(string UserId) : IRequest<Result>;
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache) : IRequestHandler<Command, Result>
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, ILogger<Handler> logger)
+        : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -75,6 +76,8 @@ public static class ClearUserPlayData
                         .AsTask()));
 
             await Task.WhenAll(invalidationTasks);
+
+            logger.LogInformation("User play data removed: {UserId}", request.UserId);
 
             return Result.Success();
         }

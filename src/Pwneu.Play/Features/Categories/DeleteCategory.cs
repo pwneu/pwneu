@@ -18,7 +18,8 @@ public static class DeleteCategory
     private static readonly Error NotFound = new("DeleteCategory.NotFound",
         "The category with the specified ID was not found");
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache) : IRequestHandler<Command, Result>
+    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, ILogger<Handler> logger)
+        : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -50,6 +51,8 @@ public static class DeleteCategory
                 cache.InvalidateChallengeCacheAsync(challenge, cancellationToken)));
 
             await Task.WhenAll(invalidationTasks);
+
+            logger.LogInformation("Category deleted: {Id}", request.Id);
 
             return Result.Success();
         }

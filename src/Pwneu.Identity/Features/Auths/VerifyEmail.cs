@@ -15,7 +15,7 @@ public class VerifyEmail
     private static readonly Error EmailAlreadyConfirmed = new("VerifyEmail.EmailAlreadyConfirmed",
         "Email is already confirmed.");
 
-    internal sealed class Handler(UserManager<User> userManager)
+    internal sealed class Handler(UserManager<User> userManager, ILogger<Handler> logger)
         : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
@@ -30,9 +30,12 @@ public class VerifyEmail
 
             var verifyEmail = await userManager.ConfirmEmailAsync(user, request.ConfirmationToken);
 
-            return verifyEmail.Succeeded
-                ? Result.Success()
-                : Result.Failure(Failed);
+            if (verifyEmail.Succeeded)
+                return Result.Success();
+
+            logger.LogInformation("User verified: {Email}", request.Email);
+
+            return Result.Failure(Failed);
         }
     }
 

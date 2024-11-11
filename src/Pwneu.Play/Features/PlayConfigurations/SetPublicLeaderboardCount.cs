@@ -11,7 +11,11 @@ public static class SetPublicLeaderboardCount
 {
     public record Command(int Count) : IRequest<Result>;
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, IValidator<Command> validator)
+    internal sealed class Handler(
+        ApplicationDbContext context,
+        IFusionCache cache,
+        IValidator<Command> validator,
+        ILogger<Handler> logger)
         : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
@@ -29,6 +33,8 @@ public static class SetPublicLeaderboardCount
                 cancellationToken);
 
             await cache.RemoveAsync(Keys.PublicLeaderboardCount(), token: cancellationToken);
+
+            logger.LogInformation("Public leaderboard count has been set to {Count}", request.Count);
 
             return Result.Success();
         }
