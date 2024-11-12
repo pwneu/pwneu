@@ -59,7 +59,7 @@ docker-compose up -d
 Before using our program, please refer to our [License](https://github.com/pwneu/pwneu/blob/main/LICENSE).
 
 ### 📚 External Resources
-Resources I used to develop the server.
+Resources that helped me to develop the server.
 
 - [Vertical Slice Architecture](https://www.youtube.com/watch?v=msjnfdeDCmo)
 - [Docker Compose ASP.NET Core](https://www.youtube.com/watch?v=WQFx2m5Ub9M)
@@ -69,6 +69,7 @@ Resources I used to develop the server.
 - [Fusion Cache](https://www.youtube.com/watch?v=wGKSNqxN4KE)
 - [Integration Testing](https://www.youtube.com/watch?v=tj5ZCtvgXKY)
 - [Prometheus and Grafana](https://www.youtube.com/watch?v=ePYQEl_ZxCs)
+- [Rate Limiting via IP Address](https://www.youtube.com/watch?v=PIfGHbvuAtM)
 - [Semantic Kernel](https://www.youtube.com/watch?v=f_hqGlt_2E8)
 
 ### 🙏 Thanks!
