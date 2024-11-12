@@ -72,4 +72,4 @@ Resources I used to develop the server.
 - [Semantic Kernel](https://www.youtube.com/watch?v=f_hqGlt_2E8)
 
 ### 🙏 Thanks!
-- Thank you for using our program (〃￣ ω ￣〃).
+Thank you for using our program (〃￣ ω ￣〃).
