@@ -176,15 +176,6 @@ builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-    options.AddPolicy(Consts.AntiEmailAbuse, httpContext =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: httpContext.Request.Headers[Consts.CfConnectingIp].ToString(),
-            factory: _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = 6,
-                Window = TimeSpan.FromDays(1),
-            }));
-
     options.AddPolicy(Consts.VerifyEmail, httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: httpContext.Request.Headers[Consts.CfConnectingIp].ToString(),
@@ -197,6 +188,15 @@ builder.Services.AddRateLimiter(options =>
     // In development, set very high limits to effectively disable rate limiting
     if (builder.Environment.IsDevelopment())
     {
+        options.AddPolicy(Consts.AntiEmailAbuse, httpContext =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: httpContext.Request.Headers[Consts.CfConnectingIp].ToString(),
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = int.MaxValue,
+                    Window = TimeSpan.FromSeconds(1),
+                }));
+
         options.AddPolicy(Consts.Generate, httpContext =>
             RateLimitPartition.GetFixedWindowLimiter(
                 partitionKey: httpContext.User.GetLoggedInUserId<string>(),
@@ -236,6 +236,15 @@ builder.Services.AddRateLimiter(options =>
     // Actual rate limiting for production environment
     else
     {
+        options.AddPolicy(Consts.AntiEmailAbuse, httpContext =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: httpContext.Request.Headers[Consts.CfConnectingIp].ToString(),
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 6,
+                    Window = TimeSpan.FromDays(1),
+                }));
+
         options.AddPolicy(Consts.Generate, httpContext =>
             RateLimitPartition.GetFixedWindowLimiter(
                 partitionKey: httpContext.User.GetLoggedInUserId<string>(),
