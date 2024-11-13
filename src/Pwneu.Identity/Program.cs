@@ -95,7 +95,7 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-if (!builder.Environment.IsDevelopment())
+if (builder.Environment.IsDevelopment())
     builder.Services.AddHostedService<UserCleanupService>();
 
 // Postgres Database 
