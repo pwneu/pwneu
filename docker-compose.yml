@@ -121,11 +121,20 @@ services:
       - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
       - SmtpOptions__SenderAddress=${SMTP_SENDER_ADDRESS}
       - SmtpOptions__SenderPassword=${SMTP_SENDER_PASSWORD}
+      - SmtpOptions__Host=${SMTP_HOST}
+      - SmtpOptions__Port=${SMTP_PORT}
+      - SmtpOptions__EnableSsl=${SMTP_ENABLE_SSL}
       - SmtpOptions__NotifyLoginIsEnabled=${SMTP_NOTIFY_LOGIN_IS_ENABLED}
       - SmtpOptions__SendEmailConfirmationIsEnabled=${SMTP_SEND_EMAIL_CONFIRMATION_IS_ENABLED}
       - SmtpOptions__SendPasswordResetTokenIsEnabled=${SMTP_SEND_PASSWORD_RESET_TOKEN_IS_ENABLED}
       - SmtpOptions__VerifyEmailUrl=${SMTP_VERIFY_EMAIL_URL}
       - SmtpOptions__ResetPasswordUrl=${SMTP_RESET_PASSWORD_URL}
+    networks:
+      - pwneu
+
+  pwneu.smtp.host:
+    image: changemakerstudiosus/papercut-smtp:latest
+    container_name: pwneu.smtp.host
     networks:
       - pwneu
 

@@ -29,6 +29,10 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
 
+  pwneu.smtp.host:
+    ports:
+      - "37502:80"
+
   pwneu.cache:
     ports:
       - "6379:6379"

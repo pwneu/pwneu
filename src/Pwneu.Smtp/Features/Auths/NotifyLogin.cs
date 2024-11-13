@@ -1,5 +1,4 @@
-using System.Net;
-using System.Net.Mail;
+using FluentEmail.Core;
 using MassTransit;
 using MediatR;
 using Microsoft.Extensions.Options;
@@ -21,38 +20,34 @@ public static class NotifyLogin
     private static readonly Error NoEmail = new("NotifyLogin.NoEmail", "No Email specified");
     private static readonly Error Disabled = new("NotifyLogin.Disabled", "Notify login is disabled");
 
-    internal sealed class Handler(IOptions<SmtpOptions> smtpOptions) : IRequestHandler<Command, Result>
+    internal sealed class Handler(IOptions<SmtpOptions> smtpOptions, IFluentEmail fluentEmail)
+        : IRequestHandler<Command, Result>
     {
         private readonly SmtpOptions _smtpOptions = smtpOptions.Value;
 
-        public Task<Result> Handle(Command request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
             if (request.Email is null)
-                return Task.FromResult(Result.Failure(NoEmail));
+                return Result.Failure(NoEmail);
 
             if (_smtpOptions.NotifyLoginIsEnabled is false)
-                return Task.FromResult(Result.Failure(Disabled));
+                return Result.Failure(Disabled);
 
-            var smtpClient = new SmtpClient("smtp.gmail.com", Consts.GmailSmtpPort)
-            {
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                EnableSsl = true,
-                UseDefaultCredentials = false,
-                Credentials = new NetworkCredential(_smtpOptions.SenderAddress, _smtpOptions.SenderPassword)
-            };
-
-            using var mailMessage = new MailMessage(_smtpOptions.SenderAddress, request.Email);
-            mailMessage.Subject = "Hello Pwneu!";
-            mailMessage.Body = $"{request.FullName} || {request.IpAddress} || {request.UserAgent} || {request.Referer}";
+            var body = $"{request.FullName} || {request.IpAddress} || {request.UserAgent} || {request.Referer}";
 
             try
             {
-                smtpClient.Send(mailMessage);
-                return Task.FromResult(Result.Success());
+                await fluentEmail
+                    .To(request.Email)
+                    .Subject("PWNEU Login Notification")
+                    .Body(body, true)
+                    .SendAsync();
+
+                return Result.Success();
             }
             catch (Exception e)
             {
-                return Task.FromResult(Result.Failure(new Error("NotifyLogin.Failed", e.Message)));
+                return Result.Failure(new Error("NotifyLogin.Failed", e.Message));
             }
         }
     }

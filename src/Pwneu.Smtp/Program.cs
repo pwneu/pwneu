@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Mail;
 using MassTransit;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -51,6 +53,43 @@ builder.Services.AddMassTransit(busConfigurator =>
 
 // Assembly scanning of Mediator
 builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(assembly));
+
+// SMTP Client
+var senderAddressConfig = builder.Configuration["SmtpOptions:SenderAddress"];
+var senderAddress = string.IsNullOrWhiteSpace(senderAddressConfig)
+    ? "pwneu@pwneu.pwneu"
+    : senderAddressConfig;
+
+var senderPasswordConfig = builder.Configuration["SmtpOptions:SenderPassword"];
+var senderPassword = string.IsNullOrWhiteSpace(senderPasswordConfig)
+    ? "PwneuPwneu!1"
+    : senderPasswordConfig;
+
+var hostConfig = builder.Configuration["SmtpOptions:Host"];
+var host = string.IsNullOrWhiteSpace(hostConfig)
+    ? "pwneu.smtp.host"
+    : hostConfig;
+
+var portConfig = builder.Configuration["SmtpOptions:Port"];
+var port = string.IsNullOrWhiteSpace(portConfig) || !int.TryParse(portConfig, out var parsedPort)
+    ? 25
+    : parsedPort;
+
+var enableSslConfig = builder.Configuration["SmtpOptions:EnableSsl"];
+var enableSsl = !string.IsNullOrWhiteSpace(enableSslConfig) &&
+                bool.TryParse(enableSslConfig, out var parsedEnableSsl) &&
+                parsedEnableSsl;
+
+builder.Services
+    .AddFluentEmail(senderAddress)
+    .AddSmtpSender(new SmtpClient(host)
+    {
+        Port = port,
+        DeliveryMethod = SmtpDeliveryMethod.Network,
+        EnableSsl = enableSsl,
+        UseDefaultCredentials = false,
+        Credentials = new NetworkCredential(senderAddress, senderPassword)
+    });
 
 var app = builder.Build();
 
