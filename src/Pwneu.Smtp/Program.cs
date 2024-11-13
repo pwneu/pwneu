@@ -88,6 +88,7 @@ builder.Services
         DeliveryMethod = SmtpDeliveryMethod.Network,
         EnableSsl = enableSsl,
         UseDefaultCredentials = false,
+        Timeout = 10_000,
         Credentials = new NetworkCredential(senderAddress, senderPassword)
     });
 
