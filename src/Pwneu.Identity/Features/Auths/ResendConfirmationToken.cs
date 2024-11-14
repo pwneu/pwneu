@@ -8,7 +8,7 @@ using Pwneu.Shared.Contracts;
 
 namespace Pwneu.Identity.Features.Auths;
 
-public static class SendConfirmationToken
+public static class ResendConfirmationToken
 {
     public record Command(
         string Email,
@@ -43,7 +43,9 @@ public static class SendConfirmationToken
 
             await publishEndpoint.Publish(new RegisteredEvent
             {
+                UserName = user.UserName ?? "User",
                 Email = user.Email,
+                FullName = user.FullName,
                 ConfirmationToken = confirmationToken
             }, cancellationToken);
 

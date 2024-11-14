@@ -1,7 +1,10 @@
 ﻿@model Pwneu.Smtp.Features.Auths.SendEmailConfirmation.Model
 
 <p>Dear User,</p>
-<p>Please verify your email address by clicking the link below:</p>
+<p>Thank you for registering in PWNEU, here are the credentials you provided:</p>
+<p>Username: @Model.UserName</p>
+<p>Full Name: @Model.FullName</p>
+<p>Please verify your account by clicking the link below:</p>
 <p>
     <a href="@($"{Model.VerifyEmailUrl}?email={Model.EncodedEmail}&confirmationToken={Model.EncodedConfirmationToken}")">Click here to confirm your email</a>
 </p>

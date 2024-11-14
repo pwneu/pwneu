@@ -47,6 +47,7 @@ public static class Register
         IFusionCache cache,
         IValidator<Command> validator,
         IPublishEndpoint publishEndpoint,
+        IOptions<AppOptions> appOptions,
         ILogger<Handler> logger) : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
@@ -55,6 +56,16 @@ public static class Register
 
             if (!validationResult.IsValid)
                 return Result.Failure(new Error("Register.Validation", validationResult.ToString()));
+
+            // Check if email domain is allowed.
+            var validDomain = appOptions.Value.ValidEmailDomain;
+
+            var isValidDomain = IsValidDomain(request.Email, validDomain);
+
+            if (!isValidDomain)
+                return Result.Failure(new Error(
+                    "Register.InvalidDomain",
+                    $"The email domain '{request.Email.Split('@').LastOrDefault()}' is not allowed. Use the domain '{validDomain}'."));
 
             // Validate Turnstile from Cloudflare.
             var isValidTurnstile = await turnstileValidator.IsValidTurnstileTokenAsync(
@@ -115,7 +126,9 @@ public static class Register
 
             await publishEndpoint.Publish(new RegisteredEvent
             {
-                Email = user.Email,
+                UserName = request.UserName,
+                Email = request.Email,
+                FullName = request.FullName,
                 ConfirmationToken = confirmationToken
             }, cancellationToken);
 
@@ -135,6 +148,15 @@ public static class Register
             logger.LogInformation("User registered: {UserName}, Email: {Email}", request.UserName, request.Email);
 
             return Result.Success();
+
+            static bool IsValidDomain(string email, string? validDomain)
+            {
+                if (string.IsNullOrWhiteSpace(validDomain))
+                    return true;
+
+                var emailDomain = email.Split('@').LastOrDefault();
+                return emailDomain?.Equals(validDomain, StringComparison.OrdinalIgnoreCase) == true;
+            }
         }
     }
 
@@ -157,18 +179,13 @@ public static class Register
 
     public class Validator : AbstractValidator<Command>
     {
-        public Validator(IOptions<AppOptions> appOptions)
+        public Validator()
         {
-            var validDomain = appOptions.Value.ValidEmailDomain;
-
             RuleFor(c => c.Email)
                 .NotEmpty()
                 .WithMessage("Email is required.")
                 .EmailAddress()
-                .WithMessage("Email must be a valid email address.")
-                .Must((_, email) => IsValidDomain(email, validDomain))
-                .WithMessage((_, email) =>
-                    $"Email domain '{email.Split('@').LastOrDefault()}' is not allowed. Use the domain '{validDomain}'.");
+                .WithMessage("Email must be a valid email address.");
 
             RuleFor(c => c.UserName)
                 .NotEmpty()
@@ -199,15 +216,6 @@ public static class Register
                 .WithMessage("Full Name is required.")
                 .MaximumLength(100)
                 .WithMessage("Full Name must be 100 characters or less.");
-        }
-
-        private static bool IsValidDomain(string email, string? validDomain)
-        {
-            if (string.IsNullOrWhiteSpace(validDomain))
-                return true;
-
-            var emailDomain = email.Split('@').LastOrDefault();
-            return emailDomain?.Equals(validDomain, StringComparison.OrdinalIgnoreCase) == true;
         }
     }
 }

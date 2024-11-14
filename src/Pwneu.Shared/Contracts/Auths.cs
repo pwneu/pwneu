@@ -14,8 +14,10 @@ public record RegisterRequest
 
 public record RegisteredEvent
 {
-    public string Email { get; init; } = default!;
-    public string ConfirmationToken { get; init; } = default!;
+    public required string UserName { get; init; } = default!;
+    public required string Email { get; init; } = default!;
+    public required string FullName { get; init; } = default!;
+    public required string ConfirmationToken { get; init; } = default!;
 }
 
 public record ConfirmEmailRequest

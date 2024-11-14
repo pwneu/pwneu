@@ -12,7 +12,7 @@ namespace Pwneu.Smtp.Features.Auths;
 
 public static class SendEmailConfirmation
 {
-    public record Command(string Email, string ConfirmationToken) : IRequest<Result>;
+    public record Command(string UserName, string FullName, string Email, string ConfirmationToken) : IRequest<Result>;
 
     private static readonly Error Disabled = new("SendEmailConfirmation.Disabled",
         "Email confirmation is disabled");
@@ -35,6 +35,8 @@ public static class SendEmailConfirmation
 
             var model = new Model
             {
+                UserName = request.UserName,
+                FullName = request.FullName,
                 VerifyEmailUrl = _smtpOptions.VerifyEmailUrl,
                 EncodedEmail = encodedEmail,
                 EncodedConfirmationToken = encodedConfirmationToken
@@ -66,6 +68,8 @@ public static class SendEmailConfirmation
 
     public class Model
     {
+        public required string UserName { get; init; }
+        public required string FullName { get; init; }
         public required string VerifyEmailUrl { get; init; }
         public required string EncodedEmail { get; init; }
         public required string EncodedConfirmationToken { get; init; }
@@ -82,7 +86,12 @@ public class RegisteredEventConsumer(ISender sender, ILogger<RegisteredEventCons
             logger.LogInformation("Received registered event message");
 
             var message = context.Message;
-            var command = new SendEmailConfirmation.Command(message.Email, message.ConfirmationToken);
+            var command = new SendEmailConfirmation.Command(
+                UserName: message.UserName,
+                FullName: message.FullName,
+                Email: message.Email,
+                ConfirmationToken: message.ConfirmationToken);
+
             var result = await sender.Send(command);
 
             if (result.IsSuccess)
