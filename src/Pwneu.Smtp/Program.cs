@@ -9,6 +9,7 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Serilog.
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .CreateLogger();
@@ -20,7 +21,7 @@ builder.Services.AddOptions<SmtpOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
-// OpenTelemetry
+// OpenTelemetry.
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource.AddService(nameof(Pwneu.Smtp)))
     .WithMetrics(metrics =>
@@ -35,7 +36,7 @@ builder.Services.AddOpenTelemetry()
 
 var assembly = typeof(Program).Assembly;
 
-// RabbitMQ
+// RabbitMQ.
 builder.Services.AddMassTransit(busConfigurator =>
 {
     busConfigurator.SetKebabCaseEndpointNameFormatter();
@@ -51,10 +52,10 @@ builder.Services.AddMassTransit(busConfigurator =>
     });
 });
 
-// Assembly scanning of Mediator
+// Assembly scanning of Mediator.
 builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(assembly));
 
-// SMTP Client
+// SMTP Client.
 var senderAddressConfig = builder.Configuration["SmtpOptions:SenderAddress"];
 var senderAddress = string.IsNullOrWhiteSpace(senderAddressConfig)
     ? throw new InvalidOperationException("Sender address is required")

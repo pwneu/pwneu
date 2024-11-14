@@ -19,20 +19,21 @@ using Swashbuckle.AspNetCore.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Serilog.
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .CreateLogger();
 
 builder.Host.UseSerilog();
 
-// App options
+// App options.
 builder.Services
     .AddOptions<ChatOptions>()
     .BindConfiguration($"{nameof(ChatOptions)}")
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
-// OpenTelemetry
+// OpenTelemetry.
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource.AddService(nameof(Pwneu.Chat)))
     .WithMetrics(metrics =>
@@ -47,7 +48,7 @@ builder.Services.AddOpenTelemetry()
 
 builder.Services.AddOpenAIChatCompletion("gpt-4o-mini", builder.Configuration[Consts.ChatOptionsOpenAiApiKey]!);
 
-// Swagger UI
+// Swagger UI.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -60,10 +61,10 @@ builder.Services.AddSwaggerGen(options =>
     options.OperationFilter<SecurityRequirementsOperationFilter>();
 });
 
-// CORS (Cross-Origin Resource Sharing)
+// CORS (Cross-Origin Resource Sharing).
 builder.Services.AddCors();
 
-// Postgres Database 
+// Postgres Database.
 var sqlite = builder.Configuration.GetConnectionString(Consts.Sqlite) ??
              throw new InvalidOperationException("No Sqlite connection found");
 
@@ -71,7 +72,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite
 
 var assembly = typeof(Program).Assembly;
 
-// RabbitMQ
+// RabbitMQ.
 builder.Services.AddMassTransit(busConfigurator =>
 {
     busConfigurator.SetKebabCaseEndpointNameFormatter();
@@ -87,14 +88,14 @@ builder.Services.AddMassTransit(busConfigurator =>
     });
 });
 
-// Assembly scanning of Mediator and Fluent Validations
+// Assembly scanning of Mediator and Fluent Validations.
 builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(assembly));
 builder.Services.AddValidatorsFromAssembly(assembly);
 
-// Add endpoints from the Features folder (Vertical Slice)
+// Add endpoints from the Features folder (Vertical Slice).
 builder.Services.AddEndpoints(assembly);
 
-// Authentication and Authorization (JSON Web Token)
+// Authentication and Authorization (JSON Web Token).
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -151,11 +152,7 @@ app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
 app.ApplyMigrations();
 
-app.UseCors(corsPolicy =>
-    corsPolicy
-        .AllowAnyMethod()
-        .AllowAnyHeader()
-        .AllowAnyOrigin());
+app.UseCors(policy => policy.AllowAnyMethod().AllowAnyHeader().AllowAnyOrigin());
 
 app.UseAuthentication();
 app.UseAuthorization();
