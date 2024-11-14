@@ -5,7 +5,8 @@ using MediatR;
 using Microsoft.Extensions.Options;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
-using Pwneu.Smtp.Shared.Options;
+using Pwneu.Smtp.Shared;
+using Razor.Templating.Core;
 
 namespace Pwneu.Smtp.Features.Auths;
 
@@ -15,6 +16,9 @@ public static class SendEmailConfirmation
 
     private static readonly Error Disabled = new("SendEmailConfirmation.Disabled",
         "Email confirmation is disabled");
+
+    private static readonly Error RenderFailed = new("SendEmailConfirmation.RenderFailed",
+        "Failed to render html template for email confirmation");
 
     internal sealed class Handler(IOptions<SmtpOptions> smtpOptions, IFluentEmail fluentEmail)
         : IRequestHandler<Command, Result>
@@ -29,22 +33,26 @@ public static class SendEmailConfirmation
             var encodedEmail = WebUtility.UrlEncode(request.Email);
             var encodedConfirmationToken = WebUtility.UrlEncode(request.ConfirmationToken);
 
-            var body = $"""
-                            <p>Dear User,</p>
-                            <p>Please verify your email address by clicking the link below:</p>
-                            <p><a href='{_smtpOptions.VerifyEmailUrl}?email={encodedEmail}&confirmationToken={encodedConfirmationToken}'>Click here to confirm your email</a></p>
-                            <p>If email verification is required and you do not verify your email within 48 hours, your account may be removed.</p>
-                            <p>If you did not request this registration, please ignore this email. No action will be taken on this account.</p>
-                            <p>Thank you!</p>
-                            <p>Pwneu Team</p>
-                        """;
+            var model = new Model
+            {
+                VerifyEmailUrl = _smtpOptions.VerifyEmailUrl,
+                EncodedEmail = encodedEmail,
+                EncodedConfirmationToken = encodedConfirmationToken
+            };
+
+            var (success, sendEmailConfirmationHtml) = await RazorTemplateEngine.TryRenderPartialAsync(
+                "Views/SendEmailConfirmationView.cshtml",
+                model);
+
+            if (!success)
+                return Result.Failure(RenderFailed);
 
             try
             {
                 await fluentEmail
                     .To(request.Email)
                     .Subject("Welcome to PWNEU!")
-                    .Body(body, true)
+                    .Body(sendEmailConfirmationHtml, true)
                     .SendAsync();
 
                 return Result.Success();
@@ -54,6 +62,13 @@ public static class SendEmailConfirmation
                 return Result.Failure(new Error("SendEmailConfirmation.Failed", ex.Message));
             }
         }
+    }
+
+    public class Model
+    {
+        public required string VerifyEmailUrl { get; init; }
+        public required string EncodedEmail { get; init; }
+        public required string EncodedConfirmationToken { get; init; }
     }
 }
 

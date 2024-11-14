@@ -4,7 +4,8 @@ using MediatR;
 using Microsoft.Extensions.Options;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
-using Pwneu.Smtp.Shared.Options;
+using Pwneu.Smtp.Shared;
+using Razor.Templating.Core;
 
 namespace Pwneu.Smtp.Features.Auths;
 
@@ -20,6 +21,9 @@ public static class NotifyLogin
     private static readonly Error NoEmail = new("NotifyLogin.NoEmail", "No Email specified");
     private static readonly Error Disabled = new("NotifyLogin.Disabled", "Notify login is disabled");
 
+    private static readonly Error RenderFailed = new("NotifyLogin.RenderFailed",
+        "Failed to render html template for login notification");
+
     internal sealed class Handler(IOptions<SmtpOptions> smtpOptions, IFluentEmail fluentEmail)
         : IRequestHandler<Command, Result>
     {
@@ -33,14 +37,28 @@ public static class NotifyLogin
             if (_smtpOptions.NotifyLoginIsEnabled is false)
                 return Result.Failure(Disabled);
 
-            var body = $"{request.FullName} || {request.IpAddress} || {request.UserAgent} || {request.Referer}";
+            var model = new Model
+            {
+                FullName = request.FullName,
+                Email = request.Email,
+                IpAddress = string.IsNullOrWhiteSpace(request.IpAddress) ? "Unknown" : request.IpAddress,
+                UserAgent = string.IsNullOrWhiteSpace(request.UserAgent) ? "Unknown" : request.UserAgent,
+                Referer = string.IsNullOrWhiteSpace(request.Referer) ? "Unknown" : request.Referer,
+            };
+
+            var (success, notifyLoginHtml) = await RazorTemplateEngine.TryRenderPartialAsync(
+                "Views/NotifyLoginView.cshtml",
+                model);
+
+            if (!success)
+                return Result.Failure(RenderFailed);
 
             try
             {
                 await fluentEmail
                     .To(request.Email)
                     .Subject("PWNEU Login Notification")
-                    .Body(body, true)
+                    .Body(notifyLoginHtml, true)
                     .SendAsync();
 
                 return Result.Success();
@@ -50,6 +68,15 @@ public static class NotifyLogin
                 return Result.Failure(new Error("NotifyLogin.Failed", e.Message));
             }
         }
+    }
+
+    public class Model
+    {
+        public required string FullName { get; init; }
+        public required string Email { get; init; }
+        public required string IpAddress { get; init; }
+        public required string UserAgent { get; init; }
+        public required string Referer { get; init; }
     }
 }
 

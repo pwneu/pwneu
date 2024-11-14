@@ -4,7 +4,7 @@ using MassTransit;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using Pwneu.Shared.Common;
-using Pwneu.Smtp.Shared.Options;
+using Pwneu.Smtp.Shared;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -57,12 +57,12 @@ builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(assemb
 // SMTP Client
 var senderAddressConfig = builder.Configuration["SmtpOptions:SenderAddress"];
 var senderAddress = string.IsNullOrWhiteSpace(senderAddressConfig)
-    ? "pwneu@pwneu.pwneu"
+    ? throw new InvalidOperationException("Sender address is required")
     : senderAddressConfig;
 
 var senderPasswordConfig = builder.Configuration["SmtpOptions:SenderPassword"];
 var senderPassword = string.IsNullOrWhiteSpace(senderPasswordConfig)
-    ? "PwneuPwneu!1"
+    ? throw new InvalidOperationException("Sender password is required")
     : senderPasswordConfig;
 
 var hostConfig = builder.Configuration["SmtpOptions:Host"];
