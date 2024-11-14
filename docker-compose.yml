@@ -133,7 +133,7 @@ services:
       - pwneu
 
   pwneu.smtp.host:
-    image: changemakerstudiosus/papercut-smtp:latest
+    image: rnwood/smtp4dev:latest
     container_name: pwneu.smtp.host
     networks:
       - pwneu

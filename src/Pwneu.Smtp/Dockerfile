@@ -22,5 +22,6 @@ ENTRYPOINT ["sh", "-c", "\
   wait-for-it.sh -t 0 pwneu.mq:5672 && \
   wait-for-it.sh -t 0 pwneu.play:8080 && \
   wait-for-it.sh -t 0 pwneu.identity:8080 && \
+  wait-for-it.sh -t 0 pwneu.chat:8080 && \
   dotnet Pwneu.Smtp.dll \
 "]
