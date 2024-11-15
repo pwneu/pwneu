@@ -24,13 +24,14 @@ using ZiggyCreatures.Caching.Fusion.Serialization.NewtonsoftJson;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Serilog.
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .CreateLogger();
 
 builder.Host.UseSerilog();
 
-// OpenTelemetry
+// OpenTelemetry.
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource.AddService(nameof(Pwneu.Play)))
     .WithMetrics(metrics =>
@@ -43,7 +44,7 @@ builder.Services.AddOpenTelemetry()
             .AddPrometheusExporter();
     });
 
-// Swagger UI
+// Swagger UI.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -56,16 +57,16 @@ builder.Services.AddSwaggerGen(options =>
     options.OperationFilter<SecurityRequirementsOperationFilter>();
 });
 
-// CORS (Cross-Origin Resource Sharing)
+// CORS (Cross-Origin Resource Sharing).
 builder.Services.AddCors();
 
-// Postgres Database 
+// Postgres Database.
 var postgres = builder.Configuration.GetConnectionString(Consts.Postgres) ??
                throw new InvalidOperationException("No Postgres connection found");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => { options.UseNpgsql(postgres); });
 
-// Redis Caching
+// Redis Caching.
 var redis = builder.Configuration.GetConnectionString(Consts.Redis) ??
             throw new InvalidOperationException("No Redis connection found");
 
@@ -77,7 +78,7 @@ builder.Services.AddFusionCache()
     }))
     .WithDistributedCache(new RedisCache(new RedisCacheOptions { Configuration = redis }));
 
-// RabbitMQ
+// RabbitMQ.
 builder.Services.AddMassTransit(busConfigurator =>
 {
     busConfigurator.SetKebabCaseEndpointNameFormatter();
@@ -113,14 +114,14 @@ builder.Services.AddMassTransit(busConfigurator =>
 
 var assembly = typeof(Program).Assembly;
 
-// Assembly scanning of Mediator and Fluent Validations
+// Assembly scanning of Mediator and Fluent Validations.
 builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(assembly));
 builder.Services.AddValidatorsFromAssembly(assembly);
 
-// Add endpoints from the Features folder (Vertical Slice)
+// Add endpoints from the Features folder (Vertical Slice).
 builder.Services.AddEndpoints(assembly);
 
-// Authentication and Authorization (JSON Web Token)
+// Authentication and Authorization (JSON Web Token).
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -211,11 +212,7 @@ app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
 app.ApplyMigrations();
 
-app.UseCors(corsPolicy =>
-    corsPolicy
-        .AllowAnyMethod()
-        .AllowAnyHeader()
-        .AllowAnyOrigin());
+app.UseCors(policy => policy.AllowAnyMethod().AllowAnyHeader().AllowAnyOrigin());
 
 await app.Services.SeedPlayConfigurationAsync();
 

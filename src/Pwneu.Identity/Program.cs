@@ -26,20 +26,21 @@ using ZiggyCreatures.Caching.Fusion.Serialization.NewtonsoftJson;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Serilog.
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .CreateLogger();
 
 builder.Host.UseSerilog();
 
-// App options
+// App options.
 builder.Services
     .AddOptions<AppOptions>()
     .BindConfiguration($"{nameof(AppOptions)}")
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
-// OpenTelemetry
+// OpenTelemetry.
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource.AddService(nameof(Pwneu.Identity)))
     .WithMetrics(metrics =>
@@ -54,14 +55,14 @@ builder.Services.AddOpenTelemetry()
 
 builder.Services.AddHttpClient();
 
-// JWT Options
+// JWT Options.
 builder.Services
     .AddOptions<JwtOptions>()
     .BindConfiguration($"{nameof(JwtOptions)}")
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
-// Swagger
+// Swagger.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -74,17 +75,17 @@ builder.Services.AddSwaggerGen(options =>
     options.OperationFilter<SecurityRequirementsOperationFilter>();
 });
 
-// CORS (Cross-Origin Resource Sharing)
+// CORS (Cross-Origin Resource Sharing).
 builder.Services.AddCors();
 
-// ASP.NET Identity
+// ASP.NET Identity.
 builder.Services.AddIdentity<User, IdentityRole>(options =>
     {
-        // Email confirmation and account confirmation
+        // Email confirmation and account confirmation.
         options.SignIn.RequireConfirmedEmail = true;
         options.SignIn.RequireConfirmedAccount = true;
 
-        // Password requirements
+        // Password requirements.
         options.Password.RequireDigit = true;
         options.Password.RequireLowercase = true;
         options.Password.RequireUppercase = true;
@@ -95,16 +96,16 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-if (!builder.Environment.IsDevelopment())
+if (builder.Environment.IsDevelopment())
     builder.Services.AddHostedService<UserCleanupService>();
 
-// Postgres Database 
+// Postgres Database.
 var postgres = builder.Configuration.GetConnectionString(Consts.Postgres) ??
                throw new InvalidOperationException("No Postgres connection found");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => { options.UseNpgsql(postgres); });
 
-// Redis Caching
+// Redis Caching.
 var redis = builder.Configuration.GetConnectionString(Consts.Redis) ??
             throw new InvalidOperationException("No Redis connection found");
 
@@ -118,7 +119,7 @@ builder.Services.AddFusionCache()
 
 var assembly = typeof(Program).Assembly;
 
-// RabbitMQ
+// RabbitMQ.
 builder.Services.AddMassTransit(busConfigurator =>
 {
     busConfigurator.SetKebabCaseEndpointNameFormatter();
@@ -134,14 +135,14 @@ builder.Services.AddMassTransit(busConfigurator =>
     });
 });
 
-// Assembly scanning of Mediator and Fluent Validations
+// Assembly scanning of Mediator and Fluent Validations.
 builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(assembly));
 builder.Services.AddValidatorsFromAssembly(assembly);
 
-// Add endpoints from the Features folder (Vertical Slice)
+// Add endpoints from the Features folder (Vertical Slice).
 builder.Services.AddEndpoints(assembly);
 
-// Authentication and Authorization (JSON Web Token)
+// Authentication and Authorization (JSON Web Token).
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -176,15 +177,6 @@ builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-    options.AddPolicy(Consts.AntiEmailAbuse, httpContext =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: httpContext.Request.Headers[Consts.CfConnectingIp].ToString(),
-            factory: _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = 6,
-                Window = TimeSpan.FromDays(1),
-            }));
-
     options.AddPolicy(Consts.VerifyEmail, httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: httpContext.Request.Headers[Consts.CfConnectingIp].ToString(),
@@ -194,9 +186,18 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromSeconds(10),
             }));
 
-    // In development, set very high limits to effectively disable rate limiting
+    // In development, set very high limits to effectively disable rate limiting.
     if (builder.Environment.IsDevelopment())
     {
+        options.AddPolicy(Consts.AntiEmailAbuse, httpContext =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: httpContext.Request.Headers[Consts.CfConnectingIp].ToString(),
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = int.MaxValue,
+                    Window = TimeSpan.FromSeconds(1),
+                }));
+
         options.AddPolicy(Consts.Generate, httpContext =>
             RateLimitPartition.GetFixedWindowLimiter(
                 partitionKey: httpContext.User.GetLoggedInUserId<string>(),
@@ -233,9 +234,18 @@ builder.Services.AddRateLimiter(options =>
                     Window = TimeSpan.FromSeconds(1),
                 }));
     }
-    // Actual rate limiting for production environment
+    // Actual rate limiting for production environment.
     else
     {
+        options.AddPolicy(Consts.AntiEmailAbuse, httpContext =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: httpContext.Request.Headers[Consts.CfConnectingIp].ToString(),
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 6,
+                    Window = TimeSpan.FromDays(1),
+                }));
+
         options.AddPolicy(Consts.Generate, httpContext =>
             RateLimitPartition.GetFixedWindowLimiter(
                 partitionKey: httpContext.User.GetLoggedInUserId<string>(),
@@ -289,11 +299,7 @@ app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
 app.ApplyMigrations();
 
-app.UseCors(corsPolicy =>
-    corsPolicy
-        .AllowAnyMethod()
-        .AllowAnyHeader()
-        .AllowAnyOrigin());
+app.UseCors(policy => policy.AllowAnyMethod().AllowAnyHeader().AllowAnyOrigin());
 
 await app.Services.SeedRolesAsync();
 await app.Services.SeedAdminAsync();

@@ -99,7 +99,7 @@ public class UserDeletedEventConsumer(ISender sender, ILogger<UserDeletedEventCo
 
             if (result.IsSuccess)
             {
-                logger.LogInformation("Successfully delete user submissions: {userId}", context.Message.Id);
+                logger.LogInformation("Successfully deleted user play data: {userId}", context.Message.Id);
                 return;
             }
 

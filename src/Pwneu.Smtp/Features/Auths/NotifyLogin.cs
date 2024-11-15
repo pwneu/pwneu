@@ -1,11 +1,11 @@
-using System.Net;
-using System.Net.Mail;
+using FluentEmail.Core;
 using MassTransit;
 using MediatR;
 using Microsoft.Extensions.Options;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
-using Pwneu.Smtp.Shared.Options;
+using Pwneu.Smtp.Shared;
+using Razor.Templating.Core;
 
 namespace Pwneu.Smtp.Features.Auths;
 
@@ -21,40 +21,62 @@ public static class NotifyLogin
     private static readonly Error NoEmail = new("NotifyLogin.NoEmail", "No Email specified");
     private static readonly Error Disabled = new("NotifyLogin.Disabled", "Notify login is disabled");
 
-    internal sealed class Handler(IOptions<SmtpOptions> smtpOptions) : IRequestHandler<Command, Result>
+    private static readonly Error RenderFailed = new("NotifyLogin.RenderFailed",
+        "Failed to render html template for login notification");
+
+    internal sealed class Handler(IOptions<SmtpOptions> smtpOptions, IFluentEmail fluentEmail)
+        : IRequestHandler<Command, Result>
     {
         private readonly SmtpOptions _smtpOptions = smtpOptions.Value;
 
-        public Task<Result> Handle(Command request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
             if (request.Email is null)
-                return Task.FromResult(Result.Failure(NoEmail));
+                return Result.Failure(NoEmail);
 
             if (_smtpOptions.NotifyLoginIsEnabled is false)
-                return Task.FromResult(Result.Failure(Disabled));
+                return Result.Failure(Disabled);
 
-            var smtpClient = new SmtpClient("smtp.gmail.com", Consts.GmailSmtpPort)
+            var model = new Model
             {
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                EnableSsl = true,
-                UseDefaultCredentials = false,
-                Credentials = new NetworkCredential(_smtpOptions.SenderAddress, _smtpOptions.SenderPassword)
+                FullName = request.FullName,
+                Email = request.Email,
+                IpAddress = string.IsNullOrWhiteSpace(request.IpAddress) ? "Unknown" : request.IpAddress,
+                UserAgent = string.IsNullOrWhiteSpace(request.UserAgent) ? "Unknown" : request.UserAgent,
+                Referer = string.IsNullOrWhiteSpace(request.Referer) ? "Unknown" : request.Referer,
             };
 
-            using var mailMessage = new MailMessage(_smtpOptions.SenderAddress, request.Email);
-            mailMessage.Subject = "Hello Pwneu!";
-            mailMessage.Body = $"{request.FullName} || {request.IpAddress} || {request.UserAgent} || {request.Referer}";
+            var (success, notifyLoginHtml) = await RazorTemplateEngine.TryRenderPartialAsync(
+                "Views/NotifyLoginView.cshtml",
+                model);
+
+            if (!success)
+                return Result.Failure(RenderFailed);
 
             try
             {
-                smtpClient.Send(mailMessage);
-                return Task.FromResult(Result.Success());
+                await fluentEmail
+                    .To(request.Email)
+                    .Subject("PWNEU Login Notification")
+                    .Body(notifyLoginHtml, true)
+                    .SendAsync();
+
+                return Result.Success();
             }
             catch (Exception e)
             {
-                return Task.FromResult(Result.Failure(new Error("NotifyLogin.Failed", e.Message)));
+                return Result.Failure(new Error("NotifyLogin.Failed", e.Message));
             }
         }
+    }
+
+    public class Model
+    {
+        public required string FullName { get; init; }
+        public required string Email { get; init; }
+        public required string IpAddress { get; init; }
+        public required string UserAgent { get; init; }
+        public required string Referer { get; init; }
     }
 }
 

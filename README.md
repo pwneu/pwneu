@@ -31,23 +31,6 @@ cp .env.example .env # On Linux
 Copy-Item .env.example .env # On Windows
 ```
 
-- Make sure to fill this up using the email address and the app password.
-
-```
-SMTP_SENDER_ADDRESS=
-SMTP_SENDER_PASSWORD=
-```
-
-- Or you can add a fake sender and disable emailing.
-
-```
-SMTP_SENDER_ADDRESS=pwneu@pwneu.pwneu
-SMTP_SENDER_PASSWORD=pwneupwneupwneu
-SMTP_NOTIFY_LOGIN_IS_ENABLED=false
-SMTP_SEND_EMAIL_CONFIRMATION_IS_ENABLED=false
-SMTP_SEND_PASSWORD_RESET_TOKEN_IS_ENABLED=false
-```
-
 - Build and run the container
 
 ```sh
@@ -56,9 +39,11 @@ docker-compose up -d
 ```
 
 ### 📜 License
+
 Before using our program, please refer to our [License](https://github.com/pwneu/pwneu/blob/main/LICENSE).
 
 ### 📚 External Resources
+
 Resources that helped me to develop the server.
 
 - [Vertical Slice Architecture](https://www.youtube.com/watch?v=msjnfdeDCmo)
@@ -70,7 +55,9 @@ Resources that helped me to develop the server.
 - [Integration Testing](https://www.youtube.com/watch?v=tj5ZCtvgXKY)
 - [Prometheus and Grafana](https://www.youtube.com/watch?v=ePYQEl_ZxCs)
 - [Rate Limiting via IP Address](https://www.youtube.com/watch?v=PIfGHbvuAtM)
+- [SMTP Client for Development](https://www.youtube.com/watch?v=KtCjH-1iCIk)
 - [Semantic Kernel](https://www.youtube.com/watch?v=f_hqGlt_2E8)
 
 ### 🙏 Thanks!
+
 Thank you for using our program (〃￣ ω ￣〃).
