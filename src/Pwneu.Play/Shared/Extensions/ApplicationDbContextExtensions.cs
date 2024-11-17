@@ -24,7 +24,7 @@ public static class ApplicationDbContextExtensions
                 g.Key.UserId,
                 g.Key.UserName,
                 TotalPoints = g.Sum(s => s.Challenge.Points),
-                LatestNonZeroSubmission = g
+                LatestNonZeroSolve = g
                     .Where(s => s.Challenge.Points > 0)
                     .Max(s => s.SolvedAt) // Track the latest solve where points > 0
             })
@@ -51,17 +51,17 @@ public static class ApplicationDbContextExtensions
                     up.UserId,
                     up.UserName,
                     FinalScore = up.TotalPoints - uds.Sum(ud => ud.TotalDeductions),
-                    up.LatestNonZeroSubmission
+                    up.LatestNonZeroSolve
                 })
             .OrderByDescending(u => u.FinalScore)
-            .ThenBy(u => u.LatestNonZeroSubmission) // Break ties by the earliest time the final score was reached
+            .ThenBy(u => u.LatestNonZeroSolve) // Break ties by the earliest time the final score was reached
             .Select((u, index) => new UserRankResponse
             {
                 Id = u.UserId,
                 UserName = u.UserName,
                 Position = index + 1,
                 Points = u.FinalScore,
-                LatestCorrectSubmission = u.LatestNonZeroSubmission
+                LatestSolve = u.LatestNonZeroSolve
             })
             .ToList();
 

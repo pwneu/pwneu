@@ -4,6 +4,7 @@ public record UserSolveResponse
 {
     public Guid ChallengeId { get; set; }
     public string ChallengeName { get; set; } = default!;
+    public int Points { get; set; }
     public DateTime SolvedAt { get; set; }
 }
 
