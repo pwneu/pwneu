@@ -28,6 +28,10 @@ public static class Register
     private static readonly Error Failed = new("Register.Failed", "Unable to create user");
     private static readonly Error InvalidAccessKey = new("Register.InvalidAccessKey", "Invalid access key");
 
+    private static readonly Error EmailBlacklisted = new(
+        "Register.EmailBlacklisted",
+        "The specified email has been blacklisted. Please use a different email");
+
     private static readonly Error AddRoleFailed = new(
         "Register.AddRoleFailed",
         "Unable to add role to user. Please contact the administrator");
@@ -74,6 +78,16 @@ public static class Register
 
             if (!isValidTurnstile)
                 return Result.Failure(InvalidAntiSpamToken);
+
+            var blacklistedEmails = await cache.GetOrSetAsync(Keys.BlacklistedEmails(), async _ =>
+                await context
+                    .BlacklistedEmails
+                    .ToListAsync(cancellationToken), token: cancellationToken);
+
+            var blacklistedEmailsNoId = blacklistedEmails.Select(b => b.Email).ToList();
+
+            if (blacklistedEmailsNoId.Contains(request.Email))
+                return Result.Failure(EmailBlacklisted);
 
             // Set values of the variables above.
             var accessKeys = await cache.GetOrSetAsync(Keys.AccessKeys(), async _ =>
@@ -190,8 +204,14 @@ public static class Register
             RuleFor(c => c.UserName)
                 .NotEmpty()
                 .WithMessage("Username is required.")
-                .MaximumLength(256)
-                .WithMessage("Username must be 256 characters or less.");
+                .MaximumLength(40)
+                .WithMessage("Username must be 40 characters or less.");
+
+            RuleFor(c => c.FullName)
+                .NotEmpty()
+                .WithMessage("Fullname is required.")
+                .MaximumLength(100)
+                .WithMessage("Fullname must be 100 characters or less.");
 
             RuleFor(c => c.AccessKey)
                 .NotEmpty()

@@ -14,6 +14,9 @@ public static class Keys
     // Key for caching access keys.
     public static string AccessKeys() => "accessKeys";
 
+    // Key for caching blacklisted emails.
+    public static string BlacklistedEmails() => "blacklistedEmails";
+
     // Key for caching a single CategoryResponse.
     public static string Category(Guid id) => $"category:{id}";
 
