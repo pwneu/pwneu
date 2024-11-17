@@ -131,8 +131,8 @@ _NCrunch*
 # JetBrains Rider
 .idea/
 
-# Mounted Files for Docker Containers
-.containers/
+# Mounted Files for Docker Containers (including their copies)
+.containers*/
 
 # Environment Variables
 *.env
