@@ -15,7 +15,7 @@ public class DeleteCategoryTests(IntegrationTestsWebAppFactory factory) : BaseIn
         var challengeId = Guid.NewGuid();
 
         // Act
-        var deleteChallenge = await Sender.Send(new DeleteCategory.Command(challengeId));
+        var deleteChallenge = await Sender.Send(new DeleteCategory.Command(challengeId, string.Empty, string.Empty));
 
         // Assert
         deleteChallenge.IsSuccess.Should().BeFalse();
@@ -35,7 +35,7 @@ public class DeleteCategoryTests(IntegrationTestsWebAppFactory factory) : BaseIn
         await DbContext.SaveChangesAsync();
 
         // Act
-        var deleteCategory = await Sender.Send(new DeleteCategory.Command(categoryId));
+        var deleteCategory = await Sender.Send(new DeleteCategory.Command(categoryId, string.Empty, string.Empty));
         var deletedCategory = DbContext.Challenges.FirstOrDefault(c => c.Id == categoryId);
 
         // Assert
@@ -57,7 +57,7 @@ public class DeleteCategoryTests(IntegrationTestsWebAppFactory factory) : BaseIn
         await DbContext.SaveChangesAsync();
 
         // Act
-        await Sender.Send(new DeleteCategory.Command(categoryId));
+        await Sender.Send(new DeleteCategory.Command(categoryId, string.Empty, string.Empty));
         var categoryCache =
             Cache.GetOrDefault<CategoryDetailsResponse>($"{nameof(CategoryDetailsResponse)}:{categoryId}");
 

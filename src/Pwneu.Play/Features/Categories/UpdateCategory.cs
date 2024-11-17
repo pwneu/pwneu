@@ -13,7 +13,7 @@ namespace Pwneu.Play.Features.Categories;
 /// </summary>
 public static class UpdateCategory
 {
-    public record Command(Guid Id, string Name, string Description) : IRequest<Result>;
+    public record Command(Guid Id, string Name, string Description, string UserName, string UserId) : IRequest<Result>;
 
     private static readonly Error NotFound = new("UpdateCategory.NotFound",
         "The category with the specified ID was not found");
@@ -48,7 +48,11 @@ public static class UpdateCategory
 
             await cache.RemoveAsync(Keys.Category(request.Id), token: cancellationToken);
 
-            logger.LogInformation("Category updated: {Id}", request.Id);
+            logger.LogInformation(
+                "Category ({Id}) updated by {UserName} ({UserId})",
+                request.Id,
+                request.UserName,
+                request.UserId);
 
             return Result.Success();
         }

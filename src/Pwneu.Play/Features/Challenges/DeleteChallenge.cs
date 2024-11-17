@@ -1,8 +1,10 @@
+using System.Security.Claims;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
 using Pwneu.Play.Shared.Extensions;
 using Pwneu.Shared.Common;
+using Pwneu.Shared.Extensions;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.Challenges;
@@ -13,7 +15,7 @@ namespace Pwneu.Play.Features.Challenges;
 /// </summary>
 public static class DeleteChallenge
 {
-    public record Command(Guid Id) : IRequest<Result>;
+    public record Command(Guid Id, string UserId, string UserName) : IRequest<Result>;
 
     private static readonly Error NotFound = new("DeleteChallenge.NotFound",
         "The challenge with the specified ID was not found");
@@ -54,7 +56,11 @@ public static class DeleteChallenge
 
             await Task.WhenAll(invalidationTasks);
 
-            logger.LogInformation("Challenge deleted: {Id}", request.Id);
+            logger.LogInformation(
+                "Challenge ({Id}) deleted by {UserName} ({UserId})",
+                request.Id,
+                request.UserName,
+                request.UserId);
 
             return Result.Success();
         }
@@ -64,9 +70,15 @@ public static class DeleteChallenge
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapDelete("challenges/{id:Guid}", async (Guid id, ISender sender) =>
+            app.MapDelete("challenges/{id:Guid}", async (Guid id, ClaimsPrincipal claims, ISender sender) =>
                 {
-                    var query = new Command(id);
+                    var userId = claims.GetLoggedInUserId<string>();
+                    if (userId is null) return Results.BadRequest();
+
+                    var userName = claims.GetLoggedInUserName();
+                    if (userName is null) return Results.BadRequest();
+
+                    var query = new Command(id, userId, userName);
                     var result = await sender.Send(query);
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();

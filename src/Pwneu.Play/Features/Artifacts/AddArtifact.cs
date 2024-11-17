@@ -1,8 +1,10 @@
+using System.Security.Claims;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
 using Pwneu.Play.Shared.Entities;
 using Pwneu.Shared.Common;
+using Pwneu.Shared.Extensions;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.Artifacts;
@@ -14,7 +16,9 @@ public static class AddArtifact
         string FileName,
         long FileSize,
         string ContentType,
-        byte[] Data) : IRequest<Result<Guid>>;
+        byte[] Data,
+        string UserId,
+        string UserName) : IRequest<Result<Guid>>;
 
     private const long MaxFileSize = 30 * 1024 * 1024;
 
@@ -35,7 +39,6 @@ public static class AddArtifact
             var challenge = await context
                 .Challenges
                 .Where(c => c.Id == request.ChallengeId)
-                .Include(c => c.Artifacts)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (challenge is null)
@@ -57,9 +60,11 @@ public static class AddArtifact
             await cache.RemoveAsync(Keys.ChallengeDetails(artifact.ChallengeId), token: cancellationToken);
 
             logger.LogInformation(
-                "Artifact added: {ArtifactId}, Challenge: {ChallengeId}",
+                "Artifact ({ArtifactId}) added on challenge ({ChallengeId}) by {UserName} ({UserId})",
                 artifact.Id,
-                request.ChallengeId);
+                request.ChallengeId,
+                request.UserName,
+                request.UserId);
 
             return artifact.Id;
         }
@@ -69,17 +74,25 @@ public static class AddArtifact
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("challenges/{id:Guid}/artifacts", async (Guid id, IFormFile file, ISender sender) =>
-                {
-                    using var memoryStream = new MemoryStream();
-                    await file.CopyToAsync(memoryStream);
+            app.MapPost("challenges/{id:Guid}/artifacts",
+                    async (Guid id, IFormFile file, ClaimsPrincipal claims, ISender sender) =>
+                    {
+                        var userId = claims.GetLoggedInUserId<string>();
+                        if (userId is null) return Results.BadRequest();
 
-                    var command = new Command(id, file.FileName, file.Length, file.ContentType, memoryStream.ToArray());
+                        var userName = claims.GetLoggedInUserName();
+                        if (userName is null) return Results.BadRequest();
 
-                    var result = await sender.Send(command);
+                        using var memoryStream = new MemoryStream();
+                        await file.CopyToAsync(memoryStream);
 
-                    return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);
-                })
+                        var command = new Command(id, file.FileName, file.Length, file.ContentType,
+                            memoryStream.ToArray(), userId, userName);
+
+                        var result = await sender.Send(command);
+
+                        return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);
+                    })
                 .DisableAntiforgery()
                 .RequireAuthorization(Consts.ManagerAdminOnly)
                 .WithTags(nameof(Artifacts));

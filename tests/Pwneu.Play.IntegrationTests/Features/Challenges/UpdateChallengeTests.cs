@@ -47,9 +47,12 @@ public class UpdateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
 
         var updatedChallenges = new List<UpdateChallenge.Command>
         {
-            new(challengeIds[0], string.Empty, F.Lorem.Sentence(), 50, false, DateTime.UtcNow, 5, [], F.Lorem.Words()),
-            new(challengeIds[1], F.Lorem.Word(), string.Empty, 50, false, DateTime.UtcNow, 5, [], F.Lorem.Words()),
-            new(challengeIds[2], F.Lorem.Word(), F.Lorem.Sentence(), 50, false, DateTime.UtcNow, 5, [], []),
+            new(challengeIds[0], string.Empty, F.Lorem.Sentence(), 50, false, DateTime.UtcNow, 5, [], F.Lorem.Words(),
+                string.Empty, string.Empty),
+            new(challengeIds[1], F.Lorem.Word(), string.Empty, 50, false, DateTime.UtcNow, 5, [], F.Lorem.Words(),
+                string.Empty, string.Empty),
+            new(challengeIds[2], F.Lorem.Word(), F.Lorem.Sentence(), 50, false, DateTime.UtcNow, 5, [], [],
+                string.Empty, string.Empty),
         };
 
         // Act
@@ -78,7 +81,7 @@ public class UpdateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
             Deadline: DateTime.UtcNow,
             MaxAttempts: 5,
             Tags: [],
-            Flags: F.Lorem.Words()));
+            Flags: F.Lorem.Words(), string.Empty, string.Empty));
 
         // Assert
         updateChallenge.IsSuccess.Should().BeFalse();
@@ -139,7 +142,7 @@ public class UpdateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
             Deadline: DateTime.UtcNow,
             MaxAttempts: faker.Random.Int(11, 20),
             Tags: [],
-            Flags: faker.Lorem.Words()));
+            Flags: faker.Lorem.Words(), string.Empty, string.Empty));
 
         var updatedChallenge = await DbContext
             .Challenges
@@ -190,7 +193,7 @@ public class UpdateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
             Deadline: DateTime.UtcNow,
             MaxAttempts: 5,
             Tags: [],
-            Flags: F.Lorem.Words()));
+            Flags: F.Lorem.Words(), string.Empty, string.Empty));
 
         var challengeCache = Cache.GetOrDefault<Challenge>($"{nameof(Challenge)}:{challenge.Id}");
 

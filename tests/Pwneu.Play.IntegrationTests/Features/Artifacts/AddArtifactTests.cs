@@ -55,7 +55,9 @@ public class AddArtifactTests(IntegrationTestsWebAppFactory factory) : BaseInteg
             FileName: file.FileName,
             FileSize: file.Length,
             ContentType: file.ContentType,
-            Data: stream.ToArray()));
+            Data: stream.ToArray(),
+            UserName: string.Empty,
+            UserId: string.Empty));
 
         var artifact = DbContext.Artifacts.FirstOrDefault(a => a.Id == addArtifact.Value);
 
