@@ -15,8 +15,8 @@ public class CreateAccessKeyTests(IntegrationTestsWebAppFactory factory) : BaseI
         {
             new(true, true, DateTime.UtcNow.AddDays(-1)),
             new(true, false, DateTime.UtcNow.AddDays(-1)),
-            new(false, true, DateTime.UtcNow.AddDays(-1)),
-            new(false, false, DateTime.UtcNow.AddDays(-1))
+            new(false, true, DateTime.Now.AddDays(-1)),
+            new(false, false, DateTime.Now.AddDays(-1))
         };
 
         // Act
@@ -30,6 +30,23 @@ public class CreateAccessKeyTests(IntegrationTestsWebAppFactory factory) : BaseI
             createAccessKeyResult.Should().BeOfType<Result<Guid>>();
             createAccessKeyResult.IsSuccess.Should().BeFalse();
         }
+    }
+
+    [Fact]
+    public async Task Handle_Should_CreateAccessKey_EvenIfDateIsNotUtc()
+    {
+        // Arrange
+        var createAccessKey = new CreateAccessKey.Command(true, true, DateTime.Now.AddDays(1));
+
+        // Act
+        var createAccessKeyResult = await Sender.Send(createAccessKey);
+        var accessKey = DbContext.AccessKeys.FirstOrDefault(c => c.Id == createAccessKeyResult.Value);
+
+        // Assert
+        createAccessKeyResult.Should().BeOfType<Result<Guid>>();
+        createAccessKeyResult.IsSuccess.Should().BeTrue();
+        accessKey.Should().NotBeNull();
+        accessKey.Id.Should().Be(createAccessKeyResult.Value);
     }
 
     [Fact]

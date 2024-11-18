@@ -60,7 +60,7 @@ public static class UpdateChallenge
             challenge.Description = request.Description;
             challenge.Points = request.Points;
             challenge.DeadlineEnabled = request.DeadlineEnabled;
-            challenge.Deadline = request.Deadline;
+            challenge.Deadline = request.Deadline.ToUniversalTime();
             challenge.MaxAttempts = request.MaxAttempts;
             challenge.Tags = request.Tags.ToList();
             challenge.Flags = request.Flags.ToList();

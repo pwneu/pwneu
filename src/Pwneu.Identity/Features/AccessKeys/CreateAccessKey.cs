@@ -31,7 +31,7 @@ public static class CreateAccessKey
                 Id = Guid.NewGuid(),
                 ForManager = request.ForManager,
                 CanBeReused = request.CanBeReused,
-                Expiration = request.Expiration
+                Expiration = request.Expiration.ToUniversalTime()
             };
 
             context.Add(accessKey);

@@ -64,7 +64,7 @@ public static class CreateChallenge
                 Description = request.Description,
                 Points = request.Points,
                 DeadlineEnabled = request.DeadlineEnabled,
-                Deadline = request.Deadline,
+                Deadline = request.Deadline.ToUniversalTime(),
                 MaxAttempts = request.MaxAttempts,
                 Tags = request.Tags.ToList(),
                 Flags = request.Flags.ToList()

@@ -139,7 +139,7 @@ public class UpdateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
             Description: faker.Lorem.Sentence(),
             Points: faker.Random.Int(101, 200),
             DeadlineEnabled: true,
-            Deadline: DateTime.UtcNow,
+            Deadline: DateTime.Now,
             MaxAttempts: faker.Random.Int(11, 20),
             Tags: [],
             Flags: faker.Lorem.Words(), string.Empty, string.Empty));
