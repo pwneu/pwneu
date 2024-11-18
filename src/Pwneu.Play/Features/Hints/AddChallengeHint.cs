@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -5,6 +6,7 @@ using Pwneu.Play.Shared.Data;
 using Pwneu.Play.Shared.Entities;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
+using Pwneu.Shared.Extensions;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.Hints;
@@ -15,7 +17,8 @@ namespace Pwneu.Play.Features.Hints;
 /// </summary>
 public static class AddChallengeHint
 {
-    public record Command(Guid ChallengeId, string Content, int Deduction) : IRequest<Result<Guid>>;
+    public record Command(Guid ChallengeId, string Content, int Deduction, string UserId, string UserName)
+        : IRequest<Result<Guid>>;
 
     private static readonly Error NoChallenge = new("AddHint.NoChallenge", "No challenge found");
 
@@ -48,7 +51,12 @@ public static class AddChallengeHint
 
             await cache.RemoveAsync(Keys.ChallengeDetails(challenge.Id), token: cancellationToken);
 
-            logger.LogInformation("Hint added: {HintId}, Challenge: {ChallengeId}", hint.Id, request.ChallengeId);
+            logger.LogInformation(
+                "Hint ({HintId}) added on challenge {ChallengeId} by {UserName} ({UserId})",
+                hint.Id,
+                request.ChallengeId,
+                request.UserName,
+                request.UserId);
 
             return hint.Id;
         }
@@ -59,9 +67,15 @@ public static class AddChallengeHint
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             app.MapPost("challenges/{id:Guid}/hints",
-                    async (Guid id, AddHintRequest request, ISender sender) =>
+                    async (Guid id, AddHintRequest request, ClaimsPrincipal claims, ISender sender) =>
                     {
-                        var command = new Command(id, request.Content, request.Deduction);
+                        var userId = claims.GetLoggedInUserId<string>();
+                        if (userId is null) return Results.BadRequest();
+
+                        var userName = claims.GetLoggedInUserName();
+                        if (userName is null) return Results.BadRequest();
+
+                        var command = new Command(id, request.Content, request.Deduction, userId, userName);
 
                         var result = await sender.Send(command);
 

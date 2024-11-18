@@ -13,7 +13,8 @@ public class DeleteChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
     public async Task Handle_Should_NotDeleteChallenge_WhenChallengeDoesNotExists()
     {
         // Act
-        var deleteChallenge = await Sender.Send(new DeleteChallenge.Command(Guid.NewGuid()));
+        var deleteChallenge =
+            await Sender.Send(new DeleteChallenge.Command(Guid.NewGuid(), string.Empty, string.Empty));
 
         // Assert
         deleteChallenge.IsSuccess.Should().BeFalse();
@@ -49,7 +50,7 @@ public class DeleteChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
         await DbContext.SaveChangesAsync();
 
         // Act
-        var deleteChallenge = await Sender.Send(new DeleteChallenge.Command(challengeId));
+        var deleteChallenge = await Sender.Send(new DeleteChallenge.Command(challengeId, string.Empty, string.Empty));
         var challenge = DbContext.Challenges.FirstOrDefault(c => c.Id == challengeId);
 
         // Assert
@@ -89,7 +90,7 @@ public class DeleteChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
         await Cache.SetAsync(Keys.ChallengeDetails(challengeId), new Challenge());
 
         // Act
-        await Sender.Send(new DeleteChallenge.Command(challengeId));
+        await Sender.Send(new DeleteChallenge.Command(challengeId, string.Empty, string.Empty));
         var challengeCache = Cache.GetOrDefault<ChallengeResponse>(Keys.ChallengeDetails(challengeId));
 
         // Assert

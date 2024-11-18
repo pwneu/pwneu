@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -6,6 +7,7 @@ using Pwneu.Play.Shared.Entities;
 using Pwneu.Play.Shared.Extensions;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
+using Pwneu.Shared.Extensions;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.Challenges;
@@ -25,7 +27,9 @@ public static class CreateChallenge
         DateTime Deadline,
         int MaxAttempts,
         IEnumerable<string> Tags,
-        IEnumerable<string> Flags) : IRequest<Result<Guid>>;
+        IEnumerable<string> Flags,
+        string UserId,
+        string UserName) : IRequest<Result<Guid>>;
 
     private static readonly Error CategoryNotFound = new("CreateCategory.CategoryNotFound",
         "The category with the specified ID was not found");
@@ -60,7 +64,7 @@ public static class CreateChallenge
                 Description = request.Description,
                 Points = request.Points,
                 DeadlineEnabled = request.DeadlineEnabled,
-                Deadline = request.Deadline,
+                Deadline = request.Deadline.ToUniversalTime(),
                 MaxAttempts = request.MaxAttempts,
                 Tags = request.Tags.ToList(),
                 Flags = request.Flags.ToList()
@@ -74,9 +78,11 @@ public static class CreateChallenge
             await cache.RemoveAsync(Keys.ChallengeIds(), token: cancellationToken);
 
             logger.LogInformation(
-                "Challenge created: {ChallengeId}, Category: {CategoryId}",
+                "Challenge ({ChallengeId}) created in category ({CategoryId}) by {UserName} ({UserId})",
                 challenge.Id,
-                request.CategoryId);
+                request.CategoryId,
+                request.UserName,
+                request.UserId);
 
             return challenge.Id;
         }
@@ -87,8 +93,14 @@ public static class CreateChallenge
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             app.MapPost("categories/{categoryId:Guid}/challenges",
-                    async (Guid categoryId, CreateChallengeRequest request, ISender sender) =>
+                    async (Guid categoryId, CreateChallengeRequest request, ClaimsPrincipal claims, ISender sender) =>
                     {
+                        var userId = claims.GetLoggedInUserId<string>();
+                        if (userId is null) return Results.BadRequest();
+
+                        var userName = claims.GetLoggedInUserName();
+                        if (userName is null) return Results.BadRequest();
+
                         var command = new Command(
                             CategoryId: categoryId,
                             Name: request.Name,
@@ -98,7 +110,9 @@ public static class CreateChallenge
                             Deadline: request.Deadline,
                             MaxAttempts: request.MaxAttempts,
                             Tags: request.Tags,
-                            Flags: request.Flags);
+                            Flags: request.Flags,
+                            UserId: userId,
+                            UserName: userName);
 
                         var result = await sender.Send(command);
 

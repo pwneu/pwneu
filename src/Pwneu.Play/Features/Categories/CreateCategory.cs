@@ -1,9 +1,11 @@
+using System.Security.Claims;
 using FluentValidation;
 using MediatR;
 using Pwneu.Play.Shared.Data;
 using Pwneu.Play.Shared.Entities;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
+using Pwneu.Shared.Extensions;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.Categories;
@@ -14,7 +16,7 @@ namespace Pwneu.Play.Features.Categories;
 /// </summary>
 public static class CreateCategory
 {
-    public record Command(string Name, string Description) : IRequest<Result<Guid>>;
+    public record Command(string Name, string Description, string UserId, string UserName) : IRequest<Result<Guid>>;
 
     internal sealed class Handler(
         ApplicationDbContext context,
@@ -46,7 +48,11 @@ public static class CreateCategory
                 cache.RemoveAsync(Keys.CategoryIds(), token: cancellationToken).AsTask()
             );
 
-            logger.LogInformation("Category created: {CategoryId}", category.Id);
+            logger.LogInformation(
+                "Category ({CategoryId}) created by {UserName} ({UserId})",
+                category.Id,
+                request.UserName,
+                request.UserId);
 
             return category.Id;
         }
@@ -56,9 +62,15 @@ public static class CreateCategory
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("categories", async (CreateCategoryRequest request, ISender sender) =>
+            app.MapPost("categories", async (CreateCategoryRequest request, ClaimsPrincipal claims, ISender sender) =>
                 {
-                    var command = new Command(request.Name, request.Description);
+                    var userId = claims.GetLoggedInUserId<string>();
+                    if (userId is null) return Results.BadRequest();
+
+                    var userName = claims.GetLoggedInUserName();
+                    if (userName is null) return Results.BadRequest();
+
+                    var command = new Command(request.Name, request.Description, userId, userName);
 
                     var result = await sender.Send(command);
 

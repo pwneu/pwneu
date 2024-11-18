@@ -32,8 +32,8 @@ public class UpdateCategoryTests(IntegrationTestsWebAppFactory factory) : BaseIn
 
         var updatedCategories = new List<UpdateCategory.Command>
         {
-            new(categoryIds[0], string.Empty, F.Lorem.Sentence()),
-            new(categoryIds[1], F.Lorem.Word(), string.Empty)
+            new(categoryIds[0], string.Empty, F.Lorem.Sentence(), string.Empty, string.Empty),
+            new(categoryIds[1], F.Lorem.Word(), string.Empty, string.Empty, string.Empty)
         };
 
         // Act
@@ -56,7 +56,7 @@ public class UpdateCategoryTests(IntegrationTestsWebAppFactory factory) : BaseIn
         var updateCategory = await Sender.Send(new UpdateCategory.Command(
             Id: Guid.NewGuid(),
             Name: F.Lorem.Word(),
-            Description: F.Lorem.Sentence()));
+            Description: F.Lorem.Sentence(), string.Empty, string.Empty));
 
         // Assert
         updateCategory.IsSuccess.Should().BeFalse();
@@ -88,7 +88,7 @@ public class UpdateCategoryTests(IntegrationTestsWebAppFactory factory) : BaseIn
         var updateCategory = await Sender.Send(new UpdateCategory.Command(
             Id: categoryId,
             Name: faker.Lorem.Word(),
-            Description: faker.Lorem.Sentence()));
+            Description: faker.Lorem.Sentence(), string.Empty, string.Empty));
 
         var updatedCategory = await DbContext
             .Categories
@@ -136,7 +136,7 @@ public class UpdateCategoryTests(IntegrationTestsWebAppFactory factory) : BaseIn
         await Sender.Send(new UpdateCategory.Command(
             Id: categoryId,
             Name: F.Lorem.Word(),
-            Description: F.Lorem.Sentence()));
+            Description: F.Lorem.Sentence(), string.Empty, string.Empty));
 
         var categoryCache =
             Cache.GetOrDefault<CategoryDetailsResponse>($"{nameof(CategoryDetailsResponse)}:{categoryId}");

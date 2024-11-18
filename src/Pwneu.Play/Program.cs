@@ -10,11 +10,10 @@ using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
-using Pwneu.Play.Features.Submissions;
-using Pwneu.Play.Features.Users;
 using Pwneu.Play.Shared.Data;
 using Pwneu.Play.Shared.Extensions;
 using Pwneu.Play.Shared.Services;
+using Pwneu.Play.Workers;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Extensions;
 using Serilog;
@@ -65,6 +64,7 @@ var postgres = builder.Configuration.GetConnectionString(Consts.Postgres) ??
                throw new InvalidOperationException("No Postgres connection found");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => { options.UseNpgsql(postgres); });
+builder.Services.AddDbContext<BufferDbContext>(options => { options.UseInMemoryDatabase("Buffer"); });
 
 // Redis Caching.
 var redis = builder.Configuration.GetConnectionString(Consts.Redis) ??
@@ -78,28 +78,13 @@ builder.Services.AddFusionCache()
     }))
     .WithDistributedCache(new RedisCache(new RedisCacheOptions { Configuration = redis }));
 
+var assembly = typeof(Program).Assembly;
+
 // RabbitMQ.
 builder.Services.AddMassTransit(busConfigurator =>
 {
     busConfigurator.SetKebabCaseEndpointNameFormatter();
-    busConfigurator.AddConsumer<UserDeletedEventConsumer>();
-    busConfigurator.AddConsumer<SubmittedEventsConsumer>(cfg =>
-    {
-        cfg.Options<BatchOptions>(options => options
-            .SetMessageLimit(10_000)
-            .SetTimeLimit(s: 1)
-            .SetTimeLimitStart(BatchTimeLimitStart.FromLast)
-            .SetConcurrencyLimit(1));
-    });
-    busConfigurator.AddConsumer<SolvedEventsConsumer>(cfg =>
-    {
-        cfg.Options<BatchOptions>(options => options
-            .SetMessageLimit(10_000)
-            .SetTimeLimit(s: 1)
-            .SetTimeLimitStart(BatchTimeLimitStart.FromLast)
-            .SetConcurrencyLimit(1));
-    });
-
+    busConfigurator.AddConsumers(assembly);
     busConfigurator.UsingRabbitMq((context, configurator) =>
     {
         configurator.Host(new Uri(builder.Configuration[Consts.MessageBrokerHost]!), h =>
@@ -111,8 +96,6 @@ builder.Services.AddMassTransit(busConfigurator =>
         configurator.ConfigureEndpoints(context);
     });
 });
-
-var assembly = typeof(Program).Assembly;
 
 // Assembly scanning of Mediator and Fluent Validations.
 builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(assembly));
@@ -174,6 +157,16 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromSeconds(5),
             }));
 
+    options.AddPolicy(Consts.UseHint, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.User.GetLoggedInUserId<string>(),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 2,
+                Window = TimeSpan.FromSeconds(10),
+            }));
+
+    // In development, set very high limits to effectively disable rate limiting.
     if (builder.Environment.IsDevelopment())
     {
         options.AddPolicy(Consts.Generate, httpContext =>
@@ -185,6 +178,7 @@ builder.Services.AddRateLimiter(options =>
                     Window = TimeSpan.FromSeconds(1),
                 }));
     }
+    // Actual rate limiting for production environment.
     else
     {
         options.AddPolicy(Consts.Generate, httpContext =>
@@ -197,6 +191,9 @@ builder.Services.AddRateLimiter(options =>
                 }));
     }
 });
+
+builder.Services.AddHostedService<SaveSolveBuffersService>();
+builder.Services.AddHostedService<SaveSubmissionBuffersService>();
 
 builder.Services.AddScoped<IMemberAccess, MemberAccess>();
 

@@ -1,10 +1,10 @@
 ﻿using System.Collections.Concurrent;
 using System.Security.Claims;
 using FluentValidation;
-using MassTransit;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
+using Pwneu.Play.Shared.Entities;
 using Pwneu.Play.Shared.Extensions;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
@@ -30,13 +30,15 @@ public static class SubmitFlag
 
     internal sealed class Handler(
         ApplicationDbContext context,
+        BufferDbContext bufferDbContext,
         IFusionCache cache,
-        IPublishEndpoint publishEndpoint,
         IValidator<Command> validator)
         : IRequestHandler<Command, Result<FlagStatus>>
     {
         public async Task<Result<FlagStatus>> Handle(Command request, CancellationToken cancellationToken)
         {
+            var submitTime = DateTime.UtcNow;
+
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
 
             if (!validationResult.IsValid)
@@ -151,16 +153,19 @@ public static class SubmitFlag
                 // Update user's cache.
                 await Task.WhenAll(cachingTasks);
 
-                // Publish the solved event.
-                await publishEndpoint.Publish(new SolvedEvent
-                    {
-                        UserId = request.UserId,
-                        UserName = request.UserName,
-                        ChallengeId = request.ChallengeId,
-                        Flag = request.Flag,
-                        SolvedAt = DateTime.UtcNow,
-                    },
-                    cancellationToken);
+                // Add the solved to the buffer.
+                var solveBuffer = new SolveBuffer
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = request.UserId,
+                    UserName = request.UserName,
+                    ChallengeId = request.ChallengeId,
+                    Flag = request.Flag,
+                    SolvedAt = submitTime,
+                };
+
+                bufferDbContext.Add(solveBuffer);
+                await bufferDbContext.SaveChangesAsync(cancellationToken);
 
                 return FlagStatus.Correct;
             }
@@ -185,15 +190,19 @@ public static class SubmitFlag
                 Keys.UserCategoryEval(request.UserId, challenge.CategoryId),
                 token: cancellationToken);
 
-            // Create a queue on for storing the submission on the database.
-            await publishEndpoint.Publish(new SubmittedEvent
+            // Add the submission to the buffer.
+            var submissionBuffer = new SubmissionBuffer
             {
+                Id = Guid.NewGuid(),
                 UserId = request.UserId,
                 UserName = request.UserName,
                 ChallengeId = request.ChallengeId,
                 Flag = request.Flag,
-                SubmittedAt = DateTime.UtcNow,
-            }, cancellationToken);
+                SubmittedAt = submitTime,
+            };
+
+            bufferDbContext.Add(submissionBuffer);
+            await bufferDbContext.SaveChangesAsync(cancellationToken);
 
             return FlagStatus.Incorrect;
         }

@@ -58,6 +58,7 @@ public static class GetUserSolves
                 {
                     ChallengeId = s.ChallengeId,
                     ChallengeName = s.Challenge.Name,
+                    Points = s.Challenge.Points,
                     SolvedAt = s.SolvedAt
                 });
 

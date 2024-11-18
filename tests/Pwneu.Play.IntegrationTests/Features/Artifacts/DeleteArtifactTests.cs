@@ -52,7 +52,7 @@ public class DeleteArtifactTests(IntegrationTestsWebAppFactory factory) : BaseIn
         await DbContext.SaveChangesAsync();
 
         // Act
-        var deleteArtifact = await Sender.Send(new DeleteArtifact.Command(artifact.Id));
+        var deleteArtifact = await Sender.Send(new DeleteArtifact.Command(artifact.Id, string.Empty, string.Empty));
         var deletedArtifact = await DbContext.Artifacts.Where(a => a.Id == artifact.Id).FirstOrDefaultAsync();
 
         // Assert
@@ -65,7 +65,7 @@ public class DeleteArtifactTests(IntegrationTestsWebAppFactory factory) : BaseIn
     public async Task Handle_Should_NotDeleteArtifact_WhenArtifactDoesNotExists()
     {
         // Act
-        var deleteArtifact = await Sender.Send(new DeleteArtifact.Command(Guid.NewGuid()));
+        var deleteArtifact = await Sender.Send(new DeleteArtifact.Command(Guid.NewGuid(), string.Empty, string.Empty));
 
         // Assert
         deleteArtifact.IsSuccess.Should().BeFalse();
@@ -115,7 +115,7 @@ public class DeleteArtifactTests(IntegrationTestsWebAppFactory factory) : BaseIn
         await Cache.SetAsync(Keys.ChallengeDetails(challenge.Id), challenge);
         await Cache.SetAsync(Keys.ArtifactData(challenge.Id), artifact);
 
-        await Sender.Send(new DeleteArtifact.Command(artifact.Id));
+        await Sender.Send(new DeleteArtifact.Command(artifact.Id, string.Empty, string.Empty));
 
         var cachedChallenge = await Cache.GetOrDefaultAsync<ChallengeDetailsResponse>(
             Keys.ChallengeDetails(challenge.Id));

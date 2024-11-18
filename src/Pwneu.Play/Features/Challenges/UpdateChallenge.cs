@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -5,6 +6,7 @@ using Pwneu.Play.Shared.Data;
 using Pwneu.Play.Shared.Extensions;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
+using Pwneu.Shared.Extensions;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.Challenges;
@@ -24,7 +26,9 @@ public static class UpdateChallenge
         DateTime Deadline,
         int MaxAttempts,
         IEnumerable<string> Tags,
-        IEnumerable<string> Flags) : IRequest<Result>;
+        IEnumerable<string> Flags,
+        string UserId,
+        string UserName) : IRequest<Result>;
 
     private static readonly Error NotFound = new("UpdateChallenge.NotFound",
         "The challenge with the specified ID was not found");
@@ -56,7 +60,7 @@ public static class UpdateChallenge
             challenge.Description = request.Description;
             challenge.Points = request.Points;
             challenge.DeadlineEnabled = request.DeadlineEnabled;
-            challenge.Deadline = request.Deadline;
+            challenge.Deadline = request.Deadline.ToUniversalTime();
             challenge.MaxAttempts = request.MaxAttempts;
             challenge.Tags = request.Tags.ToList();
             challenge.Flags = request.Flags.ToList();
@@ -82,7 +86,11 @@ public static class UpdateChallenge
 
             await Task.WhenAll(invalidationTasks);
 
-            logger.LogInformation("Challenge updated: {Id}", request.Id);
+            logger.LogInformation(
+                "Challenge ({Id}) updated by {UserName} ({UserId})",
+                request.Id,
+                request.UserName,
+                request.UserId);
 
             return Result.Success();
         }
@@ -92,15 +100,23 @@ public static class UpdateChallenge
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPut("challenges/{id:Guid}", async (Guid id, UpdateChallengeRequest request, ISender sender) =>
-                {
-                    var command = new Command(id, request.Name, request.Description, request.Points,
-                        request.DeadlineEnabled, request.Deadline, request.MaxAttempts, request.Tags, request.Flags);
+            app.MapPut("challenges/{id:Guid}",
+                    async (Guid id, UpdateChallengeRequest request, ClaimsPrincipal claims, ISender sender) =>
+                    {
+                        var userId = claims.GetLoggedInUserId<string>();
+                        if (userId is null) return Results.BadRequest();
 
-                    var result = await sender.Send(command);
+                        var userName = claims.GetLoggedInUserName();
+                        if (userName is null) return Results.BadRequest();
 
-                    return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
-                })
+                        var command = new Command(id, request.Name, request.Description, request.Points,
+                            request.DeadlineEnabled, request.Deadline, request.MaxAttempts, request.Tags,
+                            request.Flags, userId, userName);
+
+                        var result = await sender.Send(command);
+
+                        return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
+                    })
                 .RequireAuthorization(Consts.ManagerAdminOnly)
                 .WithTags(nameof(Challenges));
         }

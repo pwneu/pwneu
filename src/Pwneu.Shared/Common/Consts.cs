@@ -27,12 +27,11 @@ public static class Consts
     public const string Redis = "Redis";
     public const string Sqlite = "Sqlite";
 
-    public const int GmailSmtpPort = 587;
-
     public const string RefreshToken = "refreshToken";
     public const string AntiEmailAbuse = "antiEmailAbuse";
     public const string Fixed = "fixed";
     public const string Challenges = "challenges";
+    public const string UseHint = "useHint";
     public const string Registration = "registration";
     public const string VerifyEmail = "verifyEmail";
     public const string ResetPassword = "resetPassword";

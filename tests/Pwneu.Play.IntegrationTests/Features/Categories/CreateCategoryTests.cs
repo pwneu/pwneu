@@ -13,8 +13,8 @@ public class CreateCategoryTests(IntegrationTestsWebAppFactory factory) : BaseIn
         // Arrange
         var createCategories = new List<CreateCategory.Command>
         {
-            new(string.Empty, F.Lorem.Sentence()),
-            new(F.Lorem.Word(), string.Empty),
+            new(string.Empty, F.Lorem.Sentence(), string.Empty, string.Empty),
+            new(F.Lorem.Word(), string.Empty, string.Empty, string.Empty),
         };
 
         // Act
@@ -34,7 +34,7 @@ public class CreateCategoryTests(IntegrationTestsWebAppFactory factory) : BaseIn
     public async Task Handle_Should_CreateCategory_WhenCommandIsValid()
     {
         // Arrange
-        var createCategory = new CreateCategory.Command(F.Lorem.Word(), F.Lorem.Sentence());
+        var createCategory = new CreateCategory.Command(F.Lorem.Word(), F.Lorem.Sentence(), string.Empty, string.Empty);
 
         // Act
         var createCategoryResult = await Sender.Send(createCategory);

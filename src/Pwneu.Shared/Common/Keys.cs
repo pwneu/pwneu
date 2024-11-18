@@ -14,6 +14,9 @@ public static class Keys
     // Key for caching access keys.
     public static string AccessKeys() => "accessKeys";
 
+    // Key for caching blacklisted emails.
+    public static string BlacklistedEmails() => "blacklistedEmails";
+
     // Key for caching a single CategoryResponse.
     public static string Category(Guid id) => $"category:{id}";
 
@@ -58,8 +61,11 @@ public static class Keys
     // Key for caching graph of top users.
     public static string TopUsersGraph() => "topUserGraph";
 
+    // Key for caching if someone used a hint.
+    public static string SomeoneUsedHint() => "someoneUsedHint";
+
     // Key for caching if there's a recent calculation of leaderboard when saving a correct submission.
-    public static string HasRecentLeaderboardCount() => "hasRecentLeaderboardCount";
+    // public static string HasRecentLeaderboardCount() => "hasRecentLeaderboardCount";
 
     // Key for caching challenge flags.
     public static string Flags(Guid challengeId) => $"challenge:{challengeId}:flag";

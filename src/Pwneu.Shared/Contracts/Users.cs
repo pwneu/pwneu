@@ -91,5 +91,5 @@ public record UserRankResponse
     public string? UserName { get; set; } = default!;
     public int Position { get; set; }
     public int Points { get; set; }
-    public DateTime LatestCorrectSubmission { get; set; }
+    public DateTime LatestSolve { get; set; }
 }

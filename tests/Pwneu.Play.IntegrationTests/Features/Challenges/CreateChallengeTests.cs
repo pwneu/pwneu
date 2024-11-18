@@ -24,9 +24,12 @@ public class CreateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
 
         var createChallenges = new List<CreateChallenge.Command>
         {
-            new(categoryId, string.Empty, F.Lorem.Sentence(), 50, false, DateTime.UtcNow, 5, [], F.Lorem.Words()),
-            new(categoryId, "Sanity Check", string.Empty, 50, false, DateTime.UtcNow, 5, [], F.Lorem.Words()),
-            new(categoryId, "Sanity Check", F.Lorem.Sentence(), 50, false, DateTime.UtcNow, 5, [], [])
+            new(categoryId, string.Empty, F.Lorem.Sentence(), 50, false, DateTime.UtcNow, 5, [], F.Lorem.Words(),
+                string.Empty, string.Empty),
+            new(categoryId, "Sanity Check", string.Empty, 50, false, DateTime.UtcNow, 5, [], F.Lorem.Words(),
+                string.Empty, string.Empty),
+            new(categoryId, "Sanity Check", F.Lorem.Sentence(), 50, false, DateTime.UtcNow, 5, [], [], string.Empty,
+                string.Empty)
         };
 
         // Act
@@ -40,6 +43,35 @@ public class CreateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
             createChallengeResult.Should().BeOfType<Result<Guid>>();
             createChallengeResult.IsSuccess.Should().BeFalse();
         }
+    }
+
+    [Fact]
+    public async Task Handle_Should_CreateChallenge_EvenIfDateIsNotUtc()
+    {
+        // Arrange
+        var categoryId = Guid.NewGuid();
+        var category = new Category
+        {
+            Id = categoryId,
+            Name = F.Lorem.Word(),
+            Description = F.Lorem.Sentence()
+        };
+        DbContext.Add(category);
+        await DbContext.SaveChangesAsync();
+
+        var createChallenge = new CreateChallenge.Command(categoryId, "Sanity Check", "The flag is in plain sight", 50,
+            true,
+            DateTime.Now.AddDays(7), 5, [], ["flag1", "flag2"], string.Empty, string.Empty);
+
+        // Act
+        var createChallengeResult = await Sender.Send(createChallenge);
+        var challenge = DbContext.Challenges.FirstOrDefault(c => c.Id == createChallengeResult.Value);
+
+        // Assert
+        createChallengeResult.Should().BeOfType<Result<Guid>>();
+        createChallengeResult.IsSuccess.Should().BeTrue();
+        challenge.Should().NotBeNull();
+        challenge.Id.Should().Be(createChallengeResult.Value);
     }
 
     [Fact]
@@ -58,7 +90,7 @@ public class CreateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
 
         var createChallenge = new CreateChallenge.Command(categoryId, "Sanity Check", "The flag is in plain sight", 50,
             true,
-            DateTime.UtcNow.AddDays(7), 5, [], ["flag1", "flag2"]);
+            DateTime.UtcNow.AddDays(7), 5, [], ["flag1", "flag2"], string.Empty, string.Empty);
 
         // Act
         var createChallengeResult = await Sender.Send(createChallenge);

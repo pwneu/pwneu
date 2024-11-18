@@ -88,6 +88,12 @@ public static class UseHint
 
             await Task.WhenAll(invalidationTasks);
 
+            await cache.SetAsync(
+                Keys.SomeoneUsedHint(),
+                true,
+                new FusionCacheEntryOptions { Duration = TimeSpan.FromDays(1) },
+                cancellationToken);
+
             logger.LogInformation("Hint used: {HintId}, User: {UserId}", request.HintId, request.UserId);
 
             return hintDetails.Content;
@@ -129,7 +135,7 @@ public static class UseHint
                     }
                 })
                 .RequireAuthorization(Consts.MemberOnly)
-                .RequireRateLimiting(Consts.Fixed)
+                .RequireRateLimiting(Consts.UseHint)
                 .WithTags(nameof(Hints));
         }
     }
