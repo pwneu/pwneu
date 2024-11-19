@@ -93,5 +93,7 @@ public static class Keys
 
     // Key for caching the number of attempts left by the user.
     public static string AttemptsLeft(string userId, Guid challengeId) => $"attemptsLeft:{userId}:{challengeId}";
+
+    // Key for caching how many failed logins of an IP address.
     public static string FailedLoginCount(string ipAddress) => $"failedLoginCount:{ipAddress}";
 }

@@ -19,7 +19,7 @@ public static class Revoke
     public record Command(string UserId) : IRequest<Result>;
 
     private static readonly Error UserNotFound = new("Revoke.UserNotFound", "User not found");
-    private static readonly Error UpdateFailed = new("Revoke.UpdateFailed", "Failed to update user");
+    private static readonly Error RevokeFailed = new("Revoke.RevokeFailed", "Failed to revoke token");
 
     internal sealed class Handler(UserManager<User> userManager, IFusionCache cache) : IRequestHandler<Command, Result>
     {
@@ -30,13 +30,16 @@ public static class Revoke
             if (user is null)
                 return Result.Failure(UserNotFound);
 
-            await cache.RemoveAsync(user.Id, token: cancellationToken);
-
             user.RefreshToken = null;
 
             var updateResult = await userManager.UpdateAsync(user);
 
-            return updateResult.Succeeded ? Result.Success() : Result.Failure(UpdateFailed);
+            if (!updateResult.Succeeded)
+                return Result.Failure(RevokeFailed);
+
+            await cache.RemoveAsync(Keys.UserToken(user.Id), token: cancellationToken);
+
+            return Result.Success();
         }
     }
 

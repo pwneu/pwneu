@@ -44,7 +44,7 @@ public static class DeleteUser
 
             var userIsAdmin = await userManager.IsInRoleAsync(user, Consts.Admin);
 
-            // Admin shouldn't be deleted
+            // Admin shouldn't be deleted.
             if (userIsAdmin)
                 return Result.Failure(CannotDeleteAdmin);
 
@@ -57,8 +57,11 @@ public static class DeleteUser
             {
                 cache.RemoveAsync(Keys.User(request.Id), token: cancellationToken).AsTask(),
                 cache.RemoveAsync(Keys.UserDetails(request.Id), token: cancellationToken).AsTask(),
+                cache.RemoveAsync(Keys.UserToken(request.Id), token: cancellationToken).AsTask(),
                 cache.RemoveAsync(Keys.MemberIds(), token: cancellationToken).AsTask()
             };
+
+            // Don't delete their certificates.
 
             await Task.WhenAll(invalidationTasks);
 
