@@ -143,17 +143,27 @@ public static class SubmitFlag
                         challenge with { SolveCount = challenge.SolveCount + 1 },
                         token: cancellationToken).AsTask(),
                     cache.RemoveAsync(
-                        Keys.UserSolveIds(request.UserId), token: cancellationToken).AsTask(),
-                    cache.RemoveAsync(
                         Keys.UserGraph(request.UserId), token: cancellationToken).AsTask(),
                     cache.RemoveAsync(
                         Keys.UserCategoryEval(request.UserId, challenge.CategoryId), token: cancellationToken).AsTask()
                 };
 
-                // Update user's cache.
+                // Invalidate user's cache.
                 await Task.WhenAll(cachingTasks);
 
-                // Add the solved to the buffer.
+                // Check if the user's solve ids were in the cache.
+                var solveIdsCache = await cache.GetOrDefaultAsync<List<Guid>>(
+                    Keys.UserSolveIds(request.UserId),
+                    token: cancellationToken);
+
+                // If the cache is present, update it.
+                if (solveIdsCache is not null)
+                {
+                    solveIdsCache.Add(request.ChallengeId);
+                    await cache.SetAsync(Keys.UserSolveIds(request.UserId), solveIdsCache, token: cancellationToken);
+                }
+
+                // Add the solved challenge to the buffer.
                 var solveBuffer = new SolveBuffer
                 {
                     Id = Guid.NewGuid(),
