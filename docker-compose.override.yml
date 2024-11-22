@@ -45,3 +45,7 @@ services:
   pwneu.monitoring:
     ports:
       - "37003:9090"
+
+  pwneu.dashboard.renderer:
+    ports:
+      - "37005:8081"
