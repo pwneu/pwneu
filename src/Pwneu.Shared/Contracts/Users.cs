@@ -62,6 +62,7 @@ public record UserDetailsResponse
     public DateTime CreatedAt { get; set; }
     public string? Email { get; set; }
     public bool EmailConfirmed { get; set; }
+    public List<string> Roles { get; set; } = [];
 }
 
 public record UserDeletedEvent
