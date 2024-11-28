@@ -44,6 +44,8 @@ public static class NotifyLogin
                 IpAddress = string.IsNullOrWhiteSpace(request.IpAddress) ? "Unknown" : request.IpAddress,
                 UserAgent = string.IsNullOrWhiteSpace(request.UserAgent) ? "Unknown" : request.UserAgent,
                 Referer = string.IsNullOrWhiteSpace(request.Referer) ? "Unknown" : request.Referer,
+                WebsiteUrl = _smtpOptions.WebsiteUrl,
+                LogoUrl = _smtpOptions.LogoUrl
             };
 
             var (success, notifyLoginHtml) = await RazorTemplateEngine.TryRenderPartialAsync(
@@ -57,7 +59,7 @@ public static class NotifyLogin
             {
                 await fluentEmail
                     .To(request.Email)
-                    .Subject("PWNEU Login Notification")
+                    .Subject("PWNEU Login Notification.")
                     .Body(notifyLoginHtml, true)
                     .SendAsync();
 
@@ -77,6 +79,8 @@ public static class NotifyLogin
         public required string IpAddress { get; init; }
         public required string UserAgent { get; init; }
         public required string Referer { get; init; }
+        public required string WebsiteUrl { get; init; }
+        public required string LogoUrl { get; init; }
     }
 }
 

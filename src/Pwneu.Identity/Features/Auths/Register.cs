@@ -138,6 +138,9 @@ public static class Register
 
             var confirmationToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
 
+            // Uncomment if testing registration email.
+            // await userManager.DeleteAsync(user);
+
             await publishEndpoint.Publish(new RegisteredEvent
             {
                 UserName = request.UserName,
