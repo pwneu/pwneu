@@ -16,10 +16,13 @@ using Pwneu.Play.Shared.Services;
 using Pwneu.Play.Workers;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Extensions;
+using QuestPDF.Infrastructure;
 using Serilog;
 using Swashbuckle.AspNetCore.Filters;
 using ZiggyCreatures.Caching.Fusion;
 using ZiggyCreatures.Caching.Fusion.Serialization.NewtonsoftJson;
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -192,6 +195,8 @@ builder.Services.AddRateLimiter(options =>
     }
 });
 
+builder.Services.AddOutputCache();
+
 builder.Services.AddHostedService<SaveSolveBuffersService>();
 builder.Services.AddHostedService<SaveSubmissionBuffersService>();
 
@@ -217,6 +222,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseRateLimiter();
+
+app.UseOutputCache();
 
 if (app.Environment.IsDevelopment())
     app.MapGet("/", async context =>
