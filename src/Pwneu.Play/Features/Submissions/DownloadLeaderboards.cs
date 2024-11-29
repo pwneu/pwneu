@@ -141,6 +141,9 @@ public static class DownloadLeaderboards
                     var query = new Query();
                     var result = await sender.Send(query);
 
+                    if (result.IsFailure)
+                        return Results.BadRequest(result.Error);
+
                     using var stream = new MemoryStream();
                     result.Value.GeneratePdf(stream);
                     var pdfBytes = stream.ToArray();
