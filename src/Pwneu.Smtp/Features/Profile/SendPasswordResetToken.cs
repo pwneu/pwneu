@@ -37,7 +37,9 @@ public static class SendPasswordResetToken
             {
                 ResetPasswordUrl = _smtpOptions.ResetPasswordUrl,
                 EncodedEmail = encodedEmail,
-                EncodedPasswordResetToken = encodedPasswordResetToken
+                EncodedPasswordResetToken = encodedPasswordResetToken,
+                WebsiteUrl = _smtpOptions.WebsiteUrl,
+                LogoUrl = _smtpOptions.LogoUrl
             };
 
             var (success, sendPasswordResetTokenHtml) = await RazorTemplateEngine.TryRenderPartialAsync(
@@ -51,7 +53,7 @@ public static class SendPasswordResetToken
             {
                 await fluentEmail
                     .To(request.Email)
-                    .Subject("PWNEU Password Reset")
+                    .Subject("PWNEU Password Reset.")
                     .Body(sendPasswordResetTokenHtml, true)
                     .SendAsync();
 
@@ -69,6 +71,8 @@ public static class SendPasswordResetToken
         public required string ResetPasswordUrl { get; init; }
         public required string EncodedEmail { get; init; }
         public required string EncodedPasswordResetToken { get; init; }
+        public required string WebsiteUrl { get; init; }
+        public required string LogoUrl { get; init; }
     }
 }
 

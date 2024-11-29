@@ -117,7 +117,7 @@ public static class GenerateUserStats
                     var result = await sender.Send(query);
 
                     return result.IsFailure
-                        ? Results.NotFound(result.Error)
+                        ? Results.BadRequest(result.Error)
                         : Results.Content(result.Value, "text/html");
                 })
                 .RequireAuthorization(Consts.ManagerAdminOnly)
@@ -132,7 +132,7 @@ public static class GenerateUserStats
                     var result = await sender.Send(query);
 
                     return result.IsFailure
-                        ? Results.NotFound(result.Error)
+                        ? Results.BadRequest(result.Error)
                         : Results.Content(result.Value, "text/html");
                 })
                 .RequireAuthorization()

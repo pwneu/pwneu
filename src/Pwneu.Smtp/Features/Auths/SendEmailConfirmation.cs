@@ -39,7 +39,9 @@ public static class SendEmailConfirmation
                 FullName = request.FullName,
                 VerifyEmailUrl = _smtpOptions.VerifyEmailUrl,
                 EncodedEmail = encodedEmail,
-                EncodedConfirmationToken = encodedConfirmationToken
+                EncodedConfirmationToken = encodedConfirmationToken,
+                WebsiteUrl = _smtpOptions.WebsiteUrl,
+                LogoUrl = _smtpOptions.LogoUrl
             };
 
             var (success, sendEmailConfirmationHtml) = await RazorTemplateEngine.TryRenderPartialAsync(
@@ -53,7 +55,7 @@ public static class SendEmailConfirmation
             {
                 await fluentEmail
                     .To(request.Email)
-                    .Subject("Welcome to PWNEU!")
+                    .Subject("Welcome to PWNEU! Verify Your Email to Activate Your Account.")
                     .Body(sendEmailConfirmationHtml, true)
                     .SendAsync();
 
@@ -73,6 +75,8 @@ public static class SendEmailConfirmation
         public required string VerifyEmailUrl { get; init; }
         public required string EncodedEmail { get; init; }
         public required string EncodedConfirmationToken { get; init; }
+        public required string WebsiteUrl { get; init; }
+        public required string LogoUrl { get; init; }
     }
 }
 

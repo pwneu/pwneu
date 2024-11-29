@@ -129,6 +129,8 @@ services:
       - SmtpOptions__SendPasswordResetTokenIsEnabled=${SMTP_SEND_PASSWORD_RESET_TOKEN_IS_ENABLED}
       - SmtpOptions__VerifyEmailUrl=${SMTP_VERIFY_EMAIL_URL}
       - SmtpOptions__ResetPasswordUrl=${SMTP_RESET_PASSWORD_URL}
+      - SmtpOptions__WebsiteUrl=${SMTP_WEBSITE_URL}
+      - SmtpOptions__LogoUrl=${SMTP_LOGO_URL}
     networks:
       - pwneu
 
