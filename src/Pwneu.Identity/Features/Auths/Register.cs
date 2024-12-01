@@ -131,7 +131,7 @@ public static class Register
 
             if (!addRole.Succeeded)
             {
-                // If role assignment fails, delete the user
+                // If role assignment fails, delete the user.
                 await userManager.DeleteAsync(user);
                 return Result.Failure(AddRoleFailed);
             }
@@ -213,8 +213,10 @@ public static class Register
             RuleFor(c => c.FullName)
                 .NotEmpty()
                 .WithMessage("Fullname is required.")
-                .MaximumLength(100)
-                .WithMessage("Fullname must be 100 characters or less.");
+                .MaximumLength(40)
+                .WithMessage("Fullname must be 40 characters or less.")
+                .Matches(@"^[a-zA-Z\s]+$")
+                .WithMessage("Fullname must only contain letters and spaces.");
 
             RuleFor(c => c.AccessKey)
                 .NotEmpty()
@@ -233,12 +235,6 @@ public static class Register
                 .WithMessage("Password must contain at least one digit.")
                 .Matches(@"[\W_]")
                 .WithMessage("Password must contain at least one non-alphanumeric character.");
-
-            RuleFor(c => c.FullName)
-                .NotEmpty()
-                .WithMessage("Full Name is required.")
-                .MaximumLength(100)
-                .WithMessage("Full Name must be 100 characters or less.");
         }
     }
 }
