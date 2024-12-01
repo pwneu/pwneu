@@ -33,7 +33,7 @@ public static class GetCertificate
     {
         public async Task<Result<CertificateResponse>> Handle(Query request, CancellationToken cancellationToken)
         {
-            // Check if the submissions are allowed.
+            // Check if certifications are allowed.
             var isCertificationEnabled = await cache.GetOrSetAsync(Keys.IsCertificationEnabled(), async _ =>
                     await context.GetIdentityConfigurationValueAsync<bool>(Consts.IsCertificationEnabled,
                         cancellationToken),
