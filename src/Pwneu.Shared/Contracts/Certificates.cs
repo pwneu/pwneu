@@ -1,7 +1,8 @@
 ﻿namespace Pwneu.Shared.Contracts;
 
-public record CreateCertificateRequest
+public record CertificateResponse
 {
-    public string UserId { get; init; } = default!;
-    public string? CustomName { get; init; }
+    public string FileName { get; init; } = default!;
+    public string ContentType { get; init; } = default!;
+    public byte[] Data { get; init; } = default!;
 }

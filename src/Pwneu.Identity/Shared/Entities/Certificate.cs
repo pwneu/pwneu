@@ -6,7 +6,8 @@ public class Certificate
 {
     public Guid Id { get; init; }
     [MaxLength(36)] public string UserId { get; init; } = string.Empty;
-    [MaxLength(100)] public string FullName { get; init; } = string.Empty;
-    [MaxLength(100)] public string Issuer { get; init; } = string.Empty;
-    public DateTime IssuedAt { get; init; }
+    [MaxLength(100)] public string FileName { get; init; } = string.Empty;
+    [MaxLength(100)] public string ContentType { get; init; } = string.Empty;
+    public byte[] Data { get; init; } = null!;
+    public User? User { get; init; }
 }

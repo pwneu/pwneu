@@ -5,24 +5,37 @@ using Pwneu.Shared.Common;
 
 namespace Pwneu.Identity.Features.Certificates;
 
-public static class DeleteUserCertificate
+public static class DeleteCertificate
 {
-    public record Command(string Id) : IRequest<Result>;
+    public record Command(string UserId) : IRequest<Result>;
 
-    private static readonly Error NotFound = new("RemoveCertificate.NotFound",
+    public static readonly Error UserNotFound = new(
+        "DeleteCertificate.UserNotFound",
+        "The user with the specified ID was not found");
+
+    public static readonly Error CertificateNotFound = new(
+        "DeleteCertificate.NotFound",
         "The user doesn't have a certificate yet");
 
     internal sealed class Handler(ApplicationDbContext context) : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
+            var userExists = await context
+                .Users
+                .Where(u => u.Id == request.UserId)
+                .AnyAsync(cancellationToken);
+
+            if (!userExists)
+                return Result.Failure<Guid>(UserNotFound);
+
             var certificate = await context
                 .Certificates
-                .Where(c => c.UserId == request.Id)
+                .Where(c => c.UserId == request.UserId)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (certificate is null)
-                return Result.Failure(NotFound);
+                return Result.Failure(CertificateNotFound);
 
             context.Certificates.Remove(certificate);
 

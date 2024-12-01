@@ -9,4 +9,5 @@ public class User : IdentityUser
     public DateTime CreatedAt { get; init; }
     [MaxLength(1000)] public string? RefreshToken { get; set; }
     public DateTime RefreshTokenExpiry { get; set; }
+    public Certificate? Certificate { get; init; }
 }
