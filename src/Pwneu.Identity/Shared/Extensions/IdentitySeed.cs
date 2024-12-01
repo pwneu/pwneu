@@ -87,13 +87,5 @@ public static class IdentitySeed
         // Only set the value if it doesn't exist.
         if (isCertificationEnabled is null)
             await context.SetIdentityConfigurationValueAsync(Consts.IsCertificationEnabled, false);
-
-        // Check if the CertificationIssuer row already exists.
-        var certificationIssuer = await context.IdentityConfigurations
-            .FirstOrDefaultAsync(c => c.Key == Consts.CertificationIssuer);
-
-        // Only set the value if it doesn't exist.
-        if (certificationIssuer is null)
-            await context.SetIdentityConfigurationValueAsync(Consts.CertificationIssuer, string.Empty);
     }
 }

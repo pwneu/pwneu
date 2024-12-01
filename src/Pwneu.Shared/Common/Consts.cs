@@ -1,7 +1,7 @@
 namespace Pwneu.Shared.Common;
 
 /// <summary>
-/// Constant strings for preventing typos
+/// Constant strings for preventing typos.
 /// </summary>
 public static class Consts
 {
@@ -41,7 +41,6 @@ public static class Consts
     public const string PublicLeaderboardCount = "PublicLeaderboardCount";
 
     public const string IsCertificationEnabled = "IsCertificationEnabled";
-    public const string CertificationIssuer = "CertificationIssuer";
     public const string IsTurnstileEnabled = "IsTurnstileEnabled";
 
     public const string TurnstileChallengeUrl = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
