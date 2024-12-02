@@ -22,7 +22,8 @@ public static class Register
         string Password,
         string FullName,
         string AccessKey,
-        string? TurnstileToken)
+        string? TurnstileToken,
+        string? IpAddress = null)
         : IRequest<Result>;
 
     private static readonly Error Failed = new("Register.Failed", "Unable to create user");
@@ -162,7 +163,11 @@ public static class Register
 
             await cache.RemoveAsync(Keys.MemberIds(), token: cancellationToken);
 
-            logger.LogInformation("User registered: {UserName}, Email: {Email}", request.UserName, request.Email);
+            logger.LogInformation(
+                "User registered: {UserName}, Email: {Email}, IP Address: {IpAddress}",
+                request.UserName,
+                request.Email,
+                request.IpAddress);
 
             return Result.Success();
 
@@ -181,10 +186,19 @@ public static class Register
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("register", async (RegisterRequest request, ISender sender) =>
+            app.MapPost("register", async (RegisterRequest request, HttpContext httpContext, ISender sender) =>
                 {
-                    var command = new Command(request.UserName, request.Email, request.Password, request.FullName,
-                        request.AccessKey, request.TurnstileToken);
+                    var ipAddress = httpContext.Request.Headers[Consts.CfConnectingIp].ToString();
+
+                    var command = new Command(
+                        UserName: request.UserName,
+                        Email: request.Email,
+                        Password: request.Password,
+                        FullName: request.FullName,
+                        AccessKey: request.AccessKey,
+                        TurnstileToken: request.TurnstileToken,
+                        IpAddress: ipAddress);
+
                     var result = await sender.Send(command);
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.Created();
