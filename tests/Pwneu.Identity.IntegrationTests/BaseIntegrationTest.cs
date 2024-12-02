@@ -46,6 +46,7 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
     public async Task InitializeAsync()
     {
         await DbContext.Database.EnsureCreatedAsync();
+        await Cache.RemoveAsync(Keys.IsCertificationEnabled());
 
         await Scope.ServiceProvider.SeedRolesAsync();
         await Scope.ServiceProvider.SeedAdminAsync();

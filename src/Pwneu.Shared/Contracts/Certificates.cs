@@ -6,3 +6,10 @@ public record CertificateResponse
     public string ContentType { get; init; } = default!;
     public byte[] Data { get; init; } = default!;
 }
+
+public enum CertificateStatus
+{
+    WithCertificate,
+    WithoutCertificate,
+    NotAllowed
+}

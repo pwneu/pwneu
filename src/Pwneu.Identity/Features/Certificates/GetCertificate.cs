@@ -58,6 +58,7 @@ public static class GetCertificate
                 .Where(c => c.UserId == request.UserId)
                 .Select(c => new CertificateResponse
                 {
+                    FileName = c.FileName,
                     ContentType = c.ContentType,
                     Data = c.Data
                 })
