@@ -117,13 +117,21 @@ public static class AddArtifact
                 .NotEmpty()
                 .WithMessage("Filename is required.")
                 .MaximumLength(100)
-                .WithMessage("Filename must not exceed 100 characters.");
+                .WithMessage("Filename must not exceed 100 characters.")
+                .Must(BeAValidFileName)
+                .WithMessage("Filename contains invalid characters.");
 
             RuleFor(c => c.ContentType)
                 .NotEmpty()
                 .WithMessage("Content type is required.")
                 .MaximumLength(100)
                 .WithMessage("Content type must not exceed 100 characters.");
+        }
+
+        private static bool BeAValidFileName(string fileName)
+        {
+            var invalidChars = Path.GetInvalidFileNameChars();
+            return !fileName.Any(ch => invalidChars.Contains(ch));
         }
     }
 }

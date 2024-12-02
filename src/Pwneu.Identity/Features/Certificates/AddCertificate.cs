@@ -137,16 +137,34 @@ public static class AddCertificate
                 .WithMessage("Filename is required.")
                 .MaximumLength(100)
                 .WithMessage("Filename must not exceed 100 characters.")
-                .Must(fileName => fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
-                .WithMessage("The file must have a .pdf extension.");
+                .Must(HaveValidFileExtension)
+                .WithMessage("The file must have a .pdf extension.")
+                .Must(BeAValidFileName)
+                .WithMessage("Filename contains invalid characters.");
 
             RuleFor(c => c.ContentType)
                 .NotEmpty()
                 .WithMessage("Content type is required.")
                 .MaximumLength(100)
                 .WithMessage("Content type must not exceed 100 characters.")
-                .Must(contentType => contentType == "application/pdf")
+                .Must(BePdfContentType)
                 .WithMessage("The file must be a PDF.");
+        }
+
+        private static bool BeAValidFileName(string fileName)
+        {
+            var invalidChars = Path.GetInvalidFileNameChars();
+            return !fileName.Any(ch => invalidChars.Contains(ch));
+        }
+
+        private static bool HaveValidFileExtension(string fileName)
+        {
+            return fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool BePdfContentType(string contentType)
+        {
+            return contentType == "application/pdf";
         }
     }
 }
