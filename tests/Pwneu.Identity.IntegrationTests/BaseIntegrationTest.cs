@@ -49,6 +49,7 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
 
         await Scope.ServiceProvider.SeedRolesAsync();
         await Scope.ServiceProvider.SeedAdminAsync();
+        await Scope.ServiceProvider.SeedIdentityConfigurationAsync();
 
         var appOptions = Scope.ServiceProvider.GetRequiredService<IOptions<AppOptions>>().Value;
 

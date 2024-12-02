@@ -13,6 +13,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
         builder.Entity<IdentityConfiguration>()
             .HasKey(c => c.Key);
+
+        builder.Entity<User>()
+            .HasOne(u => u.Certificate)
+            .WithOne(c => c.User)
+            .HasForeignKey<Certificate>(c => c.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
     public virtual DbSet<AccessKey> AccessKeys { get; init; } = null!;

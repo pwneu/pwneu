@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
@@ -28,11 +29,20 @@ public static class AddArtifact
         "AddArtifact.FileSizeLimit",
         $"File size exceeds the limit of {MaxFileSize} megabytes");
 
-    internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, ILogger<Handler> logger)
+    internal sealed class Handler(
+        ApplicationDbContext context,
+        IFusionCache cache,
+        ILogger<Handler> logger,
+        IValidator<Command> validator)
         : IRequestHandler<Command, Result<Guid>>
     {
         public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
         {
+            var validationResult = await validator.ValidateAsync(request, cancellationToken);
+
+            if (!validationResult.IsValid)
+                return Result.Failure<Guid>(new Error("AddArtifact.Validation", validationResult.ToString()));
+
             if (request.FileSize > MaxFileSize)
                 return Result.Failure<Guid>(FileSizeLimit);
 
@@ -96,6 +106,32 @@ public static class AddArtifact
                 .DisableAntiforgery()
                 .RequireAuthorization(Consts.ManagerAdminOnly)
                 .WithTags(nameof(Artifacts));
+        }
+    }
+
+    public class Validator : AbstractValidator<Command>
+    {
+        public Validator()
+        {
+            RuleFor(c => c.FileName)
+                .NotEmpty()
+                .WithMessage("Filename is required.")
+                .MaximumLength(100)
+                .WithMessage("Filename must not exceed 100 characters.")
+                .Must(BeAValidFileName)
+                .WithMessage("Filename contains invalid characters.");
+
+            RuleFor(c => c.ContentType)
+                .NotEmpty()
+                .WithMessage("Content type is required.")
+                .MaximumLength(100)
+                .WithMessage("Content type must not exceed 100 characters.");
+        }
+
+        private static bool BeAValidFileName(string fileName)
+        {
+            var invalidChars = Path.GetInvalidFileNameChars();
+            return !fileName.Any(ch => invalidChars.Contains(ch));
         }
     }
 }

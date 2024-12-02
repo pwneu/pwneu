@@ -5,8 +5,9 @@ namespace Pwneu.Identity.Shared.Entities;
 
 public class User : IdentityUser
 {
-    [MaxLength(100)] public string FullName { get; set; } = string.Empty;
+    [MaxLength(40)] public string FullName { get; set; } = string.Empty;
     public DateTime CreatedAt { get; init; }
     [MaxLength(1000)] public string? RefreshToken { get; set; }
     public DateTime RefreshTokenExpiry { get; set; }
+    public Certificate? Certificate { get; init; }
 }

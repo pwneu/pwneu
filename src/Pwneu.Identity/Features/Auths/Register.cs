@@ -22,7 +22,8 @@ public static class Register
         string Password,
         string FullName,
         string AccessKey,
-        string? TurnstileToken)
+        string? TurnstileToken,
+        string? IpAddress = null)
         : IRequest<Result>;
 
     private static readonly Error Failed = new("Register.Failed", "Unable to create user");
@@ -131,7 +132,7 @@ public static class Register
 
             if (!addRole.Succeeded)
             {
-                // If role assignment fails, delete the user
+                // If role assignment fails, delete the user.
                 await userManager.DeleteAsync(user);
                 return Result.Failure(AddRoleFailed);
             }
@@ -162,7 +163,11 @@ public static class Register
 
             await cache.RemoveAsync(Keys.MemberIds(), token: cancellationToken);
 
-            logger.LogInformation("User registered: {UserName}, Email: {Email}", request.UserName, request.Email);
+            logger.LogInformation(
+                "User registered: {UserName}, Email: {Email}, IP Address: {IpAddress}",
+                request.UserName,
+                request.Email,
+                request.IpAddress);
 
             return Result.Success();
 
@@ -181,10 +186,19 @@ public static class Register
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("register", async (RegisterRequest request, ISender sender) =>
+            app.MapPost("register", async (RegisterRequest request, HttpContext httpContext, ISender sender) =>
                 {
-                    var command = new Command(request.UserName, request.Email, request.Password, request.FullName,
-                        request.AccessKey, request.TurnstileToken);
+                    var ipAddress = httpContext.Request.Headers[Consts.CfConnectingIp].ToString();
+
+                    var command = new Command(
+                        UserName: request.UserName,
+                        Email: request.Email,
+                        Password: request.Password,
+                        FullName: request.FullName,
+                        AccessKey: request.AccessKey,
+                        TurnstileToken: request.TurnstileToken,
+                        IpAddress: ipAddress);
+
                     var result = await sender.Send(command);
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.Created();
@@ -213,8 +227,10 @@ public static class Register
             RuleFor(c => c.FullName)
                 .NotEmpty()
                 .WithMessage("Fullname is required.")
-                .MaximumLength(100)
-                .WithMessage("Fullname must be 100 characters or less.");
+                .MaximumLength(40)
+                .WithMessage("Fullname must be 40 characters or less.")
+                .Matches(@"^[a-zA-Z\s]+$")
+                .WithMessage("Fullname must only contain letters and spaces.");
 
             RuleFor(c => c.AccessKey)
                 .NotEmpty()
@@ -233,12 +249,6 @@ public static class Register
                 .WithMessage("Password must contain at least one digit.")
                 .Matches(@"[\W_]")
                 .WithMessage("Password must contain at least one non-alphanumeric character.");
-
-            RuleFor(c => c.FullName)
-                .NotEmpty()
-                .WithMessage("Full Name is required.")
-                .MaximumLength(100)
-                .WithMessage("Full Name must be 100 characters or less.");
         }
     }
 }
