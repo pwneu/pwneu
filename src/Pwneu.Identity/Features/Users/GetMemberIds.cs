@@ -37,6 +37,24 @@ public static class GetMemberIds
             };
         }
     }
+
+    public class Endpoint : IEndpoint
+    {
+        public void MapEndpoint(IEndpointRouteBuilder app)
+        {
+            app.MapGet("members", async (ISender sender) =>
+                {
+                    var query = new Query();
+                    var result = await sender.Send(query);
+
+                    return result.IsFailure
+                        ? Results.StatusCode(500)
+                        : Results.Ok(result.Value.MemberIds);
+                })
+                .RequireAuthorization(Consts.ManagerAdminOnly)
+                .WithTags(nameof(Users));
+        }
+    }
 }
 
 public class GetMemberIdsConsumer(ISender sender, ILogger<GetMemberIdsConsumer> logger)
