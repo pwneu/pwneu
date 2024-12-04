@@ -30,15 +30,6 @@ public static class CheckCertificateStatus
             if (user is null)
                 return Result.Failure<CertificateStatus>(UserNotFound);
 
-            // Check if certifications are allowed.
-            var isCertificationEnabled = await cache.GetOrSetAsync(Keys.IsCertificationEnabled(), async _ =>
-                    await context.GetIdentityConfigurationValueAsync<bool>(Consts.IsCertificationEnabled,
-                        cancellationToken),
-                token: cancellationToken);
-
-            if (!isCertificationEnabled)
-                return CertificateStatus.NotAllowed;
-
             // The admin and the managers are not allowed to receive a certificate.
             var userIsManager = await userManager.IsInRoleAsync(user, Consts.Manager);
 
@@ -50,6 +41,20 @@ public static class CheckCertificateStatus
                 .Where(c => c.UserId == request.UserId)
                 .AnyAsync(cancellationToken);
 
+            // Check if the user has certificate first, before knowing if it's allowed to get a certificate.
+            if (!hasCertificate)
+                return CertificateStatus.WithoutCertificate;
+
+            // Check if certifications are allowed.
+            var isCertificationEnabled = await cache.GetOrSetAsync(Keys.IsCertificationEnabled(), async _ =>
+                    await context.GetIdentityConfigurationValueAsync<bool>(Consts.IsCertificationEnabled,
+                        cancellationToken),
+                token: cancellationToken);
+
+            if (!isCertificationEnabled)
+                return CertificateStatus.NotAllowed;
+
+            // Double-checking. But I don't care (〃￣ ω ￣〃).
             return hasCertificate
                 ? CertificateStatus.WithCertificate
                 : CertificateStatus.WithoutCertificate;
