@@ -31,7 +31,7 @@ public static class Register
 
     private static readonly Error EmailBlacklisted = new(
         "Register.EmailBlacklisted",
-        "The specified email has been blacklisted. Please use a different email");
+        "The specified email is not allowed to be used. Please use a different email");
 
     private static readonly Error AddRoleFailed = new(
         "Register.AddRoleFailed",
