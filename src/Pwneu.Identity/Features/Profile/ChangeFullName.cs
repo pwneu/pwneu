@@ -54,7 +54,7 @@ public static class ChangeFullName
         }
     }
 
-    public class Endpoint : IEndpoint
+    public class Endpoint // : IEndpoint
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
