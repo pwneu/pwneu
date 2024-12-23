@@ -55,7 +55,7 @@ public static class GetChallengeSolves
             var challengeSolves = await PagedList<ChallengeSolveResponse>.CreateAsync(
                 challengeSolvesResponse,
                 request.Page ?? 1,
-                Math.Min(request.PageSize ?? 10, 20));
+                Math.Min(request.PageSize ?? 10, 30));
 
             return challengeSolves;
         }
