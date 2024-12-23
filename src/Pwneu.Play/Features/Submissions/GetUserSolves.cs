@@ -12,6 +12,9 @@ namespace Pwneu.Play.Features.Submissions;
 
 public static class GetUserSolves
 {
+    private static readonly Error NotFound = new("GetUserSolves.NotFound",
+        "The user with the specified ID was not found");
+
     public record Query(
         string Id,
         string? SearchTerm = null,
@@ -19,9 +22,6 @@ public static class GetUserSolves
         string? SortOrder = null,
         int? Page = null,
         int? PageSize = null) : IRequest<Result<PagedList<UserSolveResponse>>>;
-
-    private static readonly Error NotFound = new("GetUserSolves.NotFound",
-        "The user with the specified ID was not found");
 
     internal sealed class Handler(ApplicationDbContext context, IMemberAccess memberAccess)
         : IRequestHandler<Query, Result<PagedList<UserSolveResponse>>>
@@ -65,7 +65,7 @@ public static class GetUserSolves
             var userSolves = await PagedList<UserSolveResponse>.CreateAsync(
                 userSolvesResponse,
                 request.Page ?? 1,
-                Math.Min(request.PageSize ?? 10, 20));
+                Math.Min(request.PageSize ?? 10, 30));
 
             return userSolves;
         }
