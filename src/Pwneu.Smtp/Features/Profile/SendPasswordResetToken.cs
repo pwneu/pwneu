@@ -1,5 +1,5 @@
 using System.Net;
-using FluentEmail.Core;
+using System.Net.Mail;
 using MassTransit;
 using MediatR;
 using Microsoft.Extensions.Options;
@@ -12,15 +12,15 @@ namespace Pwneu.Smtp.Features.Profile;
 
 public static class SendPasswordResetToken
 {
-    public record Command(string Email, string PasswordResetToken) : IRequest<Result>;
-
     private static readonly Error Disabled = new("SendEmailConfirmation.Disabled",
         "Email confirmation is disabled");
 
     private static readonly Error RenderFailed = new("SendPasswordResetToken.RenderFailed",
         "Failed to render html template for password reset");
 
-    internal sealed class Handler(IOptions<SmtpOptions> smtpOptions, IFluentEmail fluentEmail)
+    public record Command(string Email, string PasswordResetToken) : IRequest<Result>;
+
+    internal sealed class Handler(IOptions<SmtpOptions> smtpOptions)
         : IRequestHandler<Command, Result>
     {
         private readonly SmtpOptions _smtpOptions = smtpOptions.Value;
@@ -49,14 +49,22 @@ public static class SendPasswordResetToken
             if (!success)
                 return Result.Failure(RenderFailed);
 
+            var smtpClient = new SmtpClient(_smtpOptions.Host, _smtpOptions.Port)
+            {
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                EnableSsl = _smtpOptions.EnableSsl,
+                UseDefaultCredentials = false,
+                Credentials = new NetworkCredential(_smtpOptions.SenderAddress, _smtpOptions.SenderPassword)
+            };
+
+            using var mailMessage = new MailMessage(_smtpOptions.SenderAddress, request.Email);
+            mailMessage.Subject = "PWNEU Password Reset.";
+            mailMessage.IsBodyHtml = true;
+            mailMessage.Body = sendPasswordResetTokenHtml;
+
             try
             {
-                await fluentEmail
-                    .To(request.Email)
-                    .Subject("PWNEU Password Reset.")
-                    .Body(sendPasswordResetTokenHtml, true)
-                    .SendAsync();
-
+                smtpClient.Send(mailMessage);
                 return Result.Success();
             }
             catch (Exception ex)

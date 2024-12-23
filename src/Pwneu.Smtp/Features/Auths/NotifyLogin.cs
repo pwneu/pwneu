@@ -1,4 +1,5 @@
-using FluentEmail.Core;
+using System.Net;
+using System.Net.Mail;
 using MassTransit;
 using MediatR;
 using Microsoft.Extensions.Options;
@@ -11,6 +12,12 @@ namespace Pwneu.Smtp.Features.Auths;
 
 public static class NotifyLogin
 {
+    private static readonly Error NoEmail = new("NotifyLogin.NoEmail", "No Email specified");
+    private static readonly Error Disabled = new("NotifyLogin.Disabled", "Notify login is disabled");
+
+    private static readonly Error RenderFailed = new("NotifyLogin.RenderFailed",
+        "Failed to render html template for login notification");
+
     public record Command(
         string FullName,
         string? Email,
@@ -18,13 +25,7 @@ public static class NotifyLogin
         string? UserAgent = null,
         string? Referer = null) : IRequest<Result>;
 
-    private static readonly Error NoEmail = new("NotifyLogin.NoEmail", "No Email specified");
-    private static readonly Error Disabled = new("NotifyLogin.Disabled", "Notify login is disabled");
-
-    private static readonly Error RenderFailed = new("NotifyLogin.RenderFailed",
-        "Failed to render html template for login notification");
-
-    internal sealed class Handler(IOptions<SmtpOptions> smtpOptions, IFluentEmail fluentEmail)
+    internal sealed class Handler(IOptions<SmtpOptions> smtpOptions)
         : IRequestHandler<Command, Result>
     {
         private readonly SmtpOptions _smtpOptions = smtpOptions.Value;
@@ -55,14 +56,22 @@ public static class NotifyLogin
             if (!success)
                 return Result.Failure(RenderFailed);
 
+            var smtpClient = new SmtpClient(_smtpOptions.Host, _smtpOptions.Port)
+            {
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                EnableSsl = _smtpOptions.EnableSsl,
+                UseDefaultCredentials = false,
+                Credentials = new NetworkCredential(_smtpOptions.SenderAddress, _smtpOptions.SenderPassword)
+            };
+
+            using var mailMessage = new MailMessage(_smtpOptions.SenderAddress, request.Email);
+            mailMessage.Subject = "PWNEU Login Notification.";
+            mailMessage.IsBodyHtml = true;
+            mailMessage.Body = notifyLoginHtml;
+
             try
             {
-                await fluentEmail
-                    .To(request.Email)
-                    .Subject("PWNEU Login Notification.")
-                    .Body(notifyLoginHtml, true)
-                    .SendAsync();
-
+                smtpClient.Send(mailMessage);
                 return Result.Success();
             }
             catch (Exception e)

@@ -1,5 +1,5 @@
 using System.Net;
-using FluentEmail.Core;
+using System.Net.Mail;
 using MassTransit;
 using MediatR;
 using Microsoft.Extensions.Options;
@@ -12,15 +12,15 @@ namespace Pwneu.Smtp.Features.Auths;
 
 public static class SendEmailConfirmation
 {
-    public record Command(string UserName, string FullName, string Email, string ConfirmationToken) : IRequest<Result>;
-
     private static readonly Error Disabled = new("SendEmailConfirmation.Disabled",
         "Email confirmation is disabled");
 
     private static readonly Error RenderFailed = new("SendEmailConfirmation.RenderFailed",
         "Failed to render html template for email confirmation");
 
-    internal sealed class Handler(IOptions<SmtpOptions> smtpOptions, IFluentEmail fluentEmail)
+    public record Command(string UserName, string FullName, string Email, string ConfirmationToken) : IRequest<Result>;
+
+    internal sealed class Handler(IOptions<SmtpOptions> smtpOptions)
         : IRequestHandler<Command, Result>
     {
         private readonly SmtpOptions _smtpOptions = smtpOptions.Value;
@@ -51,14 +51,22 @@ public static class SendEmailConfirmation
             if (!success)
                 return Result.Failure(RenderFailed);
 
+            var smtpClient = new SmtpClient(_smtpOptions.Host, _smtpOptions.Port)
+            {
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                EnableSsl = _smtpOptions.EnableSsl,
+                UseDefaultCredentials = false,
+                Credentials = new NetworkCredential(_smtpOptions.SenderAddress, _smtpOptions.SenderPassword)
+            };
+
+            using var mailMessage = new MailMessage(_smtpOptions.SenderAddress, request.Email);
+            mailMessage.Subject = "Welcome to PWNEU! Verify Your Email to Activate Your Account.";
+            mailMessage.IsBodyHtml = true;
+            mailMessage.Body = sendEmailConfirmationHtml;
+
             try
             {
-                await fluentEmail
-                    .To(request.Email)
-                    .Subject("Welcome to PWNEU! Verify Your Email to Activate Your Account.")
-                    .Body(sendEmailConfirmationHtml, true)
-                    .SendAsync();
-
+                smtpClient.Send(mailMessage);
                 return Result.Success();
             }
             catch (Exception ex)
@@ -91,10 +99,10 @@ public class RegisteredEventConsumer(ISender sender, ILogger<RegisteredEventCons
 
             var message = context.Message;
             var command = new SendEmailConfirmation.Command(
-                UserName: message.UserName,
-                FullName: message.FullName,
-                Email: message.Email,
-                ConfirmationToken: message.ConfirmationToken);
+                message.UserName,
+                message.FullName,
+                message.Email,
+                message.ConfirmationToken);
 
             var result = await sender.Send(command);
 
