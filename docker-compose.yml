@@ -3,10 +3,12 @@ services:
     image: nginx:latest
     container_name: pwneu.gateway
     depends_on:
-      - pwneu.mq
-      - pwneu.identity
-      - pwneu.play
-      - pwneu.chat
+      pwneu.identity:
+        condition: service_healthy
+      pwneu.play:
+        condition: service_healthy
+      pwneu.chat:
+        condition: service_healthy
     ports:
       - "37100:80"
     volumes:
@@ -18,9 +20,12 @@ services:
   pwneu.identity:
     container_name: pwneu.identity
     depends_on:
-      - pwneu.identity.db
-      - pwneu.cache
-      - pwneu.mq
+      pwneu.identity.db:
+        condition: service_healthy
+      pwneu.cache:
+        condition: service_healthy
+      pwneu.mq:
+        condition: service_healthy
     build:
       context: .
       dockerfile: src/Pwneu.Identity/Dockerfile
@@ -37,6 +42,11 @@ services:
       - JwtOptions__Issuer=${JWT_ISSUER}
       - JwtOptions__Audience=${JWT_AUDIENCE}
       - JwtOptions__SigningKey=${JWT_SIGNING_KEY}
+    healthcheck:
+      test: [ "CMD-SHELL", "curl --fail http://localhost:8080/healthz || exit 1" ]
+      interval: 30s
+      timeout: 30s
+      retries: 3
     networks:
       - pwneu
 
@@ -49,18 +59,31 @@ services:
       - POSTGRES_PASSWORD=${IDENTITY_PASSWORD}
     volumes:
       - ./.containers/identity.db:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - pwneu
 
   pwneu.play:
     container_name: pwneu.play
     depends_on:
-      - pwneu.play.db
-      - pwneu.cache
-      - pwneu.mq
+      pwneu.play.db:
+        condition: service_healthy
+      pwneu.cache:
+        condition: service_healthy
+      pwneu.mq:
+        condition: service_healthy
     build:
       context: .
       dockerfile: src/Pwneu.Play/Dockerfile
+    healthcheck:
+      test: [ "CMD-SHELL", "curl --fail http://localhost:8080/healthz || exit 1" ]
+      interval: 30s
+      timeout: 30s
+      retries: 3
     environment:
       - ASPNETCORE_HTTP_PORTS=8080
       - ConnectionStrings__Postgres=${PLAY_CONNECTION}
@@ -81,14 +104,21 @@ services:
       - POSTGRES_PASSWORD=${PLAY_PASSWORD}
     volumes:
       - ./.containers/play.db:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - pwneu
 
   pwneu.chat:
     container_name: pwneu.chat
     depends_on:
-      - pwneu.cache
-      - pwneu.mq
+      pwneu.cache:
+        condition: service_healthy
+      pwneu.mq:
+        condition: service_healthy
     build:
       context: .
       dockerfile: src/Pwneu.Chat/Dockerfile
@@ -102,6 +132,11 @@ services:
       - JwtOptions__Issuer=${JWT_ISSUER}
       - JwtOptions__Audience=${JWT_AUDIENCE}
       - JwtOptions__SigningKey=${JWT_SIGNING_KEY}
+    healthcheck:
+      test: [ "CMD-SHELL", "curl --fail http://localhost:8080/healthz || exit 1" ]
+      interval: 30s
+      timeout: 30s
+      retries: 3
     volumes:
       - ./.containers/chat.db/:/db
     networks:
@@ -110,8 +145,10 @@ services:
   pwneu.smtp:
     container_name: pwneu.smtp
     depends_on:
-      - pwneu.identity
-      - pwneu.play
+      pwneu.identity:
+        condition: service_healthy
+      pwneu.play:
+        condition: service_healthy
     build:
       context: .
       dockerfile: src/Pwneu.Smtp/Dockerfile
@@ -131,6 +168,11 @@ services:
       - SmtpOptions__ResetPasswordUrl=${SMTP_RESET_PASSWORD_URL}
       - SmtpOptions__WebsiteUrl=${SMTP_WEBSITE_URL}
       - SmtpOptions__LogoUrl=${SMTP_LOGO_URL}
+    healthcheck:
+      test: [ "CMD-SHELL", "curl --fail http://localhost:8080/healthz || exit 1" ]
+      interval: 30s
+      timeout: 30s
+      retries: 3
     networks:
       - pwneu
 
@@ -143,6 +185,8 @@ services:
   pwneu.cache:
     image: redis:latest
     container_name: pwneu.cache
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
     networks:
       - pwneu
 
@@ -155,6 +199,11 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
     networks:
       - pwneu
 
@@ -162,10 +211,14 @@ services:
     image: prom/prometheus:latest
     container_name: pwneu.monitoring
     depends_on:
-      - pwneu.identity
-      - pwneu.play
-      - pwneu.chat
-      - pwneu.smtp
+      pwneu.identity:
+        condition: service_started
+      pwneu.play:
+        condition: service_started
+      pwneu.chat:
+        condition: service_started
+      pwneu.smtp:
+        condition: service_started
     volumes:
       - ./conf/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./.containers/prometheus:/prometheus
@@ -176,7 +229,8 @@ services:
     image: grafana/grafana-oss:latest
     container_name: pwneu.dashboard
     depends_on:
-      - pwneu.monitoring
+      pwneu.monitoring:
+        condition: service_started
     ports:
       - "37004:3000"
     environment:

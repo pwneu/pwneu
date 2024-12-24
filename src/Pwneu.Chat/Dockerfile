@@ -9,16 +9,11 @@ COPY "src/Pwneu.Shared" "./Pwneu.Shared"
 RUN dotnet publish "./Pwneu.Chat/Pwneu.Chat.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+RUN apt-get update && apt-get install -y curl && apt-get clean && rm -rf /var/lib/apt/lists/*
 EXPOSE 8080
 
 FROM base AS final
-COPY ["scripts/wait-for-it.sh", "/usr/bin/wait-for-it.sh"]
-USER root
-RUN chmod +x /usr/bin/wait-for-it.sh
 USER app
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["sh", "-c", "\
-  wait-for-it.sh -t 0 pwneu.mq:5672 && \
-  dotnet Pwneu.Chat.dll \
-"]
+ENTRYPOINT ["dotnet", "Pwneu.Chat.dll"]

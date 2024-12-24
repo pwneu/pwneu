@@ -202,6 +202,8 @@ builder.Services.AddHostedService<SaveSubmissionBuffersService>();
 
 builder.Services.AddScoped<IMemberAccess, MemberAccess>();
 
+builder.Services.AddHealthChecks();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -209,6 +211,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.MapHealthChecks("/healthz");
 
 app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
@@ -226,7 +230,7 @@ app.UseRateLimiter();
 app.UseOutputCache();
 
 if (app.Environment.IsDevelopment())
-    app.MapGet("/", async context =>
+    app.MapGet("/api", async context =>
     {
         var clientIp = context.Connection.RemoteIpAddress?.ToString();
         var forwardedForHeader = context.Request.Headers["X-Forwarded-For"].ToString();

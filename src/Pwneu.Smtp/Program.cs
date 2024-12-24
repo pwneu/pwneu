@@ -53,7 +53,11 @@ builder.Services.AddMassTransit(busConfigurator =>
 // Assembly scanning of Mediator.
 builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(assembly));
 
+builder.Services.AddHealthChecks();
+
 var app = builder.Build();
+
+app.MapHealthChecks("/healthz");
 
 app.UseOpenTelemetryPrometheusScrapingEndpoint();
 

@@ -140,6 +140,8 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
+builder.Services.AddHealthChecks();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -147,6 +149,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.MapHealthChecks("/healthz");
 
 app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
@@ -160,7 +164,7 @@ app.UseAuthorization();
 app.UseRateLimiter();
 
 if (app.Environment.IsDevelopment())
-    app.MapGet("/", async context =>
+    app.MapGet("/api", async context =>
     {
         var clientIp = context.Connection.RemoteIpAddress?.ToString();
         var forwardedForHeader = context.Request.Headers["X-Forwarded-For"].ToString();
