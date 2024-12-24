@@ -95,6 +95,13 @@ public record UserRankResponse
     public DateTime LatestSolve { get; set; }
 }
 
+public record UserPlayDataResponse
+{
+    public string Id { get; set; } = default!;
+    public int TotalSolves { get; set; }
+    public int TotalHintUsages { get; set; }
+}
+
 public record UserFullNameResponse
 {
     public string Id { get; set; } = default!;
