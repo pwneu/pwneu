@@ -202,6 +202,8 @@ builder.Services.AddHostedService<SaveSubmissionBuffersService>();
 
 builder.Services.AddScoped<IMemberAccess, MemberAccess>();
 
+builder.Services.AddHealthChecks();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -209,6 +211,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.MapHealthChecks("/healthz");
 
 app.UseOpenTelemetryPrometheusScrapingEndpoint();
 

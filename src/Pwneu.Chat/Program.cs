@@ -140,6 +140,8 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
+builder.Services.AddHealthChecks();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -147,6 +149,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.MapHealthChecks("/healthz");
 
 app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
