@@ -18,12 +18,6 @@ git clone https://github.com/pwneu/pwneu.git
 cd pwneu
 ```
 
-- If on windows, make sure the line endings of `wait-for-it.sh` script is `LF`.
-
-```sh
-(Get-Content -Raw -Path "./scripts/wait-for-it.sh") -replace "`r`n", "`n" | Set-Content -Path "./scripts/wait-for-it.sh"
-```
-
 - Generate `.env` file the using `.env.example` file.
 
 ```sh
@@ -34,8 +28,7 @@ Copy-Item .env.example .env # On Windows
 - Build and run the container
 
 ```sh
-docker-compose build
-docker-compose up -d
+docker-compose up -d --build
 ```
 
 ### 📜 License

@@ -44,7 +44,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{FE38
 		scripts\seed_hint_usages.py = scripts\seed_hint_usages.py
 		scripts\seed_leaderboards.py = scripts\seed_leaderboards.py
 		scripts\seed_users.py = scripts\seed_users.py
-		scripts\wait-for-it.sh = scripts\wait-for-it.sh
 	EndProjectSection
 EndProject
 Global
