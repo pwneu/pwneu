@@ -226,7 +226,7 @@ app.UseRateLimiter();
 app.UseOutputCache();
 
 if (app.Environment.IsDevelopment())
-    app.MapGet("/", async context =>
+    app.MapGet("/api", async context =>
     {
         var clientIp = context.Connection.RemoteIpAddress?.ToString();
         var forwardedForHeader = context.Request.Headers["X-Forwarded-For"].ToString();

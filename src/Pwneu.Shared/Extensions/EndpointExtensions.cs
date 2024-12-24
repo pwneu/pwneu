@@ -1,6 +1,5 @@
 using System.Reflection;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Pwneu.Shared.Common;
@@ -30,16 +29,13 @@ public static class EndpointExtensions
         return services;
     }
 
-    public static IApplicationBuilder MapEndpoints(this WebApplication app, RouteGroupBuilder? routeGroupBuilder = null)
+    public static IApplicationBuilder MapEndpoints(this WebApplication app, string prefix = "/api")
     {
         var endpoints = app.Services.GetRequiredService<IEnumerable<IEndpoint>>();
 
-        IEndpointRouteBuilder builder = routeGroupBuilder is null ? app : routeGroupBuilder;
+        var routeGroup = app.MapGroup(prefix);
 
-        foreach (var endpoint in endpoints)
-        {
-            endpoint.MapEndpoint(builder);
-        }
+        foreach (var endpoint in endpoints) endpoint.MapEndpoint(routeGroup);
 
         return app;
     }
