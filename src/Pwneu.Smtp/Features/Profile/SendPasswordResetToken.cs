@@ -53,7 +53,7 @@ public static class SendPasswordResetToken
             {
                 DeliveryMethod = SmtpDeliveryMethod.Network,
                 EnableSsl = _smtpOptions.EnableSsl,
-                UseDefaultCredentials = true,
+                UseDefaultCredentials = false,
                 Credentials = new NetworkCredential(_smtpOptions.SenderAddress, _smtpOptions.SenderPassword)
             };
 
