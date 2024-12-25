@@ -55,7 +55,7 @@ public static class SendEmailConfirmation
             {
                 DeliveryMethod = SmtpDeliveryMethod.Network,
                 EnableSsl = _smtpOptions.EnableSsl,
-                UseDefaultCredentials = false,
+                UseDefaultCredentials = true,
                 Credentials = new NetworkCredential(_smtpOptions.SenderAddress, _smtpOptions.SenderPassword)
             };
 
