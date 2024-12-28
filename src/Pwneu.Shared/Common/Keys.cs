@@ -82,6 +82,9 @@ public static class Keys
     // Key for caching if how many users in leaderboards are visible.
     public static string PublicLeaderboardCount() => "publicLeaderboardCount";
 
+    // Key for caching if challenges can be updated or deleted.
+    public static string ChallengesLocked() => "challengesLocked";
+
     // Key for caching if the user has already solved the challenge.
     public static string HasSolved(string userId, Guid challengeId) => $"hasSolved:{userId}:{challengeId}";
 

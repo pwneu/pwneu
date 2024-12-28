@@ -27,5 +27,13 @@ public static class PlaySeed
         // Only set the value if it doesn't exist
         if (publicLeaderboardCount is null)
             await context.SetPlayConfigurationValueAsync(Consts.PublicLeaderboardCount, 10);
+
+        // Check if the PublicLeaderboardCount row already exists
+        var challengesLocked = await context.PlayConfigurations
+            .FirstOrDefaultAsync(c => c.Key == Consts.ChallengesLocked);
+
+        // Only set the value if it doesn't exist
+        if (challengesLocked is null)
+            await context.SetPlayConfigurationValueAsync(Consts.ChallengesLocked, false);
     }
 }

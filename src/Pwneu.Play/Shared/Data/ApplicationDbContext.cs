@@ -75,4 +75,5 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public virtual DbSet<Solve> Solves { get; init; } = null!;
     public virtual DbSet<Hint> Hints { get; init; } = null!;
     public virtual DbSet<HintUsage> HintUsages { get; init; } = null!;
+    public virtual DbSet<Audit> Audits { get; init; } = null!;
 }
