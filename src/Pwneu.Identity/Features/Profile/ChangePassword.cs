@@ -69,6 +69,7 @@ public static class ChangePassword
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
                 })
                 .RequireAuthorization()
+                .RequireRateLimiting(Consts.ChangePassword)
                 .WithTags(nameof(Profile));
         }
     }
