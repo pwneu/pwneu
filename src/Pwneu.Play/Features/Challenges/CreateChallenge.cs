@@ -84,6 +84,19 @@ public static class CreateChallenge
                 request.UserName,
                 request.UserId);
 
+            var audit = new Audit
+            {
+                Id = Guid.NewGuid(),
+                UserId = request.UserId,
+                UserName = request.UserName,
+                Action = $"Challenge {challenge.Id} created",
+                PerformedAt = DateTime.UtcNow
+            };
+
+            context.Add(audit);
+
+            await context.SaveChangesAsync(cancellationToken);
+
             return challenge.Id;
         }
     }

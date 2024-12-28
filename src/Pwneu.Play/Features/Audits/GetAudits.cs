@@ -84,7 +84,7 @@ public static class GetAudits
                 })
                 .RequireAuthorization(Consts.AdminOnly)
                 .RequireRateLimiting(Consts.Fixed)
-                .WithTags(nameof(Challenges));
+                .WithTags(nameof(Audits));
         }
     }
 }
