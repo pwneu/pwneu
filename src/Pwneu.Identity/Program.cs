@@ -186,6 +186,15 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromSeconds(10),
             }));
 
+    options.AddPolicy(Consts.ChangePassword, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Request.Headers[Consts.CfConnectingIp].ToString(),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 1,
+                Window = TimeSpan.FromMinutes(1),
+            }));
+
     // In development, set very high limits to effectively disable rate limiting.
     if (builder.Environment.IsDevelopment())
     {
