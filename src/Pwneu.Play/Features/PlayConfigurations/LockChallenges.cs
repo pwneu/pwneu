@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Pwneu.Play.Shared.Data;
 using Pwneu.Play.Shared.Extensions;
 using Pwneu.Shared.Common;
@@ -6,7 +6,7 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.PlayConfigurations;
 
-public static class AllowSubmissions
+public static class LockChallenges
 {
     public record Command : IRequest<Result>;
 
@@ -16,10 +16,10 @@ public static class AllowSubmissions
         public async Task<Result> Handle(Command request,
             CancellationToken cancellationToken)
         {
-            await context.SetPlayConfigurationValueAsync(Consts.SubmissionsAllowed, true, cancellationToken);
-            await cache.RemoveAsync(Keys.SubmissionsAllowed(), token: cancellationToken);
+            await context.SetPlayConfigurationValueAsync(Consts.ChallengesLocked, true, cancellationToken);
+            await cache.RemoveAsync(Keys.ChallengesLocked(), token: cancellationToken);
 
-            logger.LogInformation("Submissions allowed");
+            logger.LogInformation("Challenges locked");
 
             return Result.Success();
         }
@@ -29,7 +29,7 @@ public static class AllowSubmissions
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPut("configurations/submissionsAllowed/allow", async (ISender sender) =>
+            app.MapPut("configurations/challengesLocked/lock", async (ISender sender) =>
                 {
                     var query = new Command();
                     var result = await sender.Send(query);

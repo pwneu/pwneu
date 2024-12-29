@@ -33,6 +33,9 @@ public static class UpdateChallenge
     private static readonly Error NotFound = new("UpdateChallenge.NotFound",
         "The challenge with the specified ID was not found");
 
+    private static readonly Error ChallengesLocked = new("UpdateChallenge.ChallengesLocked",
+        "Challenges are locked. Cannot delete challenges");
+
     internal sealed class Handler(
         ApplicationDbContext context,
         IValidator<Command> validator,
@@ -41,6 +44,18 @@ public static class UpdateChallenge
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
+            // The admin can bypass the challenge lock protection.
+            if (!string.Equals(request.UserName, Consts.Admin, StringComparison.OrdinalIgnoreCase))
+            {
+                var challengesLocked = await cache.GetOrSetAsync(Keys.ChallengesLocked(), async _ =>
+                        await context
+                            .GetPlayConfigurationValueAsync<bool>(Consts.ChallengesLocked, cancellationToken),
+                    token: cancellationToken);
+
+                if (challengesLocked)
+                    return Result.Failure(ChallengesLocked);
+            }
+
             var challenge = await context
                 .Challenges
                 .Where(c => c.Id == request.Id)
