@@ -29,7 +29,7 @@ public static class GetAudits
                     au.Action.Contains(request.SearchTerm) ||
                     au.UserName.Contains(request.SearchTerm) ||
                     au.UserId.Contains(request.SearchTerm) ||
-                    au.UserId.ToString().Contains(request.SearchTerm));
+                    au.Id.ToString().Contains(request.SearchTerm));
 
             Expression<Func<Audit, object>> keySelector = request.SortBy?.ToLower() switch
             {
