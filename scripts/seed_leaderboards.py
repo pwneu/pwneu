@@ -12,7 +12,7 @@ def login_admin(api_url, admin_password):
         "password": admin_password
     }
     headers = {'Content-Type': 'application/json'}
-    response = requests.post(f"{api_url}/identity/login", data=json.dumps(login_payload), headers=headers, verify=False)
+    response = requests.post(f"{api_url}/identity/login", data=json.dumps(login_payload), headers=headers)
 
     if response.status_code == 200:
         access_token = response.json().get('accessToken')
@@ -22,15 +22,17 @@ def login_admin(api_url, admin_password):
         print(f"Failed to log in admin. Status code: {response.status_code}, Response: {response.text}")
         return None
 
+
 def allow_submissions(api_url, access_token):
     allow_payload = {"allowed": True}
     headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {access_token}'}
-    response = requests.put(f"{api_url}/play/configurations/submissionsAllowed/allow", data=json.dumps(allow_payload), headers=headers, verify=False)
+    response = requests.put(f"{api_url}/play/configurations/submissionsAllowed/allow", data=json.dumps(allow_payload), headers=headers)
 
     if response.status_code == 200:
         print("Submissions allowed successfully.")
     else:
         print(f"Failed to allow submissions. Status code: {response.status_code}, Response: {response.text}")
+
 
 def fetch_all_challenges(api_url, access_token):
     challenges = []
@@ -38,7 +40,7 @@ def fetch_all_challenges(api_url, access_token):
     has_next_page = True
 
     while has_next_page:
-        response = requests.get(f"{api_url}/play/challenges?page={page}&pageSize=20", headers={'Authorization': f'Bearer {access_token}'}, verify=False)
+        response = requests.get(f"{api_url}/play/challenges?page={page}&pageSize=20", headers={'Authorization': f'Bearer {access_token}'})
         if response.status_code == 200:
             data = response.json()
             challenges.extend(data['items'])
@@ -48,8 +50,10 @@ def fetch_all_challenges(api_url, access_token):
             print(f"Failed to fetch challenges. Status code: {response.status_code}, Response: {response.text}")
             break
 
+
     print(f"Total challenges retrieved: {len(challenges)}")
     return challenges
+
 
 def fetch_all_users(api_url, access_token):
     users = []
@@ -57,7 +61,7 @@ def fetch_all_users(api_url, access_token):
     has_next_page = True
 
     while has_next_page:
-        response = requests.get(f"{api_url}/identity/users?page={page}", headers={'Authorization': f'Bearer {access_token}'}, verify=False)
+        response = requests.get(f"{api_url}/identity/users?page={page}", headers={'Authorization': f'Bearer {access_token}'})
         if response.status_code == 200:
             data = response.json()
             users.extend(data['items'])
@@ -70,13 +74,14 @@ def fetch_all_users(api_url, access_token):
     print(f"Total users retrieved: {len(users)}")
     return users
 
+
 def login_user(api_url, user_name):
     login_payload = {
         "userName": user_name,
         "password": "PwneuPwneu!1"
     }
     headers = {'Content-Type': 'application/json'}
-    response = requests.post(f"{api_url}/identity/login", data=json.dumps(login_payload), headers=headers, verify=False)
+    response = requests.post(f"{api_url}/identity/login", data=json.dumps(login_payload), headers=headers)
 
     if response.status_code == 200:
         user_info = response.json()
@@ -90,8 +95,9 @@ def login_user(api_url, user_name):
         print(f"Failed to log in user '{user_name}'. Status code: {response.status_code}, Response: {response.text}")
         return None
 
+
 def submit_flag(api_url, access_token, challenge_id, flag):
-    response = requests.post(f"{api_url}/play/challenges/{challenge_id}/submit?flag={flag}", headers={'Authorization': f'Bearer {access_token}'}, verify=False)
+    response = requests.post(f"{api_url}/play/challenges/{challenge_id}/submit?flag={flag}", headers={'Authorization': f'Bearer {access_token}'})
     response_text = response.text.strip('"')
     
     if response.status_code == 200:
@@ -128,6 +134,7 @@ def get_user_access_tokens(api_url, users):
                 tokens[user_name] = user_access_token
     return tokens
 
+
 def main():
     parser = argparse.ArgumentParser(description="Seed submissions via API.")
     parser.add_argument("--admin-password", type=str, default="PwneuPwneu!1", help="Password for the admin user.")
@@ -143,7 +150,7 @@ def main():
 
         user_tokens = get_user_access_tokens(args.api_url, users)
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1000) as executor:
             futures = []
             for user_access_token in user_tokens.values():
                 total_challenges = len(challenges)
@@ -156,6 +163,7 @@ def main():
 
             for future in concurrent.futures.as_completed(futures):
                 future.result()
+
 
 if __name__ == "__main__":
     main()

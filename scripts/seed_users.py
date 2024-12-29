@@ -13,7 +13,7 @@ def login_admin(api_url, admin_password):
         "password": admin_password
     }
     headers = {'Content-Type': 'application/json'}
-    response = requests.post(f"{api_url}/identity/login", data=json.dumps(login_payload), headers=headers, verify=False)
+    response = requests.post(f"{api_url}/identity/login", data=json.dumps(login_payload), headers=headers)
     if response.status_code == 200:
         access_token = response.json().get('accessToken')
         print("Admin logged in successfully. Access token retrieved.")
@@ -21,6 +21,7 @@ def login_admin(api_url, admin_password):
     else:
         print(f"Failed to log in admin. Status code: {response.status_code}, Response: {response.text}")
         return None
+
 
 def create_access_key(api_url, access_token):
     expiration_date = datetime.now() + timedelta(days=365)
@@ -34,7 +35,7 @@ def create_access_key(api_url, access_token):
         'Content-Type': 'application/json',
         'Authorization': f'Bearer {access_token}'
     }
-    response = requests.post(f"{api_url}/identity/keys", data=json.dumps(access_key_payload), headers=headers, verify=False)
+    response = requests.post(f"{api_url}/identity/keys", data=json.dumps(access_key_payload), headers=headers)
     if response.status_code == 200:
         access_key_guid = response.text.strip().strip('"')
         print(f"Access key created successfully: {access_key_guid} (length: {len(access_key_guid)})")
@@ -42,6 +43,7 @@ def create_access_key(api_url, access_token):
     else:
         print(f"Failed to create access key. Status code: {response.status_code}, Response: {response.text}")
         return None
+
 
 def register_users(api_url, call_count, access_key_guid, email_domain):
     timestamp = int(time.time())
@@ -58,11 +60,12 @@ def register_users(api_url, call_count, access_key_guid, email_domain):
             "accessKey": access_key_guid
         }
         headers = {'Content-Type': 'application/json'}
-        response = requests.post(f"{api_url}/identity/register", data=json.dumps(payload), headers=headers, verify=False)
+        response = requests.post(f"{api_url}/identity/register", data=json.dumps(payload), headers=headers)
         if response.status_code == 201:
             print(f"User {unique_username} registered successfully.")
         else:
             print(f"Failed to register user {unique_username}. Status code: {response.status_code}, Response: {response.text}")
+
 
 def verify_users(api_url, access_token):
     headers = {
@@ -70,7 +73,7 @@ def verify_users(api_url, access_token):
         'Authorization': f'Bearer {access_token}'
     }
     while True:
-        response = requests.get(f"{api_url}/identity/users?excludeVerified=true", headers=headers, verify=False)
+        response = requests.get(f"{api_url}/identity/users?excludeVerified=true", headers=headers)
         if response.status_code == 200:
             users = response.json().get('items', [])
             if not users:
@@ -78,7 +81,7 @@ def verify_users(api_url, access_token):
                 break
             for user in users:
                 user_id = user.get('id')
-                verify_response = requests.put(f"{api_url}/identity/users/{user_id}/verify", headers=headers, verify=False)
+                verify_response = requests.put(f"{api_url}/identity/users/{user_id}/verify", headers=headers)
                 if verify_response.status_code == 204:
                     print(f"User {user_id} verified successfully.")
                 else:
@@ -86,6 +89,7 @@ def verify_users(api_url, access_token):
         else:
             print(f"Failed to retrieve unverified users. Status code: {response.status_code}, Response: {response.text}")
             break
+
 
 def main():
     parser = argparse.ArgumentParser(description="Register users via API.")
@@ -101,6 +105,7 @@ def main():
         if access_key_guid:
             register_users(args.api_url, args.users_count, access_key_guid, args.email_domain)
             verify_users(args.api_url, access_token)
+
 
 if __name__ == "__main__":
     main()

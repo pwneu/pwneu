@@ -12,7 +12,7 @@ fake = Faker()
 def login_admin(api_url, admin_password):
     login_payload = {"userName": "admin", "password": admin_password}
     headers = {'Content-Type': 'application/json'}
-    response = requests.post(f"{api_url}/identity/login", data=json.dumps(login_payload), headers=headers, verify=False)
+    response = requests.post(f"{api_url}/identity/login", data=json.dumps(login_payload), headers=headers)
 
     if response.status_code == 200:
         access_token = response.json().get('accessToken')
@@ -22,13 +22,14 @@ def login_admin(api_url, admin_password):
         print(f"Failed to log in admin. Status code: {response.status_code}, Response: {response.text}")
         return None
 
+
 def fetch_all_challenges(api_url, access_token):
     challenges = []
     page = 1
     has_next_page = True
 
     while has_next_page:
-        response = requests.get(f"{api_url}/play/challenges?page={page}", headers={'Authorization': f'Bearer {access_token}'}, verify=False)
+        response = requests.get(f"{api_url}/play/challenges?page={page}", headers={'Authorization': f'Bearer {access_token}'})
         if response.status_code == 200:
             data = response.json()
             challenges.extend(data['items'])
@@ -41,13 +42,14 @@ def fetch_all_challenges(api_url, access_token):
     print(f"Total challenges retrieved: {len(challenges)}")
     return challenges
 
+
 def add_hint_to_challenge(api_url, access_token, challenge_id):
     content = fake.sentence(nb_words=6)
     deduction = random.randint(1, 10) * 5
     hint_payload = {"content": content, "deduction": deduction}
 
     headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {access_token}'}
-    response = requests.post(f"{api_url}/play/challenges/{challenge_id}/hints", data=json.dumps(hint_payload), headers=headers, verify=False)
+    response = requests.post(f"{api_url}/play/challenges/{challenge_id}/hints", data=json.dumps(hint_payload), headers=headers)
 
     if response.status_code == 200:
         hint_id = response.text.strip('"')
@@ -57,13 +59,14 @@ def add_hint_to_challenge(api_url, access_token, challenge_id):
         print(f"Failed to add hint to challenge ID: {challenge_id}. Status code: {response.status_code}, Response: {response.text}")
         return None
 
+
 def fetch_all_users(api_url, access_token):
     users = []
     page = 1
     has_next_page = True
 
     while has_next_page:
-        response = requests.get(f"{api_url}/identity/users?page={page}", headers={'Authorization': f'Bearer {access_token}'}, verify=False)
+        response = requests.get(f"{api_url}/identity/users?page={page}", headers={'Authorization': f'Bearer {access_token}'})
         if response.status_code == 200:
             data = response.json()
             users.extend(data['items'])
@@ -76,10 +79,11 @@ def fetch_all_users(api_url, access_token):
     print(f"Total users retrieved: {len(users)}")
     return users
 
+
 def login_user(api_url, user_name, password):
     login_payload = {"userName": user_name, "password": password}
     headers = {'Content-Type': 'application/json'}
-    response = requests.post(f"{api_url}/identity/login", data=json.dumps(login_payload), headers=headers, verify=False)
+    response = requests.post(f"{api_url}/identity/login", data=json.dumps(login_payload), headers=headers)
 
     if response.status_code == 200:
         user_info = response.json()
@@ -93,14 +97,16 @@ def login_user(api_url, user_name, password):
         print(f"Failed to log in user '{user_name}'. Status code: {response.status_code}, Response: {response.text}")
         return None
 
+
 def use_hint(api_url, access_token, hint_id):
     headers = {'Authorization': f'Bearer {access_token}'}
-    response = requests.post(f"{api_url}/play/hints/{hint_id}", headers=headers, verify=False)
+    response = requests.post(f"{api_url}/play/hints/{hint_id}", headers=headers)
 
     if response.status_code == 200:
         print(f"Hint {hint_id} used successfully.")
     else:
         print(f"Failed to use hint {hint_id}. Status code: {response.status_code}, Response: {response.text}")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Seed hints via API.")
@@ -138,6 +144,7 @@ def main():
 
                     for hint_id in hints_to_use:
                         executor.submit(use_hint, api_url, user_access_token, hint_id)
+
 
 if __name__ == "__main__":
     main()

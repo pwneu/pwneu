@@ -14,7 +14,7 @@ def login_admin(api_url, admin_password):
     }
 
     headers = {'Content-Type': 'application/json'}
-    response = requests.post(f"{api_url}/identity/login", data=json.dumps(login_payload), headers=headers, verify=False)
+    response = requests.post(f"{api_url}/identity/login", data=json.dumps(login_payload), headers=headers)
 
     if response.status_code == 200:
         access_token = response.json().get('accessToken')
@@ -23,6 +23,7 @@ def login_admin(api_url, admin_password):
     else:
         print(f"Failed to log in admin. Status code: {response.status_code}, Response: {response.text}")
         return None
+
 
 def create_category(api_url, access_token, category_name, category_description):
     category_payload = {
@@ -35,7 +36,7 @@ def create_category(api_url, access_token, category_name, category_description):
         'Authorization': f'Bearer {access_token}'
     }
 
-    response = requests.post(f"{api_url}/play/categories", data=json.dumps(category_payload), headers=headers, verify=False)
+    response = requests.post(f"{api_url}/play/categories", data=json.dumps(category_payload), headers=headers)
 
     if response.status_code == 200:
         category_id = response.text.strip().strip('"')
@@ -44,6 +45,7 @@ def create_category(api_url, access_token, category_name, category_description):
     else:
         print(f"Failed to create category. Status code: {response.status_code}, Response: {response.text}")
         return None
+
 
 def create_challenge(api_url, access_token, category_id, challenge_name, challenge_description):
     points = random.randint(1, 10) * 50
@@ -64,12 +66,13 @@ def create_challenge(api_url, access_token, category_id, challenge_name, challen
         'Authorization': f'Bearer {access_token}'
     }
 
-    response = requests.post(f"{api_url}/play/categories/{category_id}/challenges", data=json.dumps(challenge_payload), headers=headers, verify=False)
+    response = requests.post(f"{api_url}/play/categories/{category_id}/challenges", data=json.dumps(challenge_payload), headers=headers)
 
     if response.status_code == 200:
         print(f"Challenge '{challenge_name}' created successfully for category ID: {category_id}.")
     else:
         print(f"Failed to create challenge '{challenge_name}'. Status code: {response.status_code}, Response: {response.text}")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Create categories and challenges via API.")
@@ -112,6 +115,7 @@ def main():
                     ]
 
                     concurrent.futures.wait(challenge_futures)
+
 
 if __name__ == "__main__":
     main()

@@ -7,7 +7,7 @@ import argparse
 def login_admin(api_url, admin_password):
     login_payload = {"userName": "admin", "password": admin_password}
     headers = {'Content-Type': 'application/json'}
-    response = requests.post(f"{api_url}/identity/login", data=json.dumps(login_payload), headers=headers, verify=False)
+    response = requests.post(f"{api_url}/identity/login", data=json.dumps(login_payload), headers=headers)
 
     if response.status_code == 200:
         access_token = response.json().get('accessToken')
@@ -17,13 +17,14 @@ def login_admin(api_url, admin_password):
         print(f"Failed to log in admin. Status code: {response.status_code}, Response: {response.text}")
         return None
 
+
 def fetch_all_users(api_url, access_token):
     users = []
     page = 1
     has_next_page = True
 
     while has_next_page:
-        response = requests.get(f"{api_url}/identity/users?page={page}", headers={'Authorization': f'Bearer {access_token}'}, verify=False)
+        response = requests.get(f"{api_url}/identity/users?page={page}", headers={'Authorization': f'Bearer {access_token}'})
         if response.status_code == 200:
             data = response.json()
             users.extend(data['items'])
@@ -36,12 +37,13 @@ def fetch_all_users(api_url, access_token):
     print(f"Total users retrieved: {len(users)}")
     return users
 
+
 def check_user_role(api_url, user):
     user_name = user['userName']
     login_payload = {"userName": user_name, "password": "PwneuPwneu!1"}  
     headers = {'Content-Type': 'application/json'}
 
-    response = requests.post(f"{api_url}/identity/login", data=json.dumps(login_payload), headers=headers, verify=False)
+    response = requests.post(f"{api_url}/identity/login", data=json.dumps(login_payload), headers=headers)
 
     if response.status_code == 200:
         user_info = response.json()
@@ -51,14 +53,16 @@ def check_user_role(api_url, user):
         print(f"Failed to log in user '{user_name}'. Status code: {response.status_code}, Response: {response.text}")
     return None
 
+
 def delete_user(api_url, access_token, user_id):
     headers = {'Authorization': f'Bearer {access_token}'}
-    response = requests.delete(f"{api_url}/identity/users/{user_id}", headers=headers, verify=False)
+    response = requests.delete(f"{api_url}/identity/users/{user_id}", headers=headers)
 
     if response.status_code == 204:
         print(f"User with ID {user_id} deleted successfully.")
     else:
         print(f"Failed to delete user with ID {user_id}. Status code: {response.status_code}, Response: {response.text}")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Delete members via API.")
@@ -77,6 +81,7 @@ def main():
             user_id = check_user_role(api_url, user)
             if user_id:
                 delete_user(api_url, access_token, user_id)
+
 
 if __name__ == "__main__":
     main()
