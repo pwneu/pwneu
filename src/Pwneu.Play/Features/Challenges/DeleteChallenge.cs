@@ -2,6 +2,7 @@ using System.Security.Claims;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
+using Pwneu.Play.Shared.Entities;
 using Pwneu.Play.Shared.Extensions;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Extensions;
@@ -20,11 +21,26 @@ public static class DeleteChallenge
     private static readonly Error NotFound = new("DeleteChallenge.NotFound",
         "The challenge with the specified ID was not found");
 
+    private static readonly Error ChallengesLocked = new("DeleteChallenge.ChallengesLocked",
+        "Challenges are locked. Cannot delete challenges");
+
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, ILogger<Handler> logger)
         : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
+            // The admin can bypass the challenge lock protection.
+            if (!string.Equals(request.UserName, Consts.Admin, StringComparison.OrdinalIgnoreCase))
+            {
+                var challengesLocked = await cache.GetOrSetAsync(Keys.ChallengesLocked(), async _ =>
+                        await context
+                            .GetPlayConfigurationValueAsync<bool>(Consts.ChallengesLocked, cancellationToken),
+                    token: cancellationToken);
+
+                if (challengesLocked)
+                    return Result.Failure(ChallengesLocked);
+            }
+
             var challenge = await context
                 .Challenges
                 .Where(ch => ch.Id == request.Id)
@@ -61,6 +77,19 @@ public static class DeleteChallenge
                 request.Id,
                 request.UserName,
                 request.UserId);
+
+            var audit = new Audit
+            {
+                Id = Guid.NewGuid(),
+                UserId = request.UserId,
+                UserName = request.UserName,
+                Action = $"Challenge {request.Id} deleted",
+                PerformedAt = DateTime.UtcNow
+            };
+
+            context.Add(audit);
+
+            await context.SaveChangesAsync(cancellationToken);
 
             return Result.Success();
         }

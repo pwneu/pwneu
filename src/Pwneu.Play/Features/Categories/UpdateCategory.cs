@@ -2,6 +2,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
+using Pwneu.Play.Shared.Entities;
 using Pwneu.Shared.Common;
 using ZiggyCreatures.Caching.Fusion;
 
@@ -53,6 +54,19 @@ public static class UpdateCategory
                 request.Id,
                 request.UserName,
                 request.UserId);
+
+            var audit = new Audit
+            {
+                Id = Guid.NewGuid(),
+                UserId = request.UserId,
+                UserName = request.UserName,
+                Action = $"Category {request.Id} updated",
+                PerformedAt = DateTime.UtcNow
+            };
+
+            context.Add(audit);
+
+            await context.SaveChangesAsync(cancellationToken);
 
             return Result.Success();
         }

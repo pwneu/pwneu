@@ -6,14 +6,14 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.PlayConfigurations;
 
-public class DenySubmissions
+public static class DenySubmissions
 {
-    public record Query : IRequest<Result>;
+    public record Command : IRequest<Result>;
 
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, ILogger<Handler> logger)
-        : IRequestHandler<Query, Result>
+        : IRequestHandler<Command, Result>
     {
-        public async Task<Result> Handle(Query request,
+        public async Task<Result> Handle(Command request,
             CancellationToken cancellationToken)
         {
             await context.SetPlayConfigurationValueAsync(Consts.SubmissionsAllowed, false, cancellationToken);
@@ -31,7 +31,7 @@ public class DenySubmissions
         {
             app.MapPut("configurations/submissionsAllowed/deny", async (ISender sender) =>
                 {
-                    var query = new Query();
+                    var query = new Command();
                     var result = await sender.Send(query);
 
                     return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
