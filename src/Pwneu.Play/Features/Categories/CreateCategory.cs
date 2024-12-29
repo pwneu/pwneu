@@ -54,6 +54,19 @@ public static class CreateCategory
                 request.UserName,
                 request.UserId);
 
+            var audit = new Audit
+            {
+                Id = Guid.NewGuid(),
+                UserId = request.UserId,
+                UserName = request.UserName,
+                Action = $"Category {category.Id} created",
+                PerformedAt = DateTime.UtcNow
+            };
+
+            context.Add(audit);
+
+            await context.SaveChangesAsync(cancellationToken);
+
             return category.Id;
         }
     }

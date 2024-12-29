@@ -3,6 +3,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
+using Pwneu.Play.Shared.Entities;
 using Pwneu.Play.Shared.Extensions;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
@@ -106,6 +107,19 @@ public static class UpdateChallenge
                 request.Id,
                 request.UserName,
                 request.UserId);
+
+            var audit = new Audit
+            {
+                Id = Guid.NewGuid(),
+                UserId = request.UserId,
+                UserName = request.UserName,
+                Action = $"Challenge {request.Id} updated",
+                PerformedAt = DateTime.UtcNow
+            };
+
+            context.Add(audit);
+
+            await context.SaveChangesAsync(cancellationToken);
 
             return Result.Success();
         }
