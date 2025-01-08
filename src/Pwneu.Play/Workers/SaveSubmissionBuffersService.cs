@@ -58,14 +58,15 @@ public class SaveSubmissionBuffersService(
 
         var memberIds = await memberAccess.GetMemberIdsAsync(cancellationToken);
 
-        var challengeIds = await cache.GetOrSetAsync(
-            Keys.ChallengeIds(),
-            async _ => await appDbContext
-                .Challenges
-                .Select(ch => ch.Id)
-                .ToListAsync(cancellationToken),
-            new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(20) },
+        var challengeIds = await cache.GetOrSetAsync(Keys.ChallengeIds(), async _ =>
+                await appDbContext
+                    .Challenges
+                    .Select(ch => ch.Id)
+                    .ToListAsync(cancellationToken),
+            new FusionCacheEntryOptions { Duration = TimeSpan.FromSeconds(30) },
             cancellationToken);
+
+        logger.LogInformation("Challenges count: ({ChallengeIdsCount})", challengeIds.Count);
 
         // Remove all invalid submissions.
         var validSubmissions = submissionBuffers

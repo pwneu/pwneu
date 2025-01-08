@@ -66,8 +66,10 @@ public class SaveSolveBuffersService(IServiceProvider serviceProvider, ILogger<S
                     .Challenges
                     .Select(ch => ch.Id)
                     .ToListAsync(cancellationToken),
-            new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(20) },
+            new FusionCacheEntryOptions { Duration = TimeSpan.FromSeconds(30) },
             cancellationToken);
+
+        logger.LogInformation("Challenges count: ({ChallengeIdsCount})", challengeIds.Count);
 
         // Fetch the existing submissions that match the solves.
         var existingSolves = await appDbContext

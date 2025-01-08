@@ -24,7 +24,7 @@ public static class GetAllChallengeIds
                         .Challenges
                         .Select(ch => ch.Id)
                         .ToListAsync(cancellationToken),
-                new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(20) },
+                new FusionCacheEntryOptions { Duration = TimeSpan.FromSeconds(30) },
                 cancellationToken);
 
             return challengeIds;
