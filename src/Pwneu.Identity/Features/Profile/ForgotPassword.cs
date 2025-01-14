@@ -11,7 +11,6 @@ namespace Pwneu.Identity.Features.Profile;
 
 /// <summary>
 /// Generates a password reset and sent via email.
-/// If email verification is disabled, this will also be disabled.
 /// </summary>
 public static class ForgotPassword
 {
@@ -31,7 +30,7 @@ public static class ForgotPassword
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
 
             if (!validationResult.IsValid)
-                return Result.Failure<Guid>(new Error("ForgotPassword.Validation", validationResult.ToString()));
+                return Result.Failure(new Error("ForgotPassword.Validation", validationResult.ToString()));
 
             var isValidTurnstileToken = await turnstileValidator.IsValidTurnstileTokenAsync(
                 request.TurnstileToken,

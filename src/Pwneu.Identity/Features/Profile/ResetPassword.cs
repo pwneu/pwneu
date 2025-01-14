@@ -25,7 +25,7 @@ public static class ResetPassword
 
     private static readonly Error InvalidAntiSpamToken = new(
         "ResetPassword.InvalidAntiSpamToken",
-        "Verification failed. Please refresh the page and try again");
+        "Human verification failed. Please refresh the page and try again");
 
     internal sealed class Handler(
         UserManager<User> userManager,

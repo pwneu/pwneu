@@ -25,6 +25,19 @@ cp .env.example .env # On Linux
 Copy-Item .env.example .env # On Windows
 ```
 
+If on Linux, create directories with broad permissions for mounted volumes.
+
+```
+mkdir .containers
+mkdir .containers/chat.db
+mkdir .containers/grafana
+mkdir .containers/identity.db
+mkdir .containers/play.db
+mkdir .containers/prometheus
+mkdir .containers/queue
+sudo chmod -R 777 .containers
+```
+
 - Build and run the container
 
 ```sh
