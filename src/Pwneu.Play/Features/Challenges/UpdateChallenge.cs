@@ -164,8 +164,8 @@ public static class UpdateChallenge
             RuleFor(c => c.Description)
                 .NotEmpty()
                 .WithMessage("Challenge description is required.")
-                .MaximumLength(300)
-                .WithMessage("Challenge description must be 300 characters or less.");
+                .MaximumLength(1000)
+                .WithMessage("Challenge description must be 1000 characters or less.");
 
             RuleFor(c => c.Points)
                 .GreaterThanOrEqualTo(0)
