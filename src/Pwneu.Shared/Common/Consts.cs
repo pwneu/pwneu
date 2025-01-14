@@ -31,6 +31,7 @@ public static class Consts
     public const string AntiEmailAbuse = "antiEmailAbuse";
     public const string Fixed = "fixed";
     public const string Challenges = "challenges";
+    public const string Download = "download";
     public const string UseHint = "useHint";
     public const string Registration = "registration";
     public const string VerifyEmail = "verifyEmail";

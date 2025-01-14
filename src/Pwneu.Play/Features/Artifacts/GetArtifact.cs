@@ -54,6 +54,7 @@ public static class GetArtifact
                             : Results.File(result.Value.Data, result.Value.ContentType, result.Value.FileName);
                     })
                 .RequireAuthorization()
+                .RequireRateLimiting(Consts.Download)
                 .WithTags(nameof(Artifacts));
         }
     }

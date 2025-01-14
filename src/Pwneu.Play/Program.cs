@@ -150,6 +150,15 @@ builder.Services.AddRateLimiter(options =>
                 PermitLimit = 10,
                 Window = TimeSpan.FromSeconds(10),
             }));
+    
+    options.AddPolicy(Consts.Download, httpContext =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: httpContext.User.GetLoggedInUserId<string>(),
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 2,
+                    Window = TimeSpan.FromSeconds(3),
+                }));
 
     options.AddPolicy(Consts.Challenges, httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
