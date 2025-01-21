@@ -60,6 +60,7 @@ public static class CreateChallenge
             {
                 Id = Guid.NewGuid(),
                 CategoryId = request.CategoryId,
+                CreatedAt = DateTime.UtcNow,
                 Name = request.Name,
                 Description = request.Description,
                 Points = request.Points,

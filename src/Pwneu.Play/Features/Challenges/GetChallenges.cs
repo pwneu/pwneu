@@ -62,7 +62,8 @@ public static class GetChallenges
                 "deadline" => challenge => challenge.Deadline,
                 "solves" => challenge => challenge.SolveCount,
                 "solvecount" => challenge => challenge.SolveCount,
-                _ => challenge => challenge.Name
+                "name" => challenge => challenge.Name,
+                _ => challenge => challenge.CreatedAt
             };
 
             challengesQuery = request.SortOrder?.ToLower() == "desc"
