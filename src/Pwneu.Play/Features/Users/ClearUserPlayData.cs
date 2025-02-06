@@ -82,6 +82,22 @@ public static class ClearUserPlayData
             return Result.Success();
         }
     }
+
+    public class Endpoint : IEndpoint
+    {
+        public void MapEndpoint(IEndpointRouteBuilder app)
+        {
+            app.MapDelete("users/{id}/clear", async (string id, ISender sender) =>
+                {
+                    var query = new Command(id);
+                    var result = await sender.Send(query);
+
+                    return result.IsFailure ? Results.BadRequest(result.Error) : Results.NoContent();
+                })
+                .RequireAuthorization(Consts.AdminOnly)
+                .WithTags(nameof(Users));
+        }
+    }
 }
 
 public class UserDeletedEventConsumer(ISender sender, ILogger<UserDeletedEventConsumer> logger)
