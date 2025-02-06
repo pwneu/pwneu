@@ -34,6 +34,7 @@
         <PackageReference Include="QuestPDF" Version="2024.10.4"/>
         <PackageReference Include="Razor.Templating.Core" Version="2.0.0"/>
         <PackageReference Include="Serilog.AspNetCore" Version="8.0.3"/>
+        <PackageReference Include="Serilog.Sinks.Grafana.Loki" Version="8.3.0"/>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0"/>
         <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="8.0.2"/>
         <PackageReference Include="ZiggyCreatures.FusionCache" Version="1.2.0"/>

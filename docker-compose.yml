@@ -26,6 +26,8 @@ services:
         condition: service_healthy
       pwneu.mq:
         condition: service_healthy
+      pwneu.logs:
+        condition: service_healthy
     build:
       context: .
       dockerfile: src/Pwneu.Identity/Dockerfile
@@ -76,6 +78,8 @@ services:
         condition: service_healthy
       pwneu.mq:
         condition: service_healthy
+      pwneu.logs:
+        condition: service_healthy
     build:
       context: .
       dockerfile: src/Pwneu.Play/Dockerfile
@@ -119,6 +123,8 @@ services:
         condition: service_healthy
       pwneu.mq:
         condition: service_healthy
+      pwneu.logs:
+        condition: service_healthy
     build:
       context: .
       dockerfile: src/Pwneu.Chat/Dockerfile
@@ -148,6 +154,10 @@ services:
       pwneu.identity:
         condition: service_healthy
       pwneu.play:
+        condition: service_healthy
+      pwneu.mq:
+        condition: service_healthy
+      pwneu.logs:
         condition: service_healthy
     build:
       context: .
@@ -207,6 +217,19 @@ services:
     networks:
       - pwneu
 
+  pwneu.logs:
+    image: grafana/loki:latest
+    container_name: pwneu.logs
+    command: -config.file=/etc/loki/local-config.yaml
+    healthcheck:
+      test: wget -q --tries=1 -O- http://localhost:3100/ready
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    networks:
+      - pwneu
+
   pwneu.monitoring:
     image: prom/prometheus:latest
     container_name: pwneu.monitoring
@@ -229,6 +252,8 @@ services:
     image: grafana/grafana-oss:latest
     container_name: pwneu.dashboard
     depends_on:
+      pwneu.logs:
+        condition: service_healthy
       pwneu.monitoring:
         condition: service_started
     ports:
