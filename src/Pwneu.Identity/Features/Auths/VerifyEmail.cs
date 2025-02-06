@@ -6,7 +6,7 @@ using Pwneu.Shared.Contracts;
 
 namespace Pwneu.Identity.Features.Auths;
 
-public class VerifyEmail
+public static class VerifyEmail
 {
     public record Command(string Email, string ConfirmationToken) : IRequest<Result>;
 
