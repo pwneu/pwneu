@@ -7,6 +7,9 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.Categories;
 
+/// <summary>
+/// Gets all categories sorted by creation date.
+/// </summary>
 public static class GetAllCategories
 {
     public record Query : IRequest<Result<IEnumerable<CategoryResponse>>>;
@@ -20,6 +23,7 @@ public static class GetAllCategories
             var categories = await cache.GetOrSetAsync(Keys.Categories(), async _ =>
                 await context
                     .Categories
+                    .OrderBy(c => c.CreatedAt)
                     .Select(c => new CategoryResponse
                     {
                         Id = c.Id,

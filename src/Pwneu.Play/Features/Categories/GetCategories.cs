@@ -37,7 +37,7 @@ public static class GetCategories
             Expression<Func<Category, object>> keySelector = request.SortBy?.ToLower() switch
             {
                 "description" => category => category.Description,
-                _ => category => category.Name
+                _ => category => category.CreatedAt
             };
 
             categoriesQuery = request.SortOrder?.ToLower() == "desc"

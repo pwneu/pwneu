@@ -34,8 +34,9 @@ public static class CreateCategory
             var category = new Category
             {
                 Id = Guid.NewGuid(),
+                CreatedAt = DateTime.UtcNow,
                 Name = request.Name,
-                Description = request.Description,
+                Description = request.Description
             };
 
             context.Add(category);
