@@ -240,7 +240,13 @@ public static class Login
         {
             RuleFor(c => c.UserName)
                 .NotEmpty()
-                .WithMessage("Username is required.");
+                .WithMessage("Username is required.")
+                .MinimumLength(5)
+                .WithMessage("Username must be at least 5 characters long.")
+                .MaximumLength(40)
+                .WithMessage("Username must be 40 characters or less.")
+                .Matches(@"^[a-zA-Z0-9]+$")
+                .WithMessage("Username can only contain letters and numbers.");
 
             RuleFor(c => c.Password)
                 .NotEmpty()
