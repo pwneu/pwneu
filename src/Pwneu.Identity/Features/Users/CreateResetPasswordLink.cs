@@ -51,7 +51,7 @@ public class CreateResetPasswordLink
             var encodedEmail = WebUtility.UrlEncode(user.Email);
             var encodedToken = WebUtility.UrlEncode(token);
 
-            var url = $"{_appOptions.FrontendUrl}?email={encodedEmail}&resetToken={encodedToken}";
+            var url = $"{_appOptions.ResetPasswordUrl}?email={encodedEmail}&resetToken={encodedToken}";
 
             return url;
         }
