@@ -35,12 +35,14 @@ public static class Consts
     public const string Fixed = "fixed";
     public const string Challenges = "challenges";
     public const string Download = "download";
+    public const string GetUsers = "getUsers";
     public const string UseHint = "useHint";
     public const string Registration = "registration";
     public const string VerifyEmail = "verifyEmail";
     public const string ResetPassword = "resetPassword";
     public const string Generate = "generate";
     public const string ChangePassword = "changePassword";
+    public const string Conversation = "conversation";
 
     public const string SubmissionsAllowed = "SubmissionsAllowed";
     public const string PublicLeaderboardCount = "PublicLeaderboardCount";

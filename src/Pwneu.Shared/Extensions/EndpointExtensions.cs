@@ -39,4 +39,16 @@ public static class EndpointExtensions
 
         return app;
     }
+
+    public static IApplicationBuilder MapEndpoints(this WebApplication app, Assembly assembly, string prefix)
+    {
+        var endpoints = app.Services.GetRequiredService<IEnumerable<IEndpoint>>()
+            .Where(endpoint => endpoint.GetType().Assembly == assembly);
+
+        var routeGroup = app.MapGroup(prefix);
+
+        foreach (var endpoint in endpoints) endpoint.MapEndpoint(routeGroup);
+
+        return app;
+    }
 }

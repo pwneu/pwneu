@@ -1,7 +1,5 @@
-using MassTransit;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using Pwneu.Shared.Common;
+using Pwneu.Shared.Extensions;
+using Pwneu.Smtp;
 using Pwneu.Smtp.Shared;
 using Serilog;
 
@@ -19,46 +17,17 @@ builder.Services.AddOptions<SmtpOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
-// OpenTelemetry.
-builder.Services.AddOpenTelemetry()
-    .ConfigureResource(resource => resource.AddService(nameof(Pwneu.Smtp)))
-    .WithMetrics(metrics =>
-    {
-        metrics
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddRuntimeInstrumentation()
-            .AddProcessInstrumentation()
-            .AddPrometheusExporter();
-    });
-
-var assembly = typeof(Program).Assembly;
-
-// RabbitMQ.
-builder.Services.AddMassTransit(busConfigurator =>
-{
-    busConfigurator.SetKebabCaseEndpointNameFormatter();
-    busConfigurator.AddConsumers(assembly);
-    busConfigurator.UsingRabbitMq((context, configurator) =>
-    {
-        configurator.Host(new Uri(builder.Configuration[Consts.MessageBrokerHost]!), h =>
-        {
-            h.Username(builder.Configuration[Consts.MessageBrokerUsername]!);
-            h.Password(builder.Configuration[Consts.MessageBrokerPassword]!);
-        });
-        configurator.ConfigureEndpoints(context);
-    });
-});
+var assembly = typeof(AssemblyMarker).Assembly;
+const string serviceName = nameof(Pwneu.Smtp);
 
 // Assembly scanning of Mediator.
 builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(assembly));
 
-builder.Services.AddHealthChecks();
+builder.ConfigureServiceDefaults(serviceName);
+builder.ConfigureMessageBroker(assembly);
 
 var app = builder.Build();
 
-app.MapHealthChecks("/healthz");
-
-app.UseOpenTelemetryPrometheusScrapingEndpoint();
+app.MapDefaultEndpoints(serviceName);
 
 app.Run();
