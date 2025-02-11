@@ -25,7 +25,10 @@ public static class Consts
 
     public const string Postgres = "Postgres";
     public const string Redis = "Redis";
-    public const string Sqlite = "Sqlite";
+
+    public const string IdentitySchema = "identity";
+    public const string PlaySchema = "play";
+    public const string ChatSchema = "chat";
 
     public const string RefreshToken = "refreshToken";
     public const string AntiEmailAbuse = "antiEmailAbuse";

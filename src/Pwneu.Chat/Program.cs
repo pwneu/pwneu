@@ -65,10 +65,10 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddCors();
 
 // Postgres Database.
-var sqlite = builder.Configuration.GetConnectionString(Consts.Sqlite) ??
-             throw new InvalidOperationException("No Sqlite connection found");
+var postgres = builder.Configuration.GetConnectionString(Consts.Postgres) ??
+               throw new InvalidOperationException("No Database connection found");
 
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite(sqlite));
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(postgres));
 
 var assembly = typeof(Program).Assembly;
 

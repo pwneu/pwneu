@@ -17,6 +17,7 @@ namespace Pwneu.Identity.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("identity")
                 .HasAnnotation("ProductVersion", "8.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -45,7 +46,7 @@ namespace Pwneu.Identity.Migrations
                         .IsUnique()
                         .HasDatabaseName("RoleNameIndex");
 
-                    b.ToTable("AspNetRoles", (string)null);
+                    b.ToTable("AspNetRoles", "identity");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -70,7 +71,7 @@ namespace Pwneu.Identity.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetRoleClaims", (string)null);
+                    b.ToTable("AspNetRoleClaims", "identity");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
@@ -95,7 +96,7 @@ namespace Pwneu.Identity.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserClaims", (string)null);
+                    b.ToTable("AspNetUserClaims", "identity");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
@@ -117,7 +118,7 @@ namespace Pwneu.Identity.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserLogins", (string)null);
+                    b.ToTable("AspNetUserLogins", "identity");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
@@ -132,7 +133,7 @@ namespace Pwneu.Identity.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetUserRoles", (string)null);
+                    b.ToTable("AspNetUserRoles", "identity");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
@@ -151,7 +152,7 @@ namespace Pwneu.Identity.Migrations
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
-                    b.ToTable("AspNetUserTokens", (string)null);
+                    b.ToTable("AspNetUserTokens", "identity");
                 });
 
             modelBuilder.Entity("Pwneu.Identity.Shared.Entities.AccessKey", b =>
@@ -171,7 +172,7 @@ namespace Pwneu.Identity.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AccessKeys");
+                    b.ToTable("AccessKeys", "identity");
                 });
 
             modelBuilder.Entity("Pwneu.Identity.Shared.Entities.BlacklistedEmail", b =>
@@ -187,7 +188,7 @@ namespace Pwneu.Identity.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("BlacklistedEmails");
+                    b.ToTable("BlacklistedEmails", "identity");
                 });
 
             modelBuilder.Entity("Pwneu.Identity.Shared.Entities.Certificate", b =>
@@ -220,7 +221,7 @@ namespace Pwneu.Identity.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Certificates");
+                    b.ToTable("Certificates", "identity");
                 });
 
             modelBuilder.Entity("Pwneu.Identity.Shared.Entities.IdentityConfiguration", b =>
@@ -236,7 +237,7 @@ namespace Pwneu.Identity.Migrations
 
                     b.HasKey("Key");
 
-                    b.ToTable("IdentityConfigurations");
+                    b.ToTable("IdentityConfigurations", "identity");
                 });
 
             modelBuilder.Entity("Pwneu.Identity.Shared.Entities.User", b =>
@@ -315,7 +316,7 @@ namespace Pwneu.Identity.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
 
-                    b.ToTable("AspNetUsers", (string)null);
+                    b.ToTable("AspNetUsers", "identity");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

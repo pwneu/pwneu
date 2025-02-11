@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Entities;
+using Pwneu.Shared.Common;
 
 namespace Pwneu.Play.Shared.Data;
 
@@ -8,6 +9,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+        builder.HasDefaultSchema(Consts.PlaySchema);
 
         builder.Entity<PlayConfiguration>()
             .HasKey(c => c.Key);

@@ -12,14 +12,15 @@ using Pwneu.Identity.Shared.Data;
 namespace Pwneu.Identity.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20241117170335_AddBlacklist")]
-    partial class AddBlacklist
+    [Migration("20250211164619_Reset")]
+    partial class Reset
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("identity")
                 .HasAnnotation("ProductVersion", "8.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -48,7 +49,7 @@ namespace Pwneu.Identity.Migrations
                         .IsUnique()
                         .HasDatabaseName("RoleNameIndex");
 
-                    b.ToTable("AspNetRoles", (string)null);
+                    b.ToTable("AspNetRoles", "identity");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -73,7 +74,7 @@ namespace Pwneu.Identity.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetRoleClaims", (string)null);
+                    b.ToTable("AspNetRoleClaims", "identity");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
@@ -98,7 +99,7 @@ namespace Pwneu.Identity.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserClaims", (string)null);
+                    b.ToTable("AspNetUserClaims", "identity");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
@@ -120,7 +121,7 @@ namespace Pwneu.Identity.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserLogins", (string)null);
+                    b.ToTable("AspNetUserLogins", "identity");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
@@ -135,7 +136,7 @@ namespace Pwneu.Identity.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetUserRoles", (string)null);
+                    b.ToTable("AspNetUserRoles", "identity");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
@@ -154,7 +155,7 @@ namespace Pwneu.Identity.Migrations
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
-                    b.ToTable("AspNetUserTokens", (string)null);
+                    b.ToTable("AspNetUserTokens", "identity");
                 });
 
             modelBuilder.Entity("Pwneu.Identity.Shared.Entities.AccessKey", b =>
@@ -174,7 +175,7 @@ namespace Pwneu.Identity.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AccessKeys");
+                    b.ToTable("AccessKeys", "identity");
                 });
 
             modelBuilder.Entity("Pwneu.Identity.Shared.Entities.BlacklistedEmail", b =>
@@ -190,7 +191,7 @@ namespace Pwneu.Identity.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("BlacklistedEmails");
+                    b.ToTable("BlacklistedEmails", "identity");
                 });
 
             modelBuilder.Entity("Pwneu.Identity.Shared.Entities.Certificate", b =>
@@ -199,15 +200,16 @@ namespace Pwneu.Identity.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("FullName")
+                    b.Property<string>("ContentType")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<DateTime>("IssuedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<byte[]>("Data")
+                        .IsRequired()
+                        .HasColumnType("bytea");
 
-                    b.Property<string>("Issuer")
+                    b.Property<string>("FileName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -219,7 +221,10 @@ namespace Pwneu.Identity.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Certificates");
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("Certificates", "identity");
                 });
 
             modelBuilder.Entity("Pwneu.Identity.Shared.Entities.IdentityConfiguration", b =>
@@ -235,7 +240,7 @@ namespace Pwneu.Identity.Migrations
 
                     b.HasKey("Key");
 
-                    b.ToTable("IdentityConfigurations");
+                    b.ToTable("IdentityConfigurations", "identity");
                 });
 
             modelBuilder.Entity("Pwneu.Identity.Shared.Entities.User", b =>
@@ -262,8 +267,8 @@ namespace Pwneu.Identity.Migrations
 
                     b.Property<string>("FullName")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean");
@@ -314,7 +319,7 @@ namespace Pwneu.Identity.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
 
-                    b.ToTable("AspNetUsers", (string)null);
+                    b.ToTable("AspNetUsers", "identity");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -366,6 +371,22 @@ namespace Pwneu.Identity.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Pwneu.Identity.Shared.Entities.Certificate", b =>
+                {
+                    b.HasOne("Pwneu.Identity.Shared.Entities.User", "User")
+                        .WithOne("Certificate")
+                        .HasForeignKey("Pwneu.Identity.Shared.Entities.Certificate", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Pwneu.Identity.Shared.Entities.User", b =>
+                {
+                    b.Navigation("Certificate");
                 });
 #pragma warning restore 612, 618
         }

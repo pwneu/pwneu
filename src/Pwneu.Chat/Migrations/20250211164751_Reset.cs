@@ -3,27 +3,31 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Pwneu.Play.Migrations
+namespace Pwneu.Chat.Migrations
 {
     /// <inheritdoc />
-    public partial class AddAuditTable : Migration
+    public partial class Reset : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.EnsureSchema(
+                name: "chat");
+
             migrationBuilder.CreateTable(
-                name: "Audits",
+                name: "Conversations",
+                schema: "chat",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<string>(type: "character varying(36)", maxLength: 36, nullable: false),
-                    UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    Action = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
-                    PerformedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    Input = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: false),
+                    Output = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: false),
+                    RequestedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Audits", x => x.Id);
+                    table.PrimaryKey("PK_Conversations", x => x.Id);
                 });
         }
 
@@ -31,7 +35,8 @@ namespace Pwneu.Play.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Audits");
+                name: "Conversations",
+                schema: "chat");
         }
     }
 }
