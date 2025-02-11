@@ -40,7 +40,8 @@ public static class Consts
     public const string Registration = "registration";
     public const string VerifyEmail = "verifyEmail";
     public const string ResetPassword = "resetPassword";
-    public const string Generate = "generate";
+    public const string IdentityGenerate = "identityGenerate";
+    public const string PlayGenerate = "playGenerate";
     public const string ChangePassword = "changePassword";
     public const string Conversation = "conversation";
 

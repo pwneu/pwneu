@@ -97,7 +97,7 @@ public static class GetCertificate
                         : Results.File(result.Value.Data, result.Value.ContentType, result.Value.FileName);
                 })
                 .RequireAuthorization(Consts.MemberOnly)
-                .RequireRateLimiting(Consts.Generate)
+                .RequireRateLimiting(Consts.IdentityGenerate)
                 .WithTags(nameof(Certificates));
         }
     }

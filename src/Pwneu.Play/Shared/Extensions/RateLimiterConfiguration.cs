@@ -52,7 +52,7 @@ public static class RateLimiterConfiguration
             // In development, set very high limits to effectively disable rate limiting.
             if (builder.Environment.IsDevelopment())
             {
-                options.AddPolicy(Consts.Generate, httpContext =>
+                options.AddPolicy(Consts.PlayGenerate, httpContext =>
                     RateLimitPartition.GetFixedWindowLimiter(
                         partitionKey: httpContext.User.GetLoggedInUserId<string>(),
                         factory: _ => new FixedWindowRateLimiterOptions
@@ -64,7 +64,7 @@ public static class RateLimiterConfiguration
             // Actual rate limiting for production environment.
             else
             {
-                options.AddPolicy(Consts.Generate, httpContext =>
+                options.AddPolicy(Consts.PlayGenerate, httpContext =>
                     RateLimitPartition.GetFixedWindowLimiter(
                         partitionKey: httpContext.User.GetLoggedInUserId<string>(),
                         factory: _ => new FixedWindowRateLimiterOptions

@@ -136,7 +136,7 @@ public static class GenerateUserStats
                         : Results.Content(result.Value, "text/html");
                 })
                 .RequireAuthorization()
-                .RequireRateLimiting(Consts.Generate)
+                .RequireRateLimiting(Consts.PlayGenerate)
                 .WithTags(nameof(Users));
         }
     }

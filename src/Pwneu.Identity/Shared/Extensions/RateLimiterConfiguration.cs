@@ -43,7 +43,7 @@ public static class RateLimiterConfiguration
                             Window = TimeSpan.FromSeconds(1),
                         }));
 
-                options.AddPolicy(Consts.Generate, httpContext =>
+                options.AddPolicy(Consts.IdentityGenerate, httpContext =>
                     RateLimitPartition.GetFixedWindowLimiter(
                         partitionKey: httpContext.User.GetLoggedInUserId<string>(),
                         factory: _ => new FixedWindowRateLimiterOptions
@@ -91,7 +91,7 @@ public static class RateLimiterConfiguration
                             Window = TimeSpan.FromDays(1),
                         }));
 
-                options.AddPolicy(Consts.Generate, httpContext =>
+                options.AddPolicy(Consts.IdentityGenerate, httpContext =>
                     RateLimitPartition.GetFixedWindowLimiter(
                         partitionKey: httpContext.User.GetLoggedInUserId<string>(),
                         factory: _ => new FixedWindowRateLimiterOptions

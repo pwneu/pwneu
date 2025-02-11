@@ -151,7 +151,7 @@ public static class DownloadLeaderboards
                     return Results.File(pdfBytes, "application/pdf", "PWNEU Leaderboards.pdf");
                 })
                 .RequireAuthorization(Consts.ManagerAdminOnly)
-                .RequireRateLimiting(Consts.Generate)
+                .RequireRateLimiting(Consts.PlayGenerate)
                 .CacheOutput(builder => builder.Expire(TimeSpan.FromMinutes(1)))
                 .WithTags(nameof(Submissions));
         }
