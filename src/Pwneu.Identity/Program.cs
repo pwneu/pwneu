@@ -79,7 +79,7 @@ var postgres = builder.Configuration.GetConnectionString(Consts.Postgres) ??
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    options.UseNpgsql(postgres, npgsqlDbContextOptionsBuilder => npgsqlDbContextOptionsBuilder.CommandTimeout(0));
+    options.UseNpgsql(postgres);
 });
 
 // Redis Caching.

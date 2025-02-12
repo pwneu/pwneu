@@ -34,10 +34,7 @@ builder.Services.AddCors();
 var postgres = builder.Configuration.GetConnectionString(Consts.Postgres) ??
                throw new InvalidOperationException("No Database connection found");
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-{
-    options.UseNpgsql(postgres, npgsqlDbContextOptionsBuilder => npgsqlDbContextOptionsBuilder.CommandTimeout(0));
-});
+builder.Services.AddDbContext<ApplicationDbContext>(options => { options.UseNpgsql(postgres); });
 
 var assembly = typeof(AssemblyMarker).Assembly;
 const string serviceName = nameof(Pwneu.Chat);
