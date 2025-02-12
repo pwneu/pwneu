@@ -32,7 +32,10 @@ builder.Services.AddCors();
 var postgres = builder.Configuration.GetConnectionString(Consts.Postgres) ??
                throw new InvalidOperationException("No Postgres connection found");
 
-builder.Services.AddDbContext<ApplicationDbContext>(options => { options.UseNpgsql(postgres); });
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+{
+    options.UseNpgsql(postgres, npgsqlDbContextOptionsBuilder => npgsqlDbContextOptionsBuilder.CommandTimeout(0));
+});
 builder.Services.AddDbContext<BufferDbContext>(options => { options.UseInMemoryDatabase("Buffer"); });
 
 // Redis Caching.
