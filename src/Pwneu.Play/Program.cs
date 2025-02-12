@@ -70,6 +70,7 @@ builder.ConfigureRateLimiter();
 
 builder.Services.AddHostedService<SaveSolveBuffersService>();
 builder.Services.AddHostedService<SaveSubmissionBuffersService>();
+builder.Services.AddHostedService<CacheLeaderboardsService>();
 
 builder.Services.AddScoped<IMemberAccess, MemberAccess>();
 
