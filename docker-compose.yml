@@ -40,7 +40,7 @@ services:
       - AppOptions__ValidEmailDomain=${VALID_EMAIL_DOMAIN}
       - AppOptions__TurnstileSecretKey=${TURNSTILE_SECRET_KEY}
       - AppOptions__IsTurnstileEnabled=${IS_TURNSTILE_ENABLED}
-      - AppOptions__FrontendUrl=${RESET_PASSWORD_URL}
+      - AppOptions__ResetPasswordUrl=${RESET_PASSWORD_URL}
       - JwtOptions__Issuer=${JWT_ISSUER}
       - JwtOptions__Audience=${JWT_AUDIENCE}
       - JwtOptions__SigningKey=${JWT_SIGNING_KEY}
@@ -119,6 +119,8 @@ services:
   pwneu.chat:
     container_name: pwneu.chat
     depends_on:
+      pwneu.chat.db:
+        condition: service_healthy
       pwneu.cache:
         condition: service_healthy
       pwneu.mq:
@@ -130,6 +132,7 @@ services:
       dockerfile: src/Pwneu.Chat/Dockerfile
     environment:
       - ASPNETCORE_HTTP_PORTS=8080
+      - ConnectionStrings__Postgres=${CHAT_CONNECTION}
       - MessageBroker__Username=${RABBITMQ_DEFAULT_USER}
       - MessageBroker__Password=${RABBITMQ_DEFAULT_PASS}
       - ChatOptions__ConversationIsEnabled=${CHAT_CONVERSATION_IS_ENABLED}
@@ -143,8 +146,23 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - pwneu
+
+  pwneu.chat.db:
+    image: postgres:latest
+    container_name: pwneu.chat.db
+    environment:
+      - POSTGRES_DB=${CHAT_DB}
+      - POSTGRES_USER=${CHAT_USER}
+      - POSTGRES_PASSWORD=${CHAT_PASSWORD}
     volumes:
-      - ./.containers/chat.db/:/db
+      - ./.containers/chat.db:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     networks:
       - pwneu
 

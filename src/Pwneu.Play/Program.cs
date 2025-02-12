@@ -1,15 +1,8 @@
-using System.Text;
-using System.Threading.RateLimiting;
 using FluentValidation;
-using MassTransit;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
+using Pwneu.Play;
 using Pwneu.Play.Shared.Data;
 using Pwneu.Play.Shared.Extensions;
 using Pwneu.Play.Shared.Services;
@@ -18,7 +11,6 @@ using Pwneu.Shared.Common;
 using Pwneu.Shared.Extensions;
 using QuestPDF.Infrastructure;
 using Serilog;
-using Swashbuckle.AspNetCore.Filters;
 using ZiggyCreatures.Caching.Fusion;
 using ZiggyCreatures.Caching.Fusion.Serialization.NewtonsoftJson;
 
@@ -32,32 +24,6 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 builder.Host.UseSerilog();
-
-// OpenTelemetry.
-builder.Services.AddOpenTelemetry()
-    .ConfigureResource(resource => resource.AddService(nameof(Pwneu.Play)))
-    .WithMetrics(metrics =>
-    {
-        metrics
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddRuntimeInstrumentation()
-            .AddProcessInstrumentation()
-            .AddPrometheusExporter();
-    });
-
-// Swagger UI.
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
-    {
-        In = ParameterLocation.Header,
-        Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey
-    });
-    options.OperationFilter<SecurityRequirementsOperationFilter>();
-});
 
 // CORS (Cross-Origin Resource Sharing).
 builder.Services.AddCors();
@@ -81,24 +47,10 @@ builder.Services.AddFusionCache()
     }))
     .WithDistributedCache(new RedisCache(new RedisCacheOptions { Configuration = redis }));
 
-var assembly = typeof(Program).Assembly;
+builder.Services.AddOutputCache();
 
-// RabbitMQ.
-builder.Services.AddMassTransit(busConfigurator =>
-{
-    busConfigurator.SetKebabCaseEndpointNameFormatter();
-    busConfigurator.AddConsumers(assembly);
-    busConfigurator.UsingRabbitMq((context, configurator) =>
-    {
-        configurator.Host(new Uri(builder.Configuration[Consts.MessageBrokerHost]!), h =>
-        {
-            h.Username(builder.Configuration[Consts.MessageBrokerUsername]!);
-            h.Password(builder.Configuration[Consts.MessageBrokerPassword]!);
-        });
-
-        configurator.ConfigureEndpoints(context);
-    });
-});
+var assembly = typeof(AssemblyMarker).Assembly;
+const string serviceName = nameof(Pwneu.Play);
 
 // Assembly scanning of Mediator and Fluent Validations.
 builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(assembly));
@@ -107,111 +59,16 @@ builder.Services.AddValidatorsFromAssembly(assembly);
 // Add endpoints from the Features folder (Vertical Slice).
 builder.Services.AddEndpoints(assembly);
 
-// Authentication and Authorization (JSON Web Token).
-builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultForbidScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultSignInScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultSignOutScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ClockSkew = TimeSpan.FromSeconds(0),
-            ValidIssuer = builder.Configuration[Consts.JwtOptionsIssuer],
-            ValidAudience = builder.Configuration[Consts.JwtOptionsAudience],
-            IssuerSigningKey =
-                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration[Consts.JwtOptionsSigningKey]!)),
-        };
-    });
-
-builder.Services.AddAuthorizationBuilder()
-    .AddPolicy(Consts.AdminOnly, policy => { policy.RequireRole(Consts.Admin); })
-    .AddPolicy(Consts.ManagerAdminOnly, policy => { policy.RequireRole(Consts.Manager); })
-    .AddPolicy(Consts.MemberOnly, policy => { policy.RequireRole(Consts.Member); });
-
-builder.Services.AddRateLimiter(options =>
-{
-    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-
-    options.AddPolicy(Consts.Fixed, httpContext =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: httpContext.User.GetLoggedInUserId<string>(),
-            factory: _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = 10,
-                Window = TimeSpan.FromSeconds(10),
-            }));
-    
-    options.AddPolicy(Consts.Download, httpContext =>
-            RateLimitPartition.GetFixedWindowLimiter(
-                partitionKey: httpContext.User.GetLoggedInUserId<string>(),
-                factory: _ => new FixedWindowRateLimiterOptions
-                {
-                    PermitLimit = 2,
-                    Window = TimeSpan.FromSeconds(3),
-                }));
-
-    options.AddPolicy(Consts.Challenges, httpContext =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: httpContext.User.GetLoggedInUserId<string>(),
-            factory: _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = 10,
-                Window = TimeSpan.FromSeconds(5),
-            }));
-
-    options.AddPolicy(Consts.UseHint, httpContext =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: httpContext.User.GetLoggedInUserId<string>(),
-            factory: _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = 2,
-                Window = TimeSpan.FromSeconds(10),
-            }));
-
-    // In development, set very high limits to effectively disable rate limiting.
-    if (builder.Environment.IsDevelopment())
-    {
-        options.AddPolicy(Consts.Generate, httpContext =>
-            RateLimitPartition.GetFixedWindowLimiter(
-                partitionKey: httpContext.User.GetLoggedInUserId<string>(),
-                factory: _ => new FixedWindowRateLimiterOptions
-                {
-                    PermitLimit = int.MaxValue,
-                    Window = TimeSpan.FromSeconds(1),
-                }));
-    }
-    // Actual rate limiting for production environment.
-    else
-    {
-        options.AddPolicy(Consts.Generate, httpContext =>
-            RateLimitPartition.GetFixedWindowLimiter(
-                partitionKey: httpContext.User.GetLoggedInUserId<string>(),
-                factory: _ => new FixedWindowRateLimiterOptions
-                {
-                    PermitLimit = 5,
-                    Window = TimeSpan.FromMinutes(1),
-                }));
-    }
-});
-
-builder.Services.AddOutputCache();
+builder.ConfigureServiceDefaults(serviceName);
+builder.ConfigureMessageBroker(assembly);
+builder.ConfigureSwagger();
+builder.ConfigureAuth();
+builder.ConfigureRateLimiter();
 
 builder.Services.AddHostedService<SaveSolveBuffersService>();
 builder.Services.AddHostedService<SaveSubmissionBuffersService>();
 
 builder.Services.AddScoped<IMemberAccess, MemberAccess>();
-
-builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
@@ -221,9 +78,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapHealthChecks("/healthz");
-
-app.UseOpenTelemetryPrometheusScrapingEndpoint();
+app.MapDefaultEndpoints(serviceName);
 
 app.ApplyMigrations();
 

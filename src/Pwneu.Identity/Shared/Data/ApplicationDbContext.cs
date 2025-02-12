@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Identity.Shared.Entities;
+using Pwneu.Shared.Common;
 
 namespace Pwneu.Identity.Shared.Data;
 
@@ -10,6 +11,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+        builder.HasDefaultSchema(Consts.IdentitySchema);
 
         builder.Entity<IdentityConfiguration>()
             .HasKey(c => c.Key);

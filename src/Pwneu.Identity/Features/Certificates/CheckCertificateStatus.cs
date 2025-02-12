@@ -90,7 +90,7 @@ public static class CheckCertificateStatus
                         : Results.Ok(result.Value.ToString());
                 })
                 .RequireAuthorization(Consts.MemberOnly)
-                .RequireRateLimiting(Consts.Generate)
+                .RequireRateLimiting(Consts.IdentityGenerate)
                 .WithTags(nameof(Certificates));
         }
     }

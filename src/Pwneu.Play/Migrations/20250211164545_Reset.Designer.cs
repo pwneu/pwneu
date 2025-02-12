@@ -13,14 +13,15 @@ using Pwneu.Play.Shared.Data;
 namespace Pwneu.Play.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250207141949_AddCategoryCreatedAt")]
-    partial class AddCategoryCreatedAt
+    [Migration("20250211164545_Reset")]
+    partial class Reset
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("play")
                 .HasAnnotation("ProductVersion", "8.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -53,7 +54,7 @@ namespace Pwneu.Play.Migrations
 
                     b.HasIndex("ChallengeId");
 
-                    b.ToTable("Artifacts");
+                    b.ToTable("Artifacts", "play");
                 });
 
             modelBuilder.Entity("Pwneu.Play.Shared.Entities.Audit", b =>
@@ -82,7 +83,7 @@ namespace Pwneu.Play.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Audits");
+                    b.ToTable("Audits", "play");
                 });
 
             modelBuilder.Entity("Pwneu.Play.Shared.Entities.Category", b =>
@@ -106,7 +107,7 @@ namespace Pwneu.Play.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", "play");
                 });
 
             modelBuilder.Entity("Pwneu.Play.Shared.Entities.Challenge", b =>
@@ -158,7 +159,7 @@ namespace Pwneu.Play.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("Challenges");
+                    b.ToTable("Challenges", "play");
                 });
 
             modelBuilder.Entity("Pwneu.Play.Shared.Entities.Hint", b =>
@@ -182,7 +183,7 @@ namespace Pwneu.Play.Migrations
 
                     b.HasIndex("ChallengeId");
 
-                    b.ToTable("Hints");
+                    b.ToTable("Hints", "play");
                 });
 
             modelBuilder.Entity("Pwneu.Play.Shared.Entities.HintUsage", b =>
@@ -206,7 +207,7 @@ namespace Pwneu.Play.Migrations
 
                     b.HasIndex("HintId");
 
-                    b.ToTable("HintUsages");
+                    b.ToTable("HintUsages", "play");
                 });
 
             modelBuilder.Entity("Pwneu.Play.Shared.Entities.PlayConfiguration", b =>
@@ -225,7 +226,7 @@ namespace Pwneu.Play.Migrations
                     b.HasIndex("Key")
                         .IsUnique();
 
-                    b.ToTable("PlayConfigurations");
+                    b.ToTable("PlayConfigurations", "play");
                 });
 
             modelBuilder.Entity("Pwneu.Play.Shared.Entities.Solve", b =>
@@ -259,7 +260,7 @@ namespace Pwneu.Play.Migrations
 
                     b.HasIndex("ChallengeId");
 
-                    b.ToTable("Solves");
+                    b.ToTable("Solves", "play");
                 });
 
             modelBuilder.Entity("Pwneu.Play.Shared.Entities.Submission", b =>
@@ -293,7 +294,7 @@ namespace Pwneu.Play.Migrations
 
                     b.HasIndex("ChallengeId");
 
-                    b.ToTable("Submissions");
+                    b.ToTable("Submissions", "play");
                 });
 
             modelBuilder.Entity("Pwneu.Play.Shared.Entities.Artifact", b =>

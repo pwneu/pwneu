@@ -8,5 +8,5 @@ public sealed class AppOptions
     public required string? ValidEmailDomain { get; init; }
     [Required] public required bool IsTurnstileEnabled { get; init; }
     [Required] public required string TurnstileSecretKey { get; init; }
-    [Required] public required string FrontendUrl { get; init; }
+    [Required] public required string ResetPasswordUrl { get; init; }
 }

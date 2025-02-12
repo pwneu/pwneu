@@ -60,7 +60,7 @@ public static class ExportMembers
                             fileDownloadName: "pwneu-members.csv");
                 })
                 .RequireAuthorization(Consts.ManagerAdminOnly)
-                .RequireRateLimiting(Consts.Generate)
+                .RequireRateLimiting(Consts.IdentityGenerate)
                 .WithTags(nameof(Users));
         }
     }

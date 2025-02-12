@@ -25,19 +25,25 @@ public static class Consts
 
     public const string Postgres = "Postgres";
     public const string Redis = "Redis";
-    public const string Sqlite = "Sqlite";
+
+    public const string IdentitySchema = "identity";
+    public const string PlaySchema = "play";
+    public const string ChatSchema = "chat";
 
     public const string RefreshToken = "refreshToken";
     public const string AntiEmailAbuse = "antiEmailAbuse";
     public const string Fixed = "fixed";
     public const string Challenges = "challenges";
     public const string Download = "download";
+    public const string GetUsers = "getUsers";
     public const string UseHint = "useHint";
     public const string Registration = "registration";
     public const string VerifyEmail = "verifyEmail";
     public const string ResetPassword = "resetPassword";
-    public const string Generate = "generate";
+    public const string IdentityGenerate = "identityGenerate";
+    public const string PlayGenerate = "playGenerate";
     public const string ChangePassword = "changePassword";
+    public const string Conversation = "conversation";
 
     public const string SubmissionsAllowed = "SubmissionsAllowed";
     public const string PublicLeaderboardCount = "PublicLeaderboardCount";
