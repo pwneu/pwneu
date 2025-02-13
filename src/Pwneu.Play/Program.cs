@@ -32,10 +32,7 @@ builder.Services.AddCors();
 var postgres = builder.Configuration.GetConnectionString(Consts.Postgres) ??
                throw new InvalidOperationException("No Postgres connection found");
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-{
-    options.UseNpgsql(postgres);
-});
+builder.Services.AddDbContext<ApplicationDbContext>(options => { options.UseNpgsql(postgres); });
 builder.Services.AddDbContext<BufferDbContext>(options => { options.UseInMemoryDatabase("Buffer"); });
 
 // Redis Caching.
@@ -96,29 +93,6 @@ app.UseAuthorization();
 app.UseRateLimiter();
 
 app.UseOutputCache();
-
-if (app.Environment.IsDevelopment())
-    app.MapGet("/api", async context =>
-    {
-        var clientIp = context.Connection.RemoteIpAddress?.ToString();
-        var forwardedForHeader = context.Request.Headers["X-Forwarded-For"].ToString();
-        var forwardedProtoHeader = context.Request.Headers["X-Forwarded-Proto"].ToString();
-        var forwardedHostHeader = context.Request.Headers["X-Forwarded-Host"].ToString();
-        var cfConnectingIp = context.Request.Headers[Consts.CfConnectingIp].ToString();
-
-        var response = new
-        {
-            Service = "Pwneu Play",
-            ClientIp = clientIp,
-            ForwardedFor = forwardedForHeader,
-            ForwardedProto = forwardedProtoHeader,
-            ForwardedHost = forwardedHostHeader,
-            CfConnectingIp = cfConnectingIp
-        };
-
-        context.Response.ContentType = "application/json";
-        await context.Response.WriteAsJsonAsync(response);
-    });
 
 app.MapEndpoints();
 
