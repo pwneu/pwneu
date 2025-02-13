@@ -25,6 +25,10 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
 
+  pwneu.chat.db:
+    ports:
+      - "37402:5432"
+
   pwneu.smtp:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
