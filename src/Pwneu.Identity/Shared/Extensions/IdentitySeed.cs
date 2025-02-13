@@ -44,7 +44,16 @@ public static class IdentitySeed
 
         if (admin is not null)
         {
-            // Change the password if the admin exists
+            // Always reset the refresh token of the admin.
+            admin.RefreshToken = null;
+            admin.RefreshTokenExpiry = DateTime.MinValue;
+            var updateAdmin = await userManager.UpdateAsync(admin);
+            if (!updateAdmin.Succeeded)
+                throw new InvalidOperationException(
+                    "Failed to reset admin refresh token: " +
+                    string.Join(", ", updateAdmin.Errors.Select(e => e.Description)));
+
+            // Change the password if the admin exists.
             var token = await userManager.GeneratePasswordResetTokenAsync(admin);
             var resetPassword = await userManager.ResetPasswordAsync(admin, token, password);
             if (!resetPassword.Succeeded)
