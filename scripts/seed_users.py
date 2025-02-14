@@ -49,8 +49,8 @@ def register_users(api_url, call_count, access_key_guid, email_domain):
     timestamp = int(time.time())
     fake = Faker()
     for i in range(call_count):
-        unique_username = f"{fake.user_name()}_{timestamp}_{i}"
-        unique_email = f"{fake.user_name()}_{timestamp}_{i}@{email_domain}"
+        unique_username = f"{fake.user_name()}{timestamp}_{i}"
+        unique_email = f"{fake.user_name()}{timestamp}{i}@{email_domain}"
         unique_full_name = fake.name()
         payload = {
             "userName": unique_username,
