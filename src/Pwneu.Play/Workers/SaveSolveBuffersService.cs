@@ -28,7 +28,7 @@ public class SaveSolveBuffersService(IServiceProvider serviceProvider, ILogger<S
             }
             catch (Exception ex)
             {
-                logger.LogError("Something went wrong saving submission buffers {Message}", ex.Message);
+                logger.LogError("Something went wrong saving solve buffers {Message}", ex.Message);
             }
 
             if (!buffersSaved)

@@ -71,7 +71,7 @@ public class CreateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
         createChallengeResult.Should().BeOfType<Result<Guid>>();
         createChallengeResult.IsSuccess.Should().BeTrue();
         challenge.Should().NotBeNull();
-        challenge.Id.Should().Be(createChallengeResult.Value);
+        challenge!.Id.Should().Be(createChallengeResult.Value);
     }
 
     [Fact]
@@ -100,6 +100,6 @@ public class CreateChallengeTests(IntegrationTestsWebAppFactory factory) : BaseI
         createChallengeResult.Should().BeOfType<Result<Guid>>();
         createChallengeResult.IsSuccess.Should().BeTrue();
         challenge.Should().NotBeNull();
-        challenge.Id.Should().Be(createChallengeResult.Value);
+        challenge!.Id.Should().Be(createChallengeResult.Value);
     }
 }

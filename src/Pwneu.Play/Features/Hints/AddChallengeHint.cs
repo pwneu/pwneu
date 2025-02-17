@@ -30,7 +30,6 @@ public static class AddChallengeHint
             var challenge = await context
                 .Challenges
                 .Where(c => c.Id == request.ChallengeId)
-                .Include(c => c.Artifacts)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (challenge is null)

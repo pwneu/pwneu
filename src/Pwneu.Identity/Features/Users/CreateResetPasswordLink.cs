@@ -11,7 +11,7 @@ namespace Pwneu.Identity.Features.Users;
 /// <summary>
 /// Manually creates a reset password link for a user.
 /// </summary>
-public class CreateResetPasswordLink
+public static class CreateResetPasswordLink
 {
     public record Command(string UserId) : IRequest<Result<string>>;
 

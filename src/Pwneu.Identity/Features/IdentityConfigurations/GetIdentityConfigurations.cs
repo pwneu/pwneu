@@ -6,7 +6,7 @@ using Pwneu.Shared.Contracts;
 
 namespace Pwneu.Identity.Features.IdentityConfigurations;
 
-public static class GetPlayConfigurations
+public static class GetIdentityConfigurations
 {
     public record Query : IRequest<Result<IEnumerable<IdentityConfigurationsResponse>>>;
 

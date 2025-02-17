@@ -6,7 +6,7 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Identity.Features.IdentityConfigurations;
 
-public class EnableTurnstile
+public static class EnableTurnstile
 {
     public record Query : IRequest<Result>;
 

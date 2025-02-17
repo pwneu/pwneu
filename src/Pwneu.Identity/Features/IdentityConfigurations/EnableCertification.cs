@@ -6,7 +6,7 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Identity.Features.IdentityConfigurations;
 
-public class EnableCertification
+public static class EnableCertification
 {
     public record Query : IRequest<Result>;
 

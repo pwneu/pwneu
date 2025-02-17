@@ -18,7 +18,7 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-// App options.
+// Chat options.
 builder.Services
     .AddOptions<ChatOptions>()
     .BindConfiguration($"{nameof(ChatOptions)}")

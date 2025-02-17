@@ -4,6 +4,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Play.Shared.Data;
 using Pwneu.Play.Shared.Entities;
+using Pwneu.Play.Shared.Extensions;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Extensions;
 using ZiggyCreatures.Caching.Fusion;
@@ -20,11 +21,21 @@ public static class UseHint
     private static readonly Error ChallengeAlreadySolved = new("UseHint.ChallengeAlreadySolved",
         "Challenge already solved");
 
+    private static readonly Error NotAllowed = new("UseHint.NotAllowed",
+        "Using hints are not allowed when submissions are disabled");
+
     internal sealed class Handler(ApplicationDbContext context, IFusionCache cache, ILogger<Handler> logger)
         : IRequestHandler<Command, Result<string>>
     {
         public async Task<Result<string>> Handle(Command request, CancellationToken cancellationToken)
         {
+            var submissionsAllowed = await cache.GetOrSetAsync(Keys.SubmissionsAllowed(), async _ =>
+                    await context.GetPlayConfigurationValueAsync<bool>(Consts.SubmissionsAllowed, cancellationToken),
+                token: cancellationToken);
+
+            if (!submissionsAllowed)
+                return Result.Failure<string>(NotAllowed);
+
             // Get hint details first.
             var hintDetails = await context
                 .Hints

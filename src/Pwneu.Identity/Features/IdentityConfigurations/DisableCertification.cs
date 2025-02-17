@@ -6,7 +6,7 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Identity.Features.IdentityConfigurations;
 
-public class DisableCertification
+public static class DisableCertification
 {
     public record Query : IRequest<Result>;
 

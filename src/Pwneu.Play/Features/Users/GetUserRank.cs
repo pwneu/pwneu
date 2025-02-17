@@ -10,7 +10,7 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Play.Features.Users;
 
-public class GetUserRank
+public static class GetUserRank
 {
     public record Query(string Id) : IRequest<Result<UserRankResponse?>>;
 

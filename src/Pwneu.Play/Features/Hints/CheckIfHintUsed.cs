@@ -12,7 +12,7 @@ namespace Pwneu.Play.Features.Hints;
 /// Check if the user has used the hint.
 /// Returns true or false.
 /// </summary>
-public class CheckIfHintUsed
+public static class CheckIfHintUsed
 {
     public record Command(string UserId, Guid HintId) : IRequest<Result<bool>>;
 

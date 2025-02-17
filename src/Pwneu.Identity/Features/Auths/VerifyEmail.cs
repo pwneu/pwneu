@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Pwneu.Identity.Shared.Entities;
 using Pwneu.Shared.Common;
 using Pwneu.Shared.Contracts;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace Pwneu.Identity.Features.Auths;
 
@@ -15,7 +16,10 @@ public static class VerifyEmail
     private static readonly Error EmailAlreadyConfirmed = new("VerifyEmail.EmailAlreadyConfirmed",
         "Email is already confirmed.");
 
-    internal sealed class Handler(UserManager<User> userManager, ILogger<Handler> logger)
+    internal sealed class Handler(
+        UserManager<User> userManager,
+        ILogger<Handler> logger,
+        IFusionCache cache)
         : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
@@ -32,6 +36,15 @@ public static class VerifyEmail
 
             if (verifyEmail.Succeeded)
                 return Result.Success();
+
+            var invalidationTasks = new List<Task>
+            {
+                cache
+                    .RemoveAsync(Keys.UserDetails(user.Id), token: cancellationToken)
+                    .AsTask(),
+            };
+
+            await Task.WhenAll(invalidationTasks);
 
             logger.LogInformation("User verified: {Email}", request.Email);
 

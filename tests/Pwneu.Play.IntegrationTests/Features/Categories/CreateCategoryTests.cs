@@ -44,6 +44,6 @@ public class CreateCategoryTests(IntegrationTestsWebAppFactory factory) : BaseIn
         createCategoryResult.Should().BeOfType<Result<Guid>>();
         createCategoryResult.IsSuccess.Should().BeTrue();
         category.Should().NotBeNull();
-        category.Id.Should().Be(createCategoryResult.Value);
+        category!.Id.Should().Be(createCategoryResult.Value);
     }
 }
