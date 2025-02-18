@@ -117,7 +117,7 @@ public static class CreateConversation
                         return result.IsFailure ? Results.BadRequest(result.Error) : Results.Ok(result.Value);
                     })
                 .RequireAuthorization(Consts.MemberOnly)
-                .RequireRateLimiting(Consts.Fixed)
+                .RequireRateLimiting(Consts.Conversation)
                 .WithTags(nameof(Conversations));
         }
     }
