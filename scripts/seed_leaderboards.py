@@ -28,7 +28,7 @@ def allow_submissions(api_url, access_token):
     headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {access_token}'}
     response = requests.put(f"{api_url}/play/configurations/submissionsAllowed/allow", data=json.dumps(allow_payload), headers=headers)
 
-    if response.status_code == 200:
+    if response.status_code == 204:
         print("Submissions allowed successfully.")
     else:
         print(f"Failed to allow submissions. Status code: {response.status_code}, Response: {response.text}")
@@ -138,7 +138,7 @@ def get_user_access_tokens(api_url, users):
 def main():
     parser = argparse.ArgumentParser(description="Seed submissions via API.")
     parser.add_argument("--admin-password", type=str, default="PwneuPwneu!1", help="Password for the admin user.")
-    parser.add_argument("--api-url", type=str, default="http://localhost:37100", help="Base URL of the API.")
+    parser.add_argument("--api-url", type=str, default="http://localhost:37100/api/v1", help="Base URL of the API.")
     args = parser.parse_args()
 
     access_token = login_admin(args.api_url, args.admin_password)

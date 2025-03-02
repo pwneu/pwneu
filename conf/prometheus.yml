@@ -6,7 +6,4 @@ scrape_configs:
   - job_name: 'pwneu'
     static_configs:
       - targets: 
-          - 'pwneu.identity:8080'
-          - 'pwneu.play:8080'
-          - 'pwneu.chat:8080'
-          - 'pwneu.smtp:8080'
+          - 'api:8080'

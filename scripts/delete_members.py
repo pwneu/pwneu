@@ -67,7 +67,7 @@ def delete_user(api_url, access_token, user_id):
 def main():
     parser = argparse.ArgumentParser(description="Delete members via API.")
     parser.add_argument("--admin-password", type=str, default="PwneuPwneu!1", help="Password for the admin user.")
-    parser.add_argument("--api-url", type=str, default="http://localhost:37100", help="Base URL for the API.")
+    parser.add_argument("--api-url", type=str, default="http://localhost:37100/api/v1", help="Base URL for the API.")
     args = parser.parse_args()
 
     api_url = args.api_url

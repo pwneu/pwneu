@@ -111,7 +111,7 @@ def use_hint(api_url, access_token, hint_id):
 def main():
     parser = argparse.ArgumentParser(description="Seed hints via API.")
     parser.add_argument("--admin-password", type=str, default="PwneuPwneu!1", help="Password for the admin user.")
-    parser.add_argument("--api-url", type=str, default="http://localhost:37100", help="The base API URL (default: http://localhost:37100).")
+    parser.add_argument("--api-url", type=str, default="http://localhost:37100/api/v1", help="The base API URL (default: http://localhost:37100).")
     args = parser.parse_args()
 
     api_url = args.api_url

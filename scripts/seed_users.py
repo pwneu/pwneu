@@ -95,7 +95,7 @@ def main():
     parser = argparse.ArgumentParser(description="Register users via API.")
     parser.add_argument("--admin-password", type=str, default="PwneuPwneu!1", help="Password for the admin user.")
     parser.add_argument("--users-count", type=int, default=30, help="Number of users to register.")
-    parser.add_argument("--api-url", type=str, default="http://localhost:37100", help="Base URL of the API.")
+    parser.add_argument("--api-url", type=str, default="http://localhost:37100/api/v1", help="Base URL of the API.")
     parser.add_argument("--email-domain", type=str, default="example.com", help="Email domain for the registered users.")
     args = parser.parse_args()
 
