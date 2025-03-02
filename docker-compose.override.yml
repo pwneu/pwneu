@@ -1,55 +1,15 @@
 services:
-  pwneu.identity:
-    ports:
-      - "37200:8080"
+  api:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-
-  pwneu.identity.db:
+      - ASPNETCORE_HTTP_PORTS=8080
     ports:
-      - "37202:5432"
+      - "37100:8080"
 
-  pwneu.play:
+  smtp4dev:
+    image: rnwood/smtp4dev:latest
+    container_name: smtp4dev
     ports:
-      - "37300:8080"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-
-  pwneu.play.db:
-    ports:
-      - "37302:5432"
-
-  pwneu.chat:
-    ports:
-      - "37400:8080"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-
-  pwneu.chat.db:
-    ports:
-      - "37402:5432"
-
-  pwneu.smtp:
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-
-  pwneu.smtp.host:
-    ports:
-      - "37502:80"
-
-  pwneu.cache:
-    ports:
-      - "6379:6379"
-
-  pwneu.mq:
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-
-  pwneu.monitoring:
-    ports:
-      - "37003:9090"
-
-  pwneu.dashboard.renderer:
-    ports:
-      - "37005:8081"
+      - "37502:80"  
+    networks:
+      - pwneu

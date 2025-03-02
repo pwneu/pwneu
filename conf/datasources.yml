@@ -4,13 +4,13 @@ datasources:
   - name: Pwneu
     type: prometheus
     access: proxy
-    url: http://pwneu.monitoring:9090
+    url: http://prometheus:9090
     isDefault: true
     editable: false
-  - name: Pwneu.Logs
+  - name: Pwneu Logs
     type: loki
     access: proxy
-    url: http://pwneu.logs:3100
+    url: http://loki:3100
     jsonData:
       timeout: 60
       maxLines: 1000

@@ -1,0 +1,141 @@
+﻿using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Pwneu.Api.Common;
+using Pwneu.Api.Constants;
+using Pwneu.Api.Data;
+using Pwneu.Api.Entities;
+using Pwneu.Api.Extensions;
+using Pwneu.Api.Extensions.Entities;
+using Pwneu.Api.Services;
+using System.Security.Claims;
+using ZiggyCreatures.Caching.Fusion;
+
+namespace Pwneu.Api.Features.Challenges;
+
+public static class DeleteChallenge
+{
+    public record Command(Guid Id, string UserId, string UserName) : IRequest<Result>;
+
+    private static readonly Error NotFound = new(
+        "DeleteChallenge.NotFound",
+        "The challenge with the specified ID was not found"
+    );
+
+    private static readonly Error ChallengesLocked = new(
+        "DeleteChallenge.ChallengesLocked",
+        "Challenges are locked. Cannot delete challenges"
+    );
+
+    private static readonly Error NotAllowed = new(
+        "DeleteChallenge.NotAllowed",
+        "Not allowed to delete challenges when submissions are enabled"
+    );
+
+    internal sealed class Handler(AppDbContext context, IFusionCache cache, ILogger<Handler> logger)
+        : IRequestHandler<Command, Result>
+    {
+        public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
+        {
+            // The admin can bypass the challenge lock protection.
+            if (!string.Equals(request.UserName, Roles.Admin, StringComparison.OrdinalIgnoreCase))
+            {
+                var challengesLocked = await cache.CheckIfChallengesAreLockedAsync(
+                    context,
+                    cancellationToken
+                );
+
+                if (challengesLocked)
+                    return Result.Failure(ChallengesLocked);
+            }
+
+            var submissionsEnabled = await cache.CheckIfSubmissionsAllowedAsync(
+                context,
+                cancellationToken
+            );
+
+            if (submissionsEnabled)
+                return Result.Failure(NotAllowed);
+
+            var challenge = await context
+                .Challenges.Where(ch => ch.Id == request.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (challenge is null)
+                return Result.Failure(NotFound);
+
+            context.Challenges.Remove(challenge);
+
+            var audit = Audit.Create(
+                request.UserId,
+                request.UserName,
+                $"Challenge {request.Id} deleted"
+            );
+
+            context.Add(audit);
+
+            await context.SaveChangesAsync(cancellationToken);
+
+            logger.LogInformation(
+                "Challenge ({Id}) deleted by {UserName} ({UserId})",
+                request.Id,
+                request.UserName,
+                request.UserId
+            );
+
+            var invalidationTasks = new List<Task>
+            {
+                cache
+                    .RemoveAsync(CacheKeys.ChallengeDetails(challenge.Id), token: cancellationToken)
+                    .AsTask(),
+            };
+
+            await Task.WhenAll(invalidationTasks);
+
+            return Result.Success();
+        }
+    }
+
+    public class Endpoint : IV1Endpoint
+    {
+        public void MapV1Endpoint(IEndpointRouteBuilder app)
+        {
+            app.MapDelete(
+                    "play/challenges/{id:Guid}",
+                    async (
+                        Guid id,
+                        ClaimsPrincipal claims,
+                        ISender sender,
+                        IChallengePointsConcurrencyGuard guard
+                    ) =>
+                    {
+                        if (!await guard.TryEnterAsync())
+                            return Results.BadRequest(Error.AnotherProcessRunning);
+
+                        try
+                        {
+                            var userId = claims.GetLoggedInUserId<string>();
+                            if (userId is null)
+                                return Results.BadRequest();
+
+                            var userName = claims.GetLoggedInUserName();
+                            if (userName is null)
+                                return Results.BadRequest();
+
+                            var query = new Command(id, userId, userName);
+                            var result = await sender.Send(query);
+
+                            return result.IsFailure
+                                ? Results.BadRequest(result.Error)
+                                : Results.NoContent();
+                        }
+                        finally
+                        {
+                            guard.Exit();
+                        }
+                    }
+                )
+                .RequireAuthorization(AuthorizationPolicies.ManagerAdminOnly)
+                .WithTags(nameof(Challenges));
+        }
+    }
+}
