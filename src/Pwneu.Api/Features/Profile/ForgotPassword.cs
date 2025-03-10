@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using MassTransit;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Pwneu.Api.Common;
@@ -21,7 +22,7 @@ public static class ForgotPassword
     internal sealed class Handler(
         UserManager<User> userManager,
         ITurnstileValidator turnstileValidator,
-        IMediator mediator,
+        IPublishEndpoint publishEndpoint,
         IValidator<Command> validator
     ) : IRequestHandler<Command, Result>
     {
@@ -48,14 +49,14 @@ public static class ForgotPassword
             if (user?.Email is null || !user.EmailConfirmed)
                 return Result.Success();
 
-            // Admin doesn't have an email.
+            // Admin can't use this feature.
             var userIsAdmin = await userManager.IsInRoleAsync(user, Roles.Admin);
             if (userIsAdmin)
                 return Result.Success();
 
             var token = await userManager.GeneratePasswordResetTokenAsync(user);
 
-            await mediator.Publish(
+            await publishEndpoint.Publish(
                 new ForgotPasswordEvent { Email = request.Email, PasswordResetToken = token },
                 cancellationToken
             );

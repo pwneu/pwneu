@@ -1,4 +1,4 @@
-﻿using MediatR;
+﻿using MassTransit;
 using Microsoft.Extensions.Options;
 using Pwneu.Api.Contracts;
 using Pwneu.Api.Options;
@@ -10,27 +10,28 @@ namespace Pwneu.Api.Features.Smtp;
 
 public static class SendPasswordResetToken
 {
-    internal sealed class Handler(IOptions<SmtpOptions> smtpOptions, ILogger<Handler> logger)
-        : INotificationHandler<ForgotPasswordEvent>
+    public class SendPasswordResetTokenConsumer(
+        IOptions<SmtpOptions> smtpOptions,
+        ILogger<SendPasswordResetTokenConsumer> logger
+    ) : IConsumer<ForgotPasswordEvent>
     {
         private readonly SmtpOptions _smtpOptions = smtpOptions.Value;
 
-        public async Task Handle(
-            ForgotPasswordEvent notification,
-            CancellationToken cancellationToken
-        )
+        public async Task Consume(ConsumeContext<ForgotPasswordEvent> context)
         {
+            var message = context.Message;
+
             if (_smtpOptions.SendPasswordResetTokenIsEnabled is false)
             {
                 logger.LogInformation(
                     "Failed to send reset password token to {email}: Email confirmation is disabled.",
-                    notification.Email
+                    message.Email
                 );
                 return;
             }
 
-            var encodedEmail = WebUtility.UrlEncode(notification.Email);
-            var encodedPasswordResetToken = WebUtility.UrlEncode(notification.PasswordResetToken);
+            var encodedEmail = WebUtility.UrlEncode(message.Email);
+            var encodedPasswordResetToken = WebUtility.UrlEncode(message.PasswordResetToken);
 
             var model = new Model
             {
@@ -51,7 +52,7 @@ public static class SendPasswordResetToken
             {
                 logger.LogError(
                     "Failed to send reset password token to {email}: Failed to render email confirmation template",
-                    notification.Email
+                    message.Email
                 );
                 return;
             }
@@ -67,7 +68,7 @@ public static class SendPasswordResetToken
                 ),
             };
 
-            using var mailMessage = new MailMessage(_smtpOptions.SenderAddress, notification.Email);
+            using var mailMessage = new MailMessage(_smtpOptions.SenderAddress, message.Email);
             mailMessage.Subject = "PWNEU Password Reset.";
             mailMessage.IsBodyHtml = true;
             mailMessage.Body = sendPasswordResetTokenHtml;
@@ -75,13 +76,13 @@ public static class SendPasswordResetToken
             try
             {
                 smtpClient.Send(mailMessage);
-                logger.LogInformation("Sent reset password token to {email}", notification.Email);
+                logger.LogInformation("Sent reset password token to {email}", message.Email);
             }
             catch (Exception ex)
             {
                 logger.LogError(
                     "Failed to send reset password token to {email}: {error}",
-                    notification.Email,
+                    message.Email,
                     ex.Message
                 );
             }

@@ -1,4 +1,5 @@
 using FluentValidation;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -182,8 +183,18 @@ var assembly = typeof(AssemblyMarker).Assembly;
 
 builder.Services.AddMediatR(x => x.RegisterServicesFromAssembly(assembly));
 builder.Services.AddValidatorsFromAssembly(assembly);
-
 builder.Services.AddV1Endpoints(assembly);
+builder.Services.AddMassTransit(x =>
+{
+    x.SetKebabCaseEndpointNameFormatter();
+    x.AddConsumers(assembly);
+    x.UsingInMemory(
+        (context, configurator) =>
+        {
+            configurator.ConfigureEndpoints(context);
+        }
+    );
+});
 
 var app = builder.Build();
 

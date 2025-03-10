@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using MassTransit;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -59,7 +60,7 @@ public static class Login
         SignInManager<User> signInManager,
         ITurnstileValidator turnstileValidator,
         IFusionCache cache,
-        IMediator mediator,
+        IPublishEndpoint publishEndpoint,
         IOptions<JwtOptions> jwtOptions,
         IValidator<Command> validator,
         ILogger<Handler> logger
@@ -194,7 +195,7 @@ public static class Login
                 signingCredentials: accessTokenCredentials
             );
 
-            await mediator.Publish(
+            await publishEndpoint.Publish(
                 new LoggedInEvent
                 {
                     FullName = user.FullName,

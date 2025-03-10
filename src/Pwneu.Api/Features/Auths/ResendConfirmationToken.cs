@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using MassTransit;
+using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Pwneu.Api.Common;
 using Pwneu.Api.Constants;
@@ -20,7 +21,7 @@ public static class ResendConfirmationToken
     internal sealed class Handler(
         UserManager<User> userManager,
         ITurnstileValidator turnstileValidator,
-        IMediator mediator
+        IPublishEndpoint publishEndpoint
     ) : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
@@ -41,10 +42,10 @@ public static class ResendConfirmationToken
 
             var confirmationToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
 
-            await mediator.Publish(
+            await publishEndpoint.Publish(
                 new RegisteredEvent
                 {
-                    UserName = user.UserName ?? "User",
+                    UserName = user.UserName ?? CommonConstants.Unknown,
                     Email = user.Email,
                     FullName = user.FullName,
                     ConfirmationToken = confirmationToken,

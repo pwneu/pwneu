@@ -2,7 +2,7 @@
 
 namespace Pwneu.Api.Contracts;
 
-public record ForgotPasswordEvent : INotification
+public record ForgotPasswordEvent
 {
     public required string Email { get; init; } = default!;
     public required string PasswordResetToken { get; init; } = default!;

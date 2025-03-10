@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using MassTransit;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -65,7 +66,7 @@ public static class Register
         UserManager<User> userManager,
         ITurnstileValidator turnstileValidator,
         IFusionCache cache,
-        IMediator mediator,
+        IPublishEndpoint publishEndpoint,
         IValidator<Command> validator,
         IOptions<AppOptions> appOptions,
         ILogger<Handler> logger
@@ -172,7 +173,7 @@ public static class Register
             // Uncomment if testing registration email.
             // await userManager.DeleteAsync(user);
 
-            await mediator.Publish(
+            await publishEndpoint.Publish(
                 new RegisteredEvent
                 {
                     UserName = request.UserName,

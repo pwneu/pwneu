@@ -1,5 +1,4 @@
-﻿using MediatR;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace Pwneu.Api.Contracts;
 
@@ -13,7 +12,7 @@ public record RegisterRequest
     public string? TurnstileToken { get; set; }
 }
 
-public record RegisteredEvent : INotification
+public record RegisteredEvent
 {
     public required string UserName { get; init; } = default!;
     public required string Email { get; init; } = default!;
@@ -29,7 +28,7 @@ public record LoginRequest
     public string? TurnstileToken { get; set; }
 }
 
-public record LoggedInEvent : INotification
+public record LoggedInEvent
 {
     public string FullName { get; set; } = default!;
     public string? Email { get; set; }

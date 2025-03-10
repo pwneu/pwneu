@@ -1,4 +1,4 @@
-﻿using MediatR;
+﻿using MassTransit;
 using Microsoft.Extensions.Options;
 using Pwneu.Api.Constants;
 using Pwneu.Api.Contracts;
@@ -11,18 +11,22 @@ namespace Pwneu.Api.Features.Smtp;
 
 public static class NotifyLogin
 {
-    internal sealed class Handler(IOptions<SmtpOptions> smtpOptions, ILogger<Handler> logger)
-        : INotificationHandler<LoggedInEvent>
+    public class NotifyLoginEventConsumer(
+        IOptions<SmtpOptions> smtpOptions,
+        ILogger<NotifyLoginEventConsumer> logger
+    ) : IConsumer<LoggedInEvent>
     {
         private readonly SmtpOptions _smtpOptions = smtpOptions.Value;
 
-        public async Task Handle(LoggedInEvent notification, CancellationToken cancellationToken)
+        public async Task Consume(ConsumeContext<LoggedInEvent> context)
         {
-            if (notification.Email is null)
+            var message = context.Message;
+
+            if (message.Email is null)
             {
                 logger.LogInformation(
                     "Failed to send login notification to {email}: No email provided.",
-                    notification.Email
+                    message.Email
                 );
                 return;
             }
@@ -31,24 +35,24 @@ public static class NotifyLogin
             {
                 logger.LogInformation(
                     "Failed to send login notification to {email}: Notify login is disabled.",
-                    notification.Email
+                    message.Email
                 );
                 return;
             }
 
             var model = new Model
             {
-                FullName = notification.FullName,
-                Email = notification.Email,
-                IpAddress = string.IsNullOrWhiteSpace(notification.IpAddress)
+                FullName = message.FullName,
+                Email = message.Email,
+                IpAddress = string.IsNullOrWhiteSpace(message.IpAddress)
                     ? CommonConstants.Unknown
-                    : notification.IpAddress,
-                UserAgent = string.IsNullOrWhiteSpace(notification.UserAgent)
+                    : message.IpAddress,
+                UserAgent = string.IsNullOrWhiteSpace(message.UserAgent)
                     ? CommonConstants.Unknown
-                    : notification.UserAgent,
-                Referer = string.IsNullOrWhiteSpace(notification.Referer)
+                    : message.UserAgent,
+                Referer = string.IsNullOrWhiteSpace(message.Referer)
                     ? CommonConstants.Unknown
-                    : notification.Referer,
+                    : message.Referer,
                 WebsiteUrl = _smtpOptions.WebsiteUrl,
                 LogoUrl = _smtpOptions.LogoUrl,
             };
@@ -62,7 +66,7 @@ public static class NotifyLogin
             {
                 logger.LogError(
                     "Failed to send login notification to {email}: Failed to render HTML template for login notification.",
-                    notification.Email
+                    message.Email
                 );
                 return;
             }
@@ -78,7 +82,7 @@ public static class NotifyLogin
                 ),
             };
 
-            using var mailMessage = new MailMessage(_smtpOptions.SenderAddress, notification.Email);
+            using var mailMessage = new MailMessage(_smtpOptions.SenderAddress, message.Email);
             mailMessage.Subject = "PWNEU Login Notification.";
             mailMessage.IsBodyHtml = true;
             mailMessage.Body = notifyLoginHtml;
@@ -86,13 +90,13 @@ public static class NotifyLogin
             try
             {
                 smtpClient.Send(mailMessage);
-                logger.LogInformation("Sent login notification to {email}", notification.Email);
+                logger.LogInformation("Sent login notification to {email}", message.Email);
             }
             catch (Exception e)
             {
                 logger.LogError(
                     "Failed to send login notification to {email}: {error}",
-                    notification.Email,
+                    message.Email,
                     e.Message
                 );
             }
