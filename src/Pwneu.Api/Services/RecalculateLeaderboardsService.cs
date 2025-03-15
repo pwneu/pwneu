@@ -84,11 +84,40 @@ public class RecalculateLeaderboardsService(
         using var connection = new NpgsqlConnection(appDbContext.Database.GetConnectionString());
         await connection.OpenAsync(cancellationToken);
 
-        const string deleteInvalidPointsActivityQuery =
+        using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+        const string deletePointsActivityQuery = @"DELETE FROM pwneu.""PointsActivities"";";
+
+        const string insertSolvesQuery =
             @"
-            DELETE FROM pwneu.""PointsActivities""
-            WHERE ""ChallengeId"" NOT IN (SELECT ""Id"" FROM pwneu.""Challenges"")
-            OR (""IsSolve"" = FALSE AND ""HintId"" NOT IN (SELECT ""Id"" FROM pwneu.""Hints""));";
+            INSERT INTO pwneu.""PointsActivities"" 
+            (""UserId"", ""IsSolve"", ""ChallengeId"", ""HintId"", ""ChallengeName"", ""PointsChange"", ""OccurredAt"")
+            SELECT 
+                s.""UserId"",
+                TRUE,
+                s.""ChallengeId"",
+                '00000000-0000-0000-0000-000000000000'::UUID,
+                c.""Name"",
+                c.""Points"",
+                s.""SolvedAt""
+            FROM pwneu.""Solves"" s
+            JOIN pwneu.""Challenges"" c ON s.""ChallengeId"" = c.""Id"";";
+
+        const string insertHintUsagesQuery =
+            @"
+            INSERT INTO pwneu.""PointsActivities"" 
+            (""UserId"", ""IsSolve"", ""ChallengeId"", ""HintId"", ""ChallengeName"", ""PointsChange"", ""OccurredAt"")
+            SELECT 
+                hu.""UserId"",
+                FALSE,
+                h.""ChallengeId"",
+                hu.""HintId"",
+                c.""Name"",
+                -h.""Deduction"",
+                hu.""UsedAt""
+            FROM pwneu.""HintUsages"" hu
+            JOIN pwneu.""Hints"" h ON hu.""HintId"" = h.""Id""
+            JOIN pwneu.""Challenges"" c ON h.""ChallengeId"" = c.""Id"";";
 
         const string updateUsersPointsQuery =
             @"
@@ -99,17 +128,29 @@ public class RecalculateLeaderboardsService(
                 WHERE pa.""UserId"" = u.""Id""
             ), 0);";
 
-        using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            await connection.ExecuteAsync(deletePointsActivityQuery, transaction: transaction);
+            await connection.ExecuteAsync(insertSolvesQuery, transaction: transaction);
+            await connection.ExecuteAsync(insertHintUsagesQuery, transaction: transaction);
+            await connection.ExecuteAsync(updateUsersPointsQuery, transaction: transaction);
 
-        await connection.ExecuteAsync(deleteInvalidPointsActivityQuery, transaction: transaction);
-        await connection.ExecuteAsync(updateUsersPointsQuery, transaction: transaction);
-
-        await transaction.CommitAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            logger.LogError(
+                "Something went wrong during the database transaction for recalculating the user's points: {Message}",
+                ex.Message
+            );
+            throw;
+        }
 
         await cache.RemoveAsync(CacheKeys.UserRanks(), token: cancellationToken);
         await cache.RemoveAsync(CacheKeys.TopUsersGraph(), token: cancellationToken);
 
-        logger.LogInformation("Recalculating all user's points has been recalculated");
+        logger.LogInformation("All user's points has been recalculated");
 
         return true;
     }
