@@ -1,5 +1,5 @@
-﻿using System.Threading.RateLimiting;
-using Pwneu.Api.Constants;
+﻿using Pwneu.Api.Constants;
+using System.Threading.RateLimiting;
 
 namespace Pwneu.Api.Extensions;
 
@@ -105,7 +105,7 @@ public static class RateLimitingExtensions
                             .ToString(),
                         factory: _ => new FixedWindowRateLimiterOptions
                         {
-                            PermitLimit = 30,
+                            PermitLimit = 100,
                             Window = TimeSpan.FromMinutes(1),
                         }
                     )
@@ -146,7 +146,7 @@ public static class RateLimitingExtensions
                         partitionKey: httpContext.User.GetLoggedInUserId<string>(),
                         factory: _ => new FixedWindowRateLimiterOptions
                         {
-                            PermitLimit = 2,
+                            PermitLimit = 3,
                             Window = TimeSpan.FromSeconds(10),
                         }
                     )
@@ -172,7 +172,7 @@ public static class RateLimitingExtensions
                         partitionKey: httpContext.User.GetLoggedInUserId<string>(),
                         factory: _ => new FixedWindowRateLimiterOptions
                         {
-                            PermitLimit = 2,
+                            PermitLimit = 4,
                             Window = TimeSpan.FromSeconds(10),
                         }
                     )
