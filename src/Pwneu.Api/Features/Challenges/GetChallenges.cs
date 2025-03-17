@@ -65,7 +65,7 @@ public static class GetChallenges
                 "solves" => challenge => challenge.SolveCount,
                 "solvecount" => challenge => challenge.SolveCount,
                 "name" => challenge => challenge.Name,
-                _ => challenge => challenge.CreatedAt,
+                _ => challenge => challenge.Id,
             };
 
             challengesQuery =

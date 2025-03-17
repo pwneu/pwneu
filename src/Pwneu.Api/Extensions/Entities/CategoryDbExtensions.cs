@@ -28,7 +28,7 @@ public static class CategoryDbExtensions
     )
     {
         return await context
-            .Categories.OrderBy(c => c.CreatedAt)
+            .Categories.OrderBy(c => c.Id)
             .Select(c => new CategoryResponse
             {
                 Id = c.Id,
