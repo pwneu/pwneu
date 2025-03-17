@@ -50,9 +50,9 @@ public static class CacheKeys
     // Key for caching if challenges can be updated or deleted.
     public static string ChallengesLocked() => "challengesLocked";
 
-    // Key for caching the number of attempts left of the user in a challenge.
-    public static string UserAttemptsLeftInChallenge(string userId, Guid challengeId) =>
-        $"userAttemptsLeftInChallenge:{userId}:{challengeId}";
+    // Key for caching how many times the user attempted the challenge.
+    public static string UserAttemptsInChallenge(string userId, Guid challengeId) =>
+        $"userAttemptsInChallenge:{userId}:{challengeId}";
 
     // Key for caching if the user has already solved the challenge.
     public static string UserHasSolvedChallenge(string userId, Guid challengeId) =>

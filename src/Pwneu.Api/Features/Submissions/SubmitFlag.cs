@@ -122,12 +122,13 @@ public static class SubmitFlag
 
             // Check how many attempts the user has left.
             int userAttemptsLeftInChallenge;
+            int attemptCount;
             // Check if the max attempt greater or equal to 0, meaning the attempt count has a limit.
             if (challenge.MaxAttempts > 0)
             {
                 // Retrieve the current attempt count from the cache or calculate it if not present.
-                var attemptCount = await cache.GetOrSetAsync(
-                    CacheKeys.UserAttemptsLeftInChallenge(request.UserId, request.ChallengeId),
+                attemptCount = await cache.GetOrSetAsync(
+                    CacheKeys.UserAttemptsInChallenge(request.UserId, request.ChallengeId),
                     async _ =>
                         await context
                             .Submissions.Where(s =>
@@ -140,8 +141,10 @@ public static class SubmitFlag
                 userAttemptsLeftInChallenge = challenge.MaxAttempts - attemptCount;
             }
             // If the max attempt is not 0, set the number of attempts left to infinite (max value of int).
-            else
+            else {
+                attemptCount = 0;
                 userAttemptsLeftInChallenge = int.MaxValue;
+            }
 
             // Check if there are no more attempts left for the player.
             if (userAttemptsLeftInChallenge <= 0)
@@ -240,7 +243,7 @@ public static class SubmitFlag
                 // Reduce the attempt count in the cache.
                 cache
                     .SetAsync(
-                        CacheKeys.UserAttemptsLeftInChallenge(request.UserId, request.ChallengeId),
+                        CacheKeys.UserAttemptsInChallenge(request.UserId, request.ChallengeId),
                         userAttemptsLeftInChallenge - 1,
                         token: cancellationToken
                     )
