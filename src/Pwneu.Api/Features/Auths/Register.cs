@@ -278,8 +278,8 @@ public static class Register
                 .WithMessage("Fullname is required.")
                 .MaximumLength(40)
                 .WithMessage("Fullname must be 40 characters or less.")
-                .Matches(@"^[a-zA-Z\s]+$")
-                .WithMessage("Fullname must only contain letters and spaces.");
+                .Matches(@"^[a-zA-Z0-9\s]+$")
+                .WithMessage("Fullname must only contain letters, numbers, and spaces.");
 
             RuleFor(c => c.AccessKey).NotEmpty().WithMessage("Access key is required.");
 
