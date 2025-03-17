@@ -11,7 +11,7 @@ public sealed class Challenge
     [MaxLength(100)]
     public string Name { get; set; } = string.Empty;
 
-    [MaxLength(1000)]
+    [MaxLength(2000)]
     public string Description { get; set; } = string.Empty;
     public int Points { get; set; }
     public bool DeadlineEnabled { get; set; }

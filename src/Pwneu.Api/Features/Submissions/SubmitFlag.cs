@@ -336,8 +336,8 @@ public static class SubmitFlag
             RuleFor(c => c.Flag)
                 .NotEmpty()
                 .WithMessage("Flag value is required.")
-                .MaximumLength(100)
-                .WithMessage("Flag value must be 100 characters or less.");
+                .MaximumLength(500)
+                .WithMessage("Flag value must be 500 characters or less.");
         }
     }
 }

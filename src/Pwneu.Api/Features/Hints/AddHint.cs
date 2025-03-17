@@ -128,9 +128,9 @@ public static class AddHint
         {
             RuleFor(c => c.Content)
                 .NotEmpty()
-                .WithMessage("Challenge description is required.")
-                .MaximumLength(300)
-                .WithMessage("Challenge description must be 300 characters or less.");
+                .WithMessage("Hint content is required.")
+                .MaximumLength(500)
+                .WithMessage("Hint content must be 500 characters or less.");
 
             RuleFor(c => c.Deduction)
                 .GreaterThanOrEqualTo(0)

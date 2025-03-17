@@ -170,8 +170,8 @@ public static class CreateChallenge
             RuleFor(c => c.Description)
                 .NotEmpty()
                 .WithMessage("Challenge description is required.")
-                .MaximumLength(1000)
-                .WithMessage("Challenge description must be 1000 characters or less.");
+                .MaximumLength(2000)
+                .WithMessage("Challenge description must be 2000 characters or less.");
 
             RuleFor(c => c.Points)
                 .GreaterThanOrEqualTo(0)
@@ -188,8 +188,8 @@ public static class CreateChallenge
                 .WithMessage("Flags cannot be empty.")
                 .Must(flags => flags.All(flag => !string.IsNullOrWhiteSpace(flag)))
                 .WithMessage("All flags must be non-empty.")
-                .Must(flags => flags.All(flag => flag.Length <= 100))
-                .WithMessage("Each flag must be 100 characters or less.");
+                .Must(flags => flags.All(flag => flag.Length <= 500))
+                .WithMessage("Each flag must be 500 characters or less.");
         }
     }
 }
