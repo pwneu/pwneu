@@ -9,4 +9,5 @@ public static class CommonConstants
     public const string Unknown = "Unknown";
     public const string PwneuSchema = "pwneu";
     public const string DescendingOrder = "desc";
+    public const string ReceiveAnnouncement = "ReceiveAnnouncement";
 }

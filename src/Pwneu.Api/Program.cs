@@ -11,6 +11,7 @@ using Pwneu.Api.Contracts;
 using Pwneu.Api.Data;
 using Pwneu.Api.Entities;
 using Pwneu.Api.Extensions;
+using Pwneu.Api.Features.Announcements;
 using Pwneu.Api.Options;
 using Pwneu.Api.Services;
 using Pwneu.ServiceDefaults;
@@ -60,6 +61,7 @@ builder.Services.AddCors();
 builder.Services.AddHttpClient();
 builder.Services.AddOutputCache();
 builder.Services.AddProblemDetails();
+builder.Services.AddSignalR();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddScoped<ITurnstileValidator, TurnstileValidator>();
 builder.Services.AddSingleton<IChallengePointsConcurrencyGuard, ChallengePointsConcurrencyGuard>();
@@ -153,6 +155,23 @@ builder
                 )
             ),
         };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+
+                if (
+                    !string.IsNullOrEmpty(accessToken)
+                    && path.StartsWithSegments("/api/v1/announcements")
+                )
+                    context.Token = accessToken;
+
+                return Task.CompletedTask;
+            },
+        };
     });
 
 builder
@@ -218,6 +237,8 @@ app.UseAuthorization();
 
 app.UseRateLimiter();
 app.UseOutputCache();
+
+app.MapHub<AnnouncementHub>("/api/v1/announcements");
 
 app.MapV1Endpoints();
 
