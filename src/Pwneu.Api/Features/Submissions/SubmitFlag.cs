@@ -141,7 +141,8 @@ public static class SubmitFlag
                 userAttemptsLeftInChallenge = challenge.MaxAttempts - attemptCount;
             }
             // If the max attempt is not 0, set the number of attempts left to infinite (max value of int).
-            else {
+            else 
+            {
                 attemptCount = 0;
                 userAttemptsLeftInChallenge = int.MaxValue;
             }
@@ -244,8 +245,9 @@ public static class SubmitFlag
                 cache
                     .SetAsync(
                         CacheKeys.UserAttemptsInChallenge(request.UserId, request.ChallengeId),
-                        userAttemptsLeftInChallenge - 1,
-                        token: cancellationToken
+                        attemptCount + 1,
+                        new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(1) },
+                        cancellationToken
                     )
                     .AsTask(),
                 // Increment the count of recent submissions in the cache
