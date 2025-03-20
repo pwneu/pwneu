@@ -5,6 +5,12 @@ namespace Pwneu.AppHost;
 
 internal static class ResourceBuilderExtensions
 {
+    internal static IResourceBuilder<T> WithSwaggerUI<T>(this IResourceBuilder<T> builder)
+        where T : IResourceWithEndpoints
+    {
+        return builder.WithOpenApiDocs("swagger-ui-docs", "Swagger API Documentation", "swagger");
+    }
+
     internal static IResourceBuilder<T> WithScalar<T>(this IResourceBuilder<T> builder)
         where T : IResourceWithEndpoints
     {
@@ -50,3 +56,4 @@ internal static class ResourceBuilderExtensions
         );
     }
 }
+

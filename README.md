@@ -40,7 +40,7 @@ sudo chmod -R 777 .containers
 docker compose up -d --build
 ```
 
-- The endpoints can be found at http://localhost:37100/scalar/v1.
+- The endpoints can be found at http://localhost:37100/scalar/v1 or http://localhost:37100/swagger/index.html.
 
 ### 📜 License
 

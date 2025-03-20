@@ -12,6 +12,7 @@ var pwneudb = postgres.AddDatabase("pwneudb");
 
 builder
     .AddProject<Projects.Pwneu_Api>("pwneuapi")
+    .WithSwaggerUI()
     .WithScalar()
     .WithExternalHttpEndpoints()
     .WithReference(pwneudb)

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Microsoft.SemanticKernel;
 using Pwneu.Api;
 using Pwneu.Api.Constants;
@@ -18,6 +19,7 @@ using Pwneu.ServiceDefaults;
 using QuestPDF.Infrastructure;
 using Scalar.AspNetCore;
 using Serilog;
+using Swashbuckle.AspNetCore.Filters;
 using System.Text;
 using System.Threading.Channels;
 using ZiggyCreatures.Caching.Fusion;
@@ -67,6 +69,20 @@ builder.Services.AddScoped<ITurnstileValidator, TurnstileValidator>();
 builder.Services.AddSingleton<IChallengePointsConcurrencyGuard, ChallengePointsConcurrencyGuard>();
 builder.Services.AddHostedService<SaveBuffersService>();
 builder.Services.AddHostedService<RecalculateLeaderboardsService>();
+
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition(
+        "oauth2",
+        new OpenApiSecurityScheme
+        {
+            In = ParameterLocation.Header,
+            Name = "Authorization",
+            Type = SecuritySchemeType.ApiKey,
+        }
+    );
+    options.OperationFilter<SecurityRequirementsOperationFilter>();
+});
 
 builder.Services.AddSingleton<Channel<RecalculateRequest>>(_ =>
     Channel.CreateBounded<RecalculateRequest>(
@@ -224,6 +240,8 @@ if (app.Environment.IsDevelopment())
     app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
     app.MapOpenApi();
     app.MapScalarApiReference();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.ApplyMigrations();
