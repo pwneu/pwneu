@@ -51,7 +51,7 @@ public static class Refresh
                     ValidIssuer = _jwtOptions.Issuer,
                     ValidAudience = _jwtOptions.Audience,
                     IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(_jwtOptions.SigningKey)
+                        Encoding.UTF8.GetBytes(_jwtOptions.RefreshTokenSigningKey)
                     ),
                     ValidateLifetime = true,
                 };

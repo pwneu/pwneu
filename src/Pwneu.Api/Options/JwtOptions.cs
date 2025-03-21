@@ -12,4 +12,7 @@ public sealed class JwtOptions
 
     [Required]
     public required string SigningKey { get; init; }
+
+    [Required]
+    public required string RefreshTokenSigningKey { get; init; }
 }

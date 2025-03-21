@@ -37,6 +37,7 @@ services:
       - JwtOptions__Issuer=${JWT_ISSUER}
       - JwtOptions__Audience=${JWT_AUDIENCE}
       - JwtOptions__SigningKey=${JWT_SIGNING_KEY}
+      - JwtOptions__RefreshTokenSigningKey=${JWT_REFRESH_TOKEN_SIGNING_KEY}
     healthcheck:
       test: ["CMD-SHELL", "curl --fail http://localhost:8080/health || exit 1"]
       interval: 5s

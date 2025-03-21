@@ -148,7 +148,7 @@ public static class Login
             refreshTokenClaims.AddRange(userRoles.Select(role => new Claim(ClaimTypes.Role, role)));
 
             var refreshTokenKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_jwtOptions.SigningKey)
+                Encoding.UTF8.GetBytes(_jwtOptions.RefreshTokenSigningKey)
             );
 
             var refreshTokenCredentials = new SigningCredentials(
