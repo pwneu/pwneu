@@ -1,9 +1,9 @@
-﻿using System.Text;
-using MediatR;
+﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Common;
 using Pwneu.Api.Constants;
 using Pwneu.Api.Data;
+using System.Text;
 
 namespace Pwneu.Api.Features.Users;
 
@@ -28,15 +28,24 @@ public static class ExportMembers
                         .Select(ur => ur.UserId)
                         .Contains(user.Id)
                 )
-                .Select(user => new { user.Id, user.FullName })
+                .Select(user => new
+                {
+                    user.Id,
+                    user.FullName,
+                    user.UserName,
+                    user.Email,
+                    user.Points,
+                })
                 .ToListAsync(cancellationToken);
 
             var membersCsv = new StringBuilder();
-            membersCsv.AppendLine("Id,Fullname");
+            membersCsv.AppendLine("Id,Fullname,Username,Email,Points");
 
             foreach (var member in members)
             {
-                membersCsv.AppendLine($"{member.Id},{member.FullName}");
+                membersCsv.AppendLine(
+                    $"{member.Id},{member.FullName},{member.UserName},{member.Email},{member.Points}"
+                );
             }
 
             return membersCsv.ToString();
