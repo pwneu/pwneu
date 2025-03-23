@@ -18,6 +18,12 @@ public sealed class AppOptions
     public required string ResetPasswordUrl { get; init; }
 
     [Required]
+    public required int MaxFailedIpAddressAttemptCount { get; init; }
+
+    [Required]
+    public required int MaxFailedUserAttemptCount { get; init; }
+
+    [Required]
     public required string Flag { get; init; }
 
     [Required]

@@ -30,9 +30,6 @@ public static class Login
         string? Referer = null
     ) : IRequest<Result<LoginResponse>>;
 
-    private const int MaxFailedIpAddressAttemptCount = 5;
-    private const int MaxFailedUserAttemptCount = 7;
-
     private static readonly Error Invalid = new("Login.Invalid", "Incorrect username or password");
 
     private static readonly Error EmailNotConfirmed = new(
@@ -62,6 +59,7 @@ public static class Login
         IFusionCache cache,
         IPublishEndpoint publishEndpoint,
         IOptions<JwtOptions> jwtOptions,
+        IOptions<AppOptions> appOptions,
         IValidator<Command> validator,
         ILogger<Handler> logger
     ) : IRequestHandler<Command, Result<LoginResponse>>
@@ -80,6 +78,12 @@ public static class Login
                     new Error("Login.Validation", validationResult.ToString())
                 );
 
+            logger.LogInformation(
+                "User attempted to login: {UserName}, IP Address: {IpAddress}",
+                request.UserName,
+                request.IpAddress
+            );
+
             // Validate Turnstile from Cloudflare.
             var isValidTurnstile = await turnstileValidator.IsValidTurnstileTokenAsync(
                 request.TurnstileToken,
@@ -88,6 +92,9 @@ public static class Login
 
             if (!isValidTurnstile)
                 return Result.Failure<LoginResponse>(InvalidAntiSpamToken);
+
+            var MaxFailedIpAddressAttemptCount = appOptions.Value.MaxFailedIpAddressAttemptCount;
+            var MaxFailedUserAttemptCount = appOptions.Value.MaxFailedUserAttemptCount;
 
             // Check IP-based failed login attempts.
             if (request.IpAddress is not null)

@@ -17,6 +17,8 @@ services:
       - AppOptions__TurnstileSecretKey=${TURNSTILE_SECRET_KEY}
       - AppOptions__IsTurnstileEnabled=${IS_TURNSTILE_ENABLED}
       - AppOptions__ResetPasswordUrl=${RESET_PASSWORD_URL}
+      - AppOptions__MaxFailedIpAddressAttemptCount=${MAX_FAILED_IP_ADDRESS_ATTEMPT_COUNT}
+      - AppOptions__MaxFailedUserAttemptCount=${MAX_FAILED_USER_ATTEMPT_COUNT}
       - AppOptions__Flag=${FLAG}
       - AppOptions__AutoMigrate=${AUTO_MIGRATE}
       - ChatOptions__ConversationIsEnabled=${CHAT_CONVERSATION_IS_ENABLED}
