@@ -37,9 +37,9 @@ public static class GetChallenges
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
                 challengesQuery = challengesQuery.Where(ch =>
-                    ch.Name.Contains(request.SearchTerm)
-                    || ch.Description.Contains(request.SearchTerm)
-                    || ch.Id.ToString().Contains(request.SearchTerm)
+                    EF.Functions.ILike(ch.Name, $"%{request.SearchTerm}%")
+                    || EF.Functions.ILike(ch.Description, $"%{request.SearchTerm}%")
+                    || EF.Functions.ILike(ch.Id.ToString(), $"%{request.SearchTerm}%")
                 );
 
             if (request.CategoryId is not null)
@@ -48,12 +48,14 @@ public static class GetChallenges
             if (!string.IsNullOrWhiteSpace(request.UserId) && request.ExcludeSolves is true)
             {
                 var userSolveIds = await cache.GetOrSetAsync(
-                    CacheKeys.UserSolvedChallengeIds(request.UserId), async _ =>
+                    CacheKeys.UserSolvedChallengeIds(request.UserId),
+                    async _ =>
                         await context
-                            .Solves
-                            .Where(s => s.UserId == request.UserId)
+                            .Solves.Where(s => s.UserId == request.UserId)
                             .Select(s => s.ChallengeId)
-                            .ToListAsync(cancellationToken), token: cancellationToken);
+                            .ToListAsync(cancellationToken),
+                    token: cancellationToken
+                );
 
                 challengesQuery = challengesQuery.Where(ch => !userSolveIds.Contains(ch.Id));
             }

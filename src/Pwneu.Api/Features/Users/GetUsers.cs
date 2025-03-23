@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Pwneu.Api.Common;
 using Pwneu.Api.Constants;
 using Pwneu.Api.Contracts;
@@ -33,10 +34,13 @@ public static class GetUsers
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
                 usersQuery = usersQuery.Where(u =>
-                    (u.UserName != null && u.UserName.Contains(request.SearchTerm))
-                    || (u.Email != null && u.Email.Contains(request.SearchTerm))
-                    || u.FullName.Contains(request.SearchTerm)
-                    || u.Id.Contains(request.SearchTerm)
+                    (
+                        u.UserName != null
+                        && EF.Functions.ILike(u.UserName, $"%{request.SearchTerm}%")
+                    )
+                    || (u.Email != null && EF.Functions.ILike(u.Email, $"%{request.SearchTerm}%"))
+                    || EF.Functions.ILike(u.FullName, $"%{request.SearchTerm}%")
+                    || EF.Functions.ILike(u.Id, $"%{request.SearchTerm}%")
                 );
 
             if (request.ExcludeVerified is true)
