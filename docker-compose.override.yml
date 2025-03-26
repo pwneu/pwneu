@@ -3,8 +3,6 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=8080
-    ports:
-      - "37100:8080"
 
   smtp4dev:
     image: rnwood/smtp4dev:latest
