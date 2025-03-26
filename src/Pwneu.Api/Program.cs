@@ -70,6 +70,11 @@ builder.Services.AddSingleton<IChallengePointsConcurrencyGuard, ChallengePointsC
 builder.Services.AddHostedService<SaveBuffersService>();
 builder.Services.AddHostedService<RecalculateLeaderboardsService>();
 
+if (builder.Environment.IsDevelopment())
+    builder.Services.AddScoped<IPasswordChecker, DevelopmentPasswordChecker>();
+else
+    builder.Services.AddScoped<IPasswordChecker, ProductionPasswordChecker>();
+
 builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition(

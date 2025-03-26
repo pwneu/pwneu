@@ -27,6 +27,7 @@ public static class ResetPassword
     );
 
     internal sealed class Handler(
+        IPasswordChecker passwordChecker,
         UserManager<User> userManager,
         IMediator mediator,
         ITurnstileValidator turnstileValidator,
@@ -41,6 +42,10 @@ public static class ResetPassword
                 return Result.Failure<Guid>(
                     new Error("ResetPassword.Validation", validationResult.ToString())
                 );
+
+            var checkPassword = passwordChecker.IsPasswordAllowed(request.NewPassword);
+            if (checkPassword.IsFailure)
+                return Result.Failure(checkPassword.Error);
 
             // Validate Turnstile from Cloudflare.
             var isValidTurnstile = await turnstileValidator.IsValidTurnstileTokenAsync(

@@ -65,6 +65,7 @@ public static class Register
         AppDbContext context,
         UserManager<User> userManager,
         ITurnstileValidator turnstileValidator,
+        IPasswordChecker passwordChecker,
         IFusionCache cache,
         IPublishEndpoint publishEndpoint,
         IValidator<Command> validator,
@@ -85,6 +86,10 @@ public static class Register
             var validDomain = appOptions.Value.ValidEmailDomain;
 
             var isValidDomain = IsValidDomain(request.Email, validDomain);
+
+            var checkPassword = passwordChecker.IsPasswordAllowed(request.Password);
+            if (checkPassword.IsFailure)
+                return Result.Failure(checkPassword.Error);
 
             if (!isValidDomain)
                 return Result.Failure(

@@ -2,6 +2,7 @@
 
 public static class CommonConstants
 {
+    public const string DevelopmentPassword = "PwneuPwneu!1";
     public const string RefreshToken = "refreshToken";
     public const string TurnstileChallengeUrl =
         "https://challenges.cloudflare.com/turnstile/v0/siteverify";

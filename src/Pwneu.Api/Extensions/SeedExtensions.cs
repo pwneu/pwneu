@@ -5,6 +5,7 @@ using Pwneu.Api.Constants;
 using Pwneu.Api.Data;
 using Pwneu.Api.Entities;
 using Pwneu.Api.Options;
+using Pwneu.Api.Services;
 
 namespace Pwneu.Api.Extensions;
 
@@ -39,8 +40,13 @@ public static class SeedExtensions
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var appOptions = scope.ServiceProvider.GetRequiredService<IOptions<AppOptions>>().Value;
         var smtpOptions = scope.ServiceProvider.GetRequiredService<IOptions<SmtpOptions>>().Value;
+        var passwordChecker = scope.ServiceProvider.GetRequiredService<IPasswordChecker>();
 
         var password = appOptions.InitialAdminPassword;
+
+        var checkPassword = passwordChecker.IsPasswordAllowed(password);
+        if (checkPassword.IsFailure)
+            throw new InvalidOperationException(checkPassword.Error.Message);
 
         var admin = await userManager.FindByNameAsync(Roles.Admin);
 

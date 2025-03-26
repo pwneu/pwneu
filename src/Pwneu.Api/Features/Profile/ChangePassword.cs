@@ -5,6 +5,7 @@ using Pwneu.Api.Common;
 using Pwneu.Api.Constants;
 using Pwneu.Api.Entities;
 using Pwneu.Api.Extensions;
+using Pwneu.Api.Services;
 using System.Security.Claims;
 
 namespace Pwneu.Api.Features.Profile;
@@ -29,6 +30,7 @@ public static class ChangePassword
     );
 
     internal sealed class Handler(
+        IPasswordChecker passwordChecker,
         UserManager<User> userManager,
         IValidator<Command> validator,
         ILogger<Handler> logger
@@ -42,6 +44,10 @@ public static class ChangePassword
                 return Result.Failure<Guid>(
                     new Error("ChangePassword.Validation", validationResult.ToString())
                 );
+
+            var checkPassword = passwordChecker.IsPasswordAllowed(request.NewPassword);
+            if (checkPassword.IsFailure)
+                return Result.Failure(checkPassword.Error);
 
             var user = await userManager.FindByIdAsync(request.UserId);
 
