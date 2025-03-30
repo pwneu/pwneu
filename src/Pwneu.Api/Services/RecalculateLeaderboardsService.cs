@@ -1,10 +1,12 @@
 ﻿using Dapper;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Pwneu.Api.Constants;
 using Pwneu.Api.Contracts;
 using Pwneu.Api.Data;
 using Pwneu.Api.Extensions.Entities;
+using Pwneu.Api.Features.Announcements;
 using System.Threading.Channels;
 using ZiggyCreatures.Caching.Fusion;
 
@@ -65,6 +67,7 @@ public class RecalculateLeaderboardsService(
 
         var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var cache = scope.ServiceProvider.GetRequiredService<IFusionCache>();
+        var hubContext = scope.ServiceProvider.GetRequiredService<IHubContext<AnnouncementHub>>();
 
         var submissionsAllowed = await cache.CheckIfSubmissionsAllowedAsync(
             appDbContext,
@@ -128,12 +131,25 @@ public class RecalculateLeaderboardsService(
                 WHERE pa.""UserId"" = u.""Id""
             ), 0);";
 
+        const string updateUsersLatestSolveQuery =
+            @"
+            UPDATE pwneu.""AspNetUsers"" AS u
+            SET ""LatestSolve"" = sub.""LatestSolve""
+            FROM (
+                SELECT ""UserId"", MAX(""OccurredAt"") AS ""LatestSolve""
+                FROM pwneu.""PointsActivities""
+                WHERE ""IsSolve"" = TRUE
+                GROUP BY ""UserId""
+            ) AS sub
+            WHERE u.""Id"" = sub.""UserId"";";
+
         try
         {
             await connection.ExecuteAsync(deletePointsActivityQuery, transaction: transaction);
             await connection.ExecuteAsync(insertSolvesQuery, transaction: transaction);
             await connection.ExecuteAsync(insertHintUsagesQuery, transaction: transaction);
             await connection.ExecuteAsync(updateUsersPointsQuery, transaction: transaction);
+            await connection.ExecuteAsync(updateUsersLatestSolveQuery, transaction: transaction);
 
             await transaction.CommitAsync(cancellationToken);
         }
@@ -149,6 +165,12 @@ public class RecalculateLeaderboardsService(
 
         await cache.RemoveAsync(CacheKeys.UserRanks(), token: cancellationToken);
         await cache.RemoveAsync(CacheKeys.TopUsersGraph(), token: cancellationToken);
+
+        await hubContext.Clients.All.SendAsync(
+            CommonConstants.ReceiveAnnouncement,
+            $"Announcement:\n\nThe leaderboards has been recalculated\n\n- system",
+            cancellationToken
+        );
 
         logger.LogInformation("All user's points has been recalculated");
 
