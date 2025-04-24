@@ -33,7 +33,9 @@ public static class GetChallengeSolves
 
             // Only managers and admin can see solvers who aren't visible on leaderboards.
             if (!request.RequesterIsManager)
-                challengeSolvesQuery = challengeSolvesQuery.Where(s => s.User.IsVisibleOnLeaderboards);
+                challengeSolvesQuery = challengeSolvesQuery.Where(s =>
+                    s.User.IsVisibleOnLeaderboards
+                );
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
                 challengeSolvesQuery = challengeSolvesQuery.Where(s =>
