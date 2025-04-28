@@ -291,6 +291,7 @@ public static class GetLeaderboardsPerCategory
                     }
                 )
                 .RequireAuthorization(AuthorizationPolicies.AdminOnly)
+                .RequireRateLimiting(RateLimitingPolicies.ExpensiveRequest)
                 .WithTags(nameof(Analysis));
         }
     }
