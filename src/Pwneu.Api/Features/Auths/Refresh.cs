@@ -22,14 +22,21 @@ public static class Refresh
 
     private static readonly Error Invalid = new("Refresh.Invalid", "Invalid token");
 
+    private static readonly Error InArchiveMode = new(
+        "Refresh.InArchiveMode",
+        "The platform is currently in archive mode. Authentication is disabled."
+    );
+
     internal sealed class Handler(
         AppDbContext context,
         IOptions<JwtOptions> jwtOptions,
+        IOptions<AppOptions> appOptions,
         IFusionCache cache,
         IValidator<Command> validator
     ) : IRequestHandler<Command, Result<TokenResponse>>
     {
         private readonly JwtOptions _jwtOptions = jwtOptions.Value;
+        private readonly AppOptions _appOptions = appOptions.Value;
 
         public async Task<Result<TokenResponse>> Handle(
             Command request,
@@ -42,6 +49,9 @@ public static class Refresh
                 return Result.Failure<TokenResponse>(
                     new Error("Refresh.Validation", validationResult.ToString())
                 );
+
+            if (_appOptions.IsArchiveMode)
+                return Result.Failure<TokenResponse>(InArchiveMode);
 
             try
             {

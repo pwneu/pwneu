@@ -52,6 +52,11 @@ public static class Login
         "User account locked due to one or more failed login attempts. Please wait a few minutes."
     );
 
+    private static readonly Error InArchiveMode = new(
+        "Login.InArchiveMode",
+        "The platform is currently in archive mode. Authentication is disabled."
+    );
+
     internal sealed class Handler(
         UserManager<User> userManager,
         SignInManager<User> signInManager,
@@ -65,6 +70,7 @@ public static class Login
     ) : IRequestHandler<Command, Result<LoginResponse>>
     {
         private readonly JwtOptions _jwtOptions = jwtOptions.Value;
+        private readonly AppOptions _appOptions = appOptions.Value;
 
         public async Task<Result<LoginResponse>> Handle(
             Command request,
@@ -77,6 +83,9 @@ public static class Login
                 return Result.Failure<LoginResponse>(
                     new Error("Login.Validation", validationResult.ToString())
                 );
+
+            if (_appOptions.IsArchiveMode)
+                return Result.Failure<LoginResponse>(InArchiveMode);
 
             logger.LogInformation(
                 "User attempted to login: {UserName}, IP Address: {IpAddress}",
@@ -93,8 +102,8 @@ public static class Login
             if (!isValidTurnstile)
                 return Result.Failure<LoginResponse>(InvalidAntiSpamToken);
 
-            var MaxFailedIpAddressAttemptCount = appOptions.Value.MaxFailedIpAddressAttemptCount;
-            var MaxFailedUserAttemptCount = appOptions.Value.MaxFailedUserAttemptCount;
+            var MaxFailedIpAddressAttemptCount = _appOptions.MaxFailedIpAddressAttemptCount;
+            var MaxFailedUserAttemptCount = _appOptions.MaxFailedUserAttemptCount;
 
             // Check IP-based failed login attempts.
             if (request.IpAddress is not null)
